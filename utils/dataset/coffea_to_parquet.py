@@ -6,6 +6,7 @@ import numpy as np
 import awkward as ak
 
 import vector
+
 vector.register_numba()
 vector.register_awkward()
 
@@ -14,10 +15,19 @@ from coffea.processor.accumulator import column_accumulator
 from coffea.processor import accumulate
 
 # Read arguments from command line: input file and output directory. Description: script to convert ntuples from coffea file to parquet file.
-parser = argparse.ArgumentParser(description='Convert awkward ntuples in coffea files to parquet files.')
-parser.add_argument('-i', '--input', type=str, required=True, help='Input coffea file')
-parser.add_argument('-o', '--output', type=str, required=True, help='Output parquet file')
-parser.add_argument('-c', '--cat', type=str, default="semilep_LHE", required=False, help='Event category')
+parser = argparse.ArgumentParser(
+    description="Convert awkward ntuples in coffea files to parquet files."
+)
+parser.add_argument("-i", "--input", type=str, required=True, help="Input coffea file")
+parser.add_argument("-o", "--output", type=str, required=True, help="Output directory")
+parser.add_argument(
+    "-c",
+    "--cat",
+    type=str,
+    default="baseline",
+    required=False,
+    help="Event category",
+)
 
 args = parser.parse_args()
 
@@ -40,111 +50,89 @@ if not args.cat in df["cutflow"].keys():
 # For each feature, the dictionary contains the name of the feature in the coffea file (e.g. `provenance`) and the name of the feature in the parquet file (e.g. `prov`).
 
 features = {
-    "common" : {
-        "Parton" : {
-            "pt" : "pt",
-            "eta" : "eta",
-            "phi" : "phi",
-            "mass" : "mass",
-            "pdgId" : "pdgId",
-            "prov" : "provenance"
+    "common": {
+        # "bQuark": {
+        #     "pt": "pt",
+        #     "eta": "eta",
+        #     "phi": "phi",
+        #     # "mass" : "mass",
+        #     "pdgId": "pdgId",
+        #     "prov": "provenance",
+        # },
+        # "bQuarkHiggsMatched": {
+        #     "pt": "pt",
+        #     "eta": "eta",
+        #     "phi": "phi",
+        #     # "mass" : "mass",
+        #     "pdgId": "pdgId",
+        #     "prov": "provenance",
+        # },
+        "JetGood": {
+            "pt": "pt",
+            "eta": "eta",
+            "phi": "phi",
+            "btag": "btagPNetB",
+            "ptPnetRegNeutrino": "ptPnetRegNeutrino",
         },
-        "PartonMatched" : {
-            "pt" : "pt",
-            "eta" : "eta",
-            "phi" : "phi",
-            "mass" : "mass",
-            "pdgId" : "pdgId",
-            "prov" : "provenance"
+        "JetGoodHiggs": {
+            "pt": "pt",
+            "eta": "eta",
+            "phi": "phi",
+            "btag": "btagPNetB",
+            "ptPnetRegNeutrino": "ptPnetRegNeutrino",
         },
-        "JetGood" : {
-            "pt" : "pt",
-            "eta" : "eta",
-            "phi" : "phi",
-            "btag" : "btagDeepFlavB"
+        "JetGoodHiggsMatched": {
+            "pt": "pt",
+            "eta": "eta",
+            "phi": "phi",
+            "btag": "btagPNetB",
+            "ptPnetRegNeutrino": "ptPnetRegNeutrino",
+            "prov": "provenance",
+            # "pdgId" : "pdgId",
+            # "hadronFlavour" : "hadronFlavour"
         },
-        "JetGoodMatched" : {
-            "pt" : "pt",
-            "eta" : "eta",
-            "phi" : "phi",
-            "btag" : "btagDeepFlavB",
-            "prov" : "provenance"
+        "JetGoodMatched": {
+            "pt": "pt",
+            "eta": "eta",
+            "phi": "phi",
+            "btag": "btagPNetB",
+            "ptPnetRegNeutrino": "ptPnetRegNeutrino",
+            "prov": "provenance",
+            # "pdgId" : "pdgId",
+            # "hadronFlavour" : "hadronFlavour"
         },
-        "Generator" : {
-            "pdgid1" : "id1",
-            "pdgid2" : "id2",
-            "x1" : "x1",
-            "x2" : "x2"
-        },
-        "LeptonParton" : {
-            "pt" : "pt",
-            "eta" : "eta",
-            "phi" : "phi",
-            "mass" : "mass",
-            "pdgId" : "pdgId"
-        },
-        "LeptonGood" : {
-            "pt" : "pt",
-            "eta" : "eta",
-            "phi" : "phi",
-            "pdgId" : "pdgId"
-        },
-        "MET" : {
-            "pt" : "pt",
-            "phi" : "phi"
-        }
     },
-    "by_sample": {
-        "ttHTobb" : {
-            "HiggsParton" : {
-                "pt" : "pt",
-                "eta" : "eta",
-                "phi" : "phi",
-                "m" : "mass"
-            }
-        },
-        "ttHTobb_ttToSemiLep" : {
-            "HiggsParton" : {
-                "pt" : "pt",
-                "eta" : "eta",
-                "phi" : "phi",
-                "m" : "mass"
-            }
-        }
-    }
+    "by_sample": {},
 }
 
 # Dictionary of features to pad with a default value
 features_pad = {
-    "common" : {
-        "JetGood" : {
-            "m" : 0
-        },
-        "JetGoodMatched" : {
-            "m" : 0
-        },
-        "LeptonGood" : {
-            "m" : 0
-        },
-        "MET" : {
-            "m" : 0,
-            "eta" : 0
-        }
+    "common": {
+        # "JetGood" : {
+        #     "m" : 0
+        # },
+        # "JetGoodHiggs" : {
+        #     "m" : 0
+        # },
+        # "JetGoodHiggsMatched" : {
+        #     "m" : 0
+        # },
     },
-    "by_sample": {}
+    "by_sample": {},
 }
 
-awkward_collections = ["Parton", "PartonMatched", "JetGood", "JetGoodMatched", "LeptonParton"]
+awkward_collections = list(features["common"].keys())
 matched_collections_dict = {
-    "Parton" : "PartonMatched",
-    "JetGood" : "JetGoodMatched"
+    # "bQuark": "bQuarkHiggsMatched",
+    "JetGoodHiggs": "JetGoodHiggsMatched",
+    "JetGood": "JetGoodMatched",
 }
 
 samples = df["columns"].keys()
 print("Samples: ", samples)
 
 for sample in samples:
-    
+
     # Compose the features dictionary with common features and sample-specific features
     features_dict = features["common"].copy()
     if sample in features["by_sample"].keys():
@@ -156,7 +144,7 @@ for sample in samples:
         features_pad_dict.update(features_pad["by_sample"][sample])
 
     # Create a default dictionary of dictionaries to store the arrays
-    array_dict = {k : defaultdict(dict) for k in features_dict.keys()}
+    array_dict = {k: defaultdict(dict) for k in features_dict.keys()}
     datasets = df["columns"][sample].keys()
     print("Datasets: ", datasets)
 
@@ -176,15 +164,17 @@ for sample in samples:
     # In order to get the numpy array from the column_accumulator, we have to access the `value` attribute.
     for collection, variables in features_dict.items():
         for key_feature, key_coffea in variables.items():
-            if (collection == "JetGoodMatched") & (key_coffea == "provenance"):
-                array_dict[collection][key_feature] = cs[f"PartonMatched_{key_coffea}"].value
-            else:
-                array_dict[collection][key_feature] = cs[f"{collection}_{key_coffea}"].value
-            
+            # if (collection == "JetGoodHiggsMatched") & (key_coffea == "provenance"):
+            #     array_dict[collection][key_feature] = cs[f"bQuarkHiggsMatched_{key_coffea}"].value
+            # else:
+            array_dict[collection][key_feature] = cs[f"{collection}_{key_coffea}"].value
+
         # Add padded features to the array, according to the features dictionary
         if collection in features_pad_dict.keys():
             for key_feature, value in features_pad_dict[collection].items():
-                array_dict[collection][key_feature] = value * np.ones_like(cs[f"{collection}_pt"].value)
+                array_dict[collection][key_feature] = value * np.ones_like(
+                    cs[f"{collection}_pt"].value
+                )
 
     # The awkward arrays are zipped together to form the Momentum4D arrays.
     # If the collection is not a Momentum4D array, it is zipped as it is,
@@ -192,9 +182,14 @@ for sample in samples:
     zipped_dict = {}
     for collection in array_dict.keys():
         if collection in awkward_collections:
-            zipped_dict[collection] = ak.unflatten(ak.zip(array_dict[collection], with_name='Momentum4D'), cs[f"{collection}_N"].value)
+            zipped_dict[collection] = ak.unflatten(
+                ak.zip(array_dict[collection], with_name="Momentum4D"),
+                cs[f"{collection}_N"].value,
+            )
         else:
-            zipped_dict[collection] = ak.zip(array_dict[collection], with_name='Momentum4D')
+            zipped_dict[collection] = ak.zip(
+                array_dict[collection], with_name="Momentum4D"
+            )
         print(f"Collection: {collection}")
         print("Fields: ", zipped_dict[collection].fields)
 
@@ -202,13 +197,29 @@ for sample in samples:
         # Pad the matched collections with None if there is no matching
         if collection in matched_collections_dict.keys():
             matched_collection = matched_collections_dict[collection]
-            masked_arrays = ak.mask(zipped_dict[matched_collection], zipped_dict[matched_collection].pt==-999, None)
+            masked_arrays = ak.mask(
+                zipped_dict[matched_collection],
+                zipped_dict[matched_collection].pt == -999,
+                None,
+            )
+            print("masked_arrays: ", masked_arrays)
             zipped_dict[matched_collection] = masked_arrays
             # Add the matched flag and the provenance to the matched jets
-            if collection == "JetGood":
+            if collection == "JetGoodHiggs"or collection ==  "JetGood":
+                print(
+                    "Adding the matched flag and the provenance to the matched jets..."
+                )
                 is_matched = ~ak.is_none(masked_arrays, axis=1)
-                zipped_dict[collection] = ak.with_field(zipped_dict[collection], is_matched, "matched")
-                zipped_dict[collection] = ak.with_field(zipped_dict[collection], ak.fill_none(masked_arrays.prov, -1), "prov")
+                print("is_matched: ", is_matched)
+                print("zipped: ", zipped_dict[collection].pt, zipped_dict[collection])
+                zipped_dict[collection] = ak.with_field(
+                    zipped_dict[collection], is_matched, "matched"
+                )
+                zipped_dict[collection] = ak.with_field(
+                    zipped_dict[collection],
+                    ak.fill_none(masked_arrays.prov, -1),
+                    "prov",
+                )
 
     # The Momentum4D arrays are zipped together to form the final dictionary of arrays.
     print("Zipping the collections into a single dictionary...")

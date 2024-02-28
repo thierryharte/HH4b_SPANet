@@ -1,199 +1,199 @@
-import os
-import argparse
-from collections import defaultdict
-
-import numpy as np
 import awkward as ak
 import numba
+import numpy as np
+import pandas as pd
+import awkward as ak
+import os
 import h5py
-
 import vector
+import argparse
+from multiprocessing import Pool
+import functools
+
 vector.register_numba()
 vector.register_awkward()
 
-input_features = {
-    "Jet" : ["MASK", "pt", "eta", "sin_phi", "cos_phi", "btag"],
-    "Lepton" : ["pt", "eta", "sin_phi", "cos_phi"],
-    "Met" : ["pt", "eta", "sin_phi", "cos_phi"],
-    "Event" : ["ht"]
-}
 
-def create_groups(file):
-    file.create_group("TARGETS/t1") # hadronic top -> q1 q2 b
-    file.create_group("TARGETS/t2") # leptonic top -> b
-    file.create_group("TARGETS/h") # higgs -> b1 b2
-    file.create_group("INPUTS")
-    file.create_group("INPUTS/Jet")
-    file.create_group("INPUTS/Lepton")
-    file.create_group("INPUTS/Met")
-    file.create_group("INPUTS/Event")
-    return file
+parser = argparse.ArgumentParser(
+    description="Convert awkward ntuples in coffea files to parquet files."
+)
+parser.add_argument("-i", "--input", type=str, required=True, help="Input coffea file")
+parser.add_argument("-o", "--output", type=str, required=True, help="Output directory")
+parser.add_argument(
+    "-f",
+    "--frac-train",
+    type=float,
+    default=0.8,
+    help="Fraction of events to use for training",
+)
 
-def create_targets(file, particle, jets):
-    indices = ak.local_index(jets)
-    
-    if particle == "h":
-        mask = jets.prov == 1 # H->b1b2
-        # We select the local indices of jets matched with the Higgs
-        # The indices are padded with None such that there are 2 entries per event
-        # The None values are filled with -1 (a nan value).
-        indices_prov = ak.fill_none(ak.pad_none(indices[mask], 2), -1)
-
-        index_b1 = indices_prov[:,0]
-        index_b2 = indices_prov[:,1]
-        
-        file.create_dataset("TARGETS/h/b1", np.shape(index_b1), dtype='int64', data=index_b1)
-        file.create_dataset("TARGETS/h/b2", np.shape(index_b2), dtype='int64', data=index_b2)
-        
-    elif particle == "t1":
-        mask = jets.prov == 5 # W->q1q2 from t1
-        indices_prov = ak.fill_none(ak.pad_none(indices[mask], 2), -1)
-
-        index_q1 = indices_prov[:,0]
-        index_q2 = indices_prov[:,1]
-
-        mask = jets.prov == 2 # t1->Wb
-        index_b_hadr = ak.fill_none(ak.pad_none(indices[mask], 1), -1)[:,0]
-                
-        file.create_dataset("TARGETS/t1/q1", np.shape(index_q1), dtype='int64', data=index_q1)
-        file.create_dataset("TARGETS/t1/q2", np.shape(index_q2), dtype='int64', data=index_q2)
-        file.create_dataset("TARGETS/t1/b", np.shape(index_b_hadr), dtype='int64', data=index_b_hadr)
-                
-    elif particle == "t2":
-        mask = jets.prov == 3 # t2->b
-        index_b_lep = ak.fill_none(ak.pad_none(indices[mask], 1), -1)[:,0]
-
-        file.create_dataset("TARGETS/t2/b", np.shape(index_b_lep), dtype='int64', data=index_b_lep)
-
-def get_object_features(df, collection=None, features=["pt", "eta", "sin_phi", "cos_phi"]):
-
-    if collection in df.fields:
-        objects = df[collection]
-    features_dict = {}
-    for feat in features:
-        if feat in ["MASK", "ht"]: continue
-        if feat in ["sin_phi", "cos_phi"]:
-            phi = objects["phi"]
-            if feat == "sin_phi":
-                values = np.sin(phi)
-            elif feat == "cos_phi":
-                values = np.cos(phi)
-        else:
-            values = objects[feat]
-        if objects.ndim == 1:
-            features_dict[feat] = ak.to_numpy(values)
-        elif objects.ndim == 2:
-            features_dict[feat] = ak.to_numpy(ak.fill_none(ak.pad_none(values, 16, clip=True), 0))
-        else:
-            raise NotImplementedError
-
-    if "MASK" in features:
-        if not "pt" in features:
-            raise NotImplementedError
-        features_dict["MASK"] = ~(features_dict["pt"] == 0)
-    elif "ht" in features:
-        features_dict["ht"] = ak.sum(df["JetGood"]["pt"], axis=1)
-    return features_dict
-
-def create_inputs(file, df):
-    features = defaultdict(dict)
-    for obj, feats in input_features.items():
-        features["Jet"] = get_object_features(df, "JetGood", features=input_features["Jet"])
-        features["Lepton"] = get_object_features(df, "LeptonGood", features=input_features["Lepton"])
-        features["Met"] = get_object_features(df, "MET", features=input_features["Met"])
-        features["Event"] = get_object_features(df, features=input_features["Event"])
-
-    for obj, feats in features.items():
-        for feat, val in feats.items():
-            if feat == "MASK":
-                dtype = 'bool'
-            else:
-                dtype = 'float32'
-            dataset_name = f"INPUTS/{obj}/{feat}"
-            print("Creating dataset: ", dataset_name)
-            ds = file.create_dataset(dataset_name, np.shape(val), dtype=dtype, data=val)
-
-def h5_tree(val, pre=''):
-    items = len(val)
-    for key, val in val.items():
-        items -= 1
-        if items == 0:
-            # the last item
-            if type(val) == h5py._hl.group.Group:
-                print(pre + '└── ' + key)
-                h5_tree(val, pre+'    ')
-            else:
-                print(pre + '└── ' + key + ' (%d)' % len(val))
-        else:
-            if type(val) == h5py._hl.group.Group:
-                print(pre + '├── ' + key)
-                h5_tree(val, pre+'│   ')
-            else:
-                print(pre + '├── ' + key + ' (%d)' % len(val))
-
-# Read arguments from command line: input file and output directory. Description: script to convert ntuples from coffea file to parquet file.
-parser = argparse.ArgumentParser(description='Convert awkward ntuples in coffea files to parquet files.')
-parser.add_argument('-i', '--input', type=str, required=True, help='Input parquet file')
-parser.add_argument('-o', '--output', type=str, required=True, help='Output h5 file')
-parser.add_argument('-f', '--frac_train', type=float, default=0.8, required=False, help='Fraction of events to be used for training')
-parser.add_argument('-fm', '--fully_matched', action='store_true', required=False, help='Use only fully matched events')
 
 args = parser.parse_args()
 
-## Loading the exported dataset
-# We open the .coffea file and read the output accumulator. The ntuples for the training are saved under the key `columns`.
+filename = f"{args.input}"
+main_dir = args.output
+df = ak.from_parquet(filename)
 
-if not os.path.exists(args.input):
-    raise ValueError(f"Input file {args.input} does not exist.")
-output_dir = os.path.abspath(os.path.dirname(args.output))
-filename, file_extension = os.path.splitext(args.output)
-if not file_extension == ".h5":
-    raise ValueError(f"Output file {args.output} should be in .h5 format.")
-if not os.path.exists(output_dir):
-    os.makedirs(output_dir)
 
-# Read the parquet file
-print("Reading parquet file: ", args.input)
-df_all = ak.from_parquet(args.input)
+def create_groups(file):
+    file.create_group("TARGETS/h1")  # higgs 1 -> b1 b2
+    file.create_group("TARGETS/h2")  # higgs 2 -> b3 b4
+    file.create_group("INPUTS")
+    # file.create_group("INPUTS/Source")
+    # file.create_group("INPUTS/ht")
+    return file
 
-# Dictionary of train and test datasets
 
-print("Splitting dataset into train and test...")
-df_dict = {
-    "train" : df_all[:int(len(df_all)*args.frac_train)],
-    "test" : df_all[int(len(df_all)*args.frac_train):]
+def create_targets(file, particle, jets, filename):
+    multiindex = ak.zip([ak.local_index(jets, i) for i in range(jets.ndim)])
+
+    higgs_targets = {1: ["b1", "b2"], 2: ["b3", "b4"]}
+
+    for j in [1, 2]:
+        if particle == f"h{j}":
+            mask = jets.prov == j  # H->b1b2
+            multiindex2 = multiindex[mask]
+            print(filename, particle, multiindex2)
+
+            b1_array = []
+            b2_array = []
+
+            for index, i in enumerate(multiindex2):
+                if len(i) == 0:
+                    b1_array.append(-1)
+                    b2_array.append(-1)
+                elif len(i) == 1:
+                    b1_array.append(i[0].tolist()[1])
+                    b2_array.append(-1)
+                elif len(i) == 2:
+                    b1_array.append(i[0].tolist()[1])
+                    b2_array.append(i[1].tolist()[1])
+
+            file.create_dataset(
+                f"TARGETS/h{j}/{higgs_targets[j][0]}",
+                np.shape(b1_array),
+                dtype="int64",
+                data=b1_array,
+            )
+            file.create_dataset(
+                f"TARGETS/h{j}/{higgs_targets[j][1]}",
+                np.shape(b2_array),
+                dtype="int64",
+                data=b2_array,
+            )
+
+
+def create_inputs(file, jets):
+    pt_array = ak.to_numpy(ak.fill_none(ak.pad_none(jets.pt, 16, clip=True), 0))
+    mask = ~(pt_array == 0)
+    mask_ds = file.create_dataset(
+        "INPUTS/Jet/MASK", np.shape(mask), dtype="bool", data=mask
+    )
+    pt_ds = file.create_dataset(
+        "INPUTS/Jet/pt", np.shape(pt_array), dtype="float32", data=pt_array
+    )
+
+    ptPnetRegNeutrino_array = ak.to_numpy(
+        ak.fill_none(ak.pad_none(jets.ptPnetRegNeutrino, 16, clip=True), 0)
+    )
+    ptPnetRegNeutrino_ds = file.create_dataset(
+        "INPUTS/Jet/ptPnetRegNeutrino",
+        np.shape(ptPnetRegNeutrino_array),
+        dtype="float32",
+        data=ptPnetRegNeutrino_array,
+    )
+
+    phi_array = ak.to_numpy(ak.fill_none(ak.pad_none(jets.phi, 16, clip=True), 0))
+    phi_ds = file.create_dataset(
+        "INPUTS/Jet/phi", np.shape(phi_array), dtype="float32", data=phi_array
+    )
+
+    eta_array = ak.to_numpy(ak.fill_none(ak.pad_none(jets.eta, 16, clip=True), 0))
+    eta_ds = file.create_dataset(
+        "INPUTS/Jet/eta", np.shape(eta_array), dtype="float32", data=eta_array
+    )
+
+    btag = ak.to_numpy(ak.fill_none(ak.pad_none(jets.btag, 16, clip=True), 0))
+    btag_ds = file.create_dataset(
+        "INPUTS/Jet/btag", np.shape(btag), dtype="float32", data=btag
+    )
+
+    # # Fill ht
+    # pt_array = ak.to_numpy(ak.fill_none(ak.pad_none(jets.pt, 15, clip=True), 0))
+    # ht_array = np.sum(pt_array, axis=1)
+    # ht_ds = file.create_dataset(
+    #     "INPUTS/ht/ht", np.shape(ht_array), dtype="float32", data=ht_array
+    # )
+
+    # # Fill ht
+    # ptPnetRegNeutrino_array = ak.to_numpy(
+    #     ak.fill_none(ak.pad_none(jets.ptPnetRegNeutrino, 15, clip=True), 0)
+    # )
+    # htPNetRegNeutrino_array = np.sum(ptPnetRegNeutrino_array, axis=1)
+    # htPNetRegNeutrino_ds = file.create_dataset(
+    #     "INPUTS/ht/htPNetRegNeutrino",
+    #     np.shape(htPNetRegNeutrino_array),
+    #     dtype="float32",
+    #     data=htPNetRegNeutrino_array,
+    # )
+
+
+file_dict = {
+    0: "output_JetGood_train.h5",
+    1: "output_JetGood_test.h5",
+    2: "output_JetGoodHiggs_train.h5",
+    3: "output_JetGoodHiggs_test.h5",
 }
 
-for dataset, df in df_dict.items():
-    print(f"Processing dataset: {dataset} ({len(df)} events)")
-    # We select only events where all the jets are parton-matched, so that we know their provenance
-    if args.fully_matched:
-        mask_fullymatched = ak.sum(df.JetGood.matched == True, axis=1) >= 6
-        df = df[mask_fullymatched]
 
-        # We require exactly 2 jets from the Higgs, 3 jets from the W or hadronic top, and 1 lepton from the leptonic top
-        jets_higgs = df.JetGood[df.JetGood.prov == 1]
-        mask_match = ak.num(jets_higgs) == 2
+def add_info_to_file(input_to_file):
+    k, jets = input_to_file
+    print(f"Adding info to file {file_dict[k]}")
+    file_out = h5py.File(f"{main_dir}/{file_dict[k]}", "w")
+    file_out = create_groups(file_out)
+    create_inputs(file_out, jets)
+    create_targets(file_out, "h1", jets, file_dict[k])
+    create_targets(file_out, "h2", jets, file_dict[k])
+    file_out.close()
 
-        jets_w_thadr = df.JetGood[(df.JetGood.prov == 5) | (df.JetGood.prov == 2)]
-        mask_match = mask_match & (ak.num(jets_w_thadr) == 3)
 
-        jets_tlep = df.JetGood[df.JetGood.prov == 3]
-        mask_match = mask_match & (ak.num(jets_tlep) == 1)
+# create the test and train datasets
+# and create differnt datasets with jetGood and jetGoodHiggs
 
-        df = df[mask_match]
-        print(f"Selected {len(df)} fully matched events")
-    else:
-        print(f"Selected {len(df)} events")
+jets_good = df.JetGood
+jets_good_higgs = df.JetGoodHiggs
 
-    output_file = args.output.replace(".h5", f"_{dataset}_{len(df)}.h5")
-    print("Creating output file: ", output_file)
-    with h5py.File(output_file, "w") as f:
-        f = create_groups(f)
-        # Create targets in the file
-        for particle in ["h", "t1", "t2"]:
-            create_targets(f, particle, df.JetGood)
-        # Create input arrays in the files
-        create_inputs(f, df)
-        print(f)
-        h5_tree(f)
+jets_list = []
+for i, jets_all in enumerate([jets_good, jets_good_higgs]):
+    print(f"Creating dataset for {'JetGood' if i == 0 else 'JetGoodHiggs'}")
+    n_events = len(jets_all)
+    print(f"Number of events: {n_events}")
+    idx_train_max = int(np.ceil(n_events * args.frac_train))
+    print(f"Number of events for training: {idx_train_max}")
+    print(f"Number of events for testing: {n_events - idx_train_max}")
+    jets_train = jets_all[:idx_train_max]
+    jets_test = jets_all[idx_train_max:]
+
+    for j, jets in enumerate([jets_train, jets_test]):
+        jets_list.append(jets)
+        # if j == 0:
+        #     print("Creating training dataset")
+        #     file_out = h5py.File(
+        #         f"{main_dir}/output_{'JetGood' if i == 0 else 'JetGoodHiggs'}_train.h5",
+        #         "w",
+        #     )
+        # else:
+        #     print("Creating testing dataset")
+        #     file_out = h5py.File(
+        #         f"{main_dir}/output_{'JetGood' if i == 0 else 'JetGoodHiggs'}_test.h5",
+        #         "w",
+        #     )
+        # file_out = create_groups(file_out)
+        # create_inputs(file_out, jets)
+        # create_targets(file_out, "h1", jets)
+        # create_targets(file_out, "h2", jets)
+
+        # file_out.close()
+
+with Pool(4) as p:
+    p.map(add_info_to_file, enumerate(jets_list))
