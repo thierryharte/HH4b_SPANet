@@ -15,9 +15,9 @@ vector.register_awkward()
 
 
 parser = argparse.ArgumentParser(
-    description="Convert awkward ntuples in coffea files to parquet files."
+    description="Convert awkward ntuples in parquet files to h5 files."
 )
-parser.add_argument("-i", "--input", type=str, required=True, help="Input coffea file")
+parser.add_argument("-i", "--input", type=str, required=True, help="Input parquet file")
 parser.add_argument("-o", "--output", type=str, required=True, help="Output directory")
 parser.add_argument(
     "-f",
@@ -30,8 +30,10 @@ parser.add_argument(
 
 args = parser.parse_args()
 
+
 filename = f"{args.input}"
 main_dir = args.output
+os.makedirs(main_dir, exist_ok=True)
 df = ak.from_parquet(filename)
 
 
@@ -83,8 +85,8 @@ def create_targets(file, particle, jets, filename):
             )
 
 
-def create_inputs(file, jets):
-    pt_array = ak.to_numpy(ak.fill_none(ak.pad_none(jets.pt, 16, clip=True), 0))
+def create_inputs(file, jets, max_num_jets):
+    pt_array = ak.to_numpy(ak.fill_none(ak.pad_none(jets.pt, max_num_jets, clip=True), 0))
     mask = ~(pt_array == 0)
     mask_ds = file.create_dataset(
         "INPUTS/Jet/MASK", np.shape(mask), dtype="bool", data=mask
@@ -94,7 +96,7 @@ def create_inputs(file, jets):
     )
 
     ptPnetRegNeutrino_array = ak.to_numpy(
-        ak.fill_none(ak.pad_none(jets.ptPnetRegNeutrino, 16, clip=True), 0)
+        ak.fill_none(ak.pad_none(jets.ptPnetRegNeutrino, max_num_jets, clip=True), 0)
     )
     ptPnetRegNeutrino_ds = file.create_dataset(
         "INPUTS/Jet/ptPnetRegNeutrino",
@@ -103,19 +105,26 @@ def create_inputs(file, jets):
         data=ptPnetRegNeutrino_array,
     )
 
-    phi_array = ak.to_numpy(ak.fill_none(ak.pad_none(jets.phi, 16, clip=True), 0))
+    phi_array = ak.to_numpy(ak.fill_none(ak.pad_none(jets.phi, max_num_jets, clip=True), 0))
     phi_ds = file.create_dataset(
         "INPUTS/Jet/phi", np.shape(phi_array), dtype="float32", data=phi_array
     )
 
-    eta_array = ak.to_numpy(ak.fill_none(ak.pad_none(jets.eta, 16, clip=True), 0))
+    eta_array = ak.to_numpy(ak.fill_none(ak.pad_none(jets.eta, max_num_jets, clip=True), 0))
     eta_ds = file.create_dataset(
         "INPUTS/Jet/eta", np.shape(eta_array), dtype="float32", data=eta_array
     )
 
-    btag = ak.to_numpy(ak.fill_none(ak.pad_none(jets.btag, 16, clip=True), 0))
+    btag = ak.to_numpy(ak.fill_none(ak.pad_none(jets.btag, max_num_jets, clip=True), 0))
     btag_ds = file.create_dataset(
         "INPUTS/Jet/btag", np.shape(btag), dtype="float32", data=btag
+    )
+
+    mass_array = ak.to_numpy(
+        ak.fill_none(ak.pad_none(jets.mass, max_num_jets, clip=True), 0)
+    )
+    mass_ds = file.create_dataset(
+        "INPUTS/Jet/mass", np.shape(mass_array), dtype="float32", data=mass_array
     )
 
     # # Fill ht
@@ -146,16 +155,6 @@ file_dict = {
 }
 
 
-def add_info_to_file(input_to_file):
-    k, jets = input_to_file
-    print(f"Adding info to file {file_dict[k]}")
-    file_out = h5py.File(f"{main_dir}/{file_dict[k]}", "w")
-    file_out = create_groups(file_out)
-    create_inputs(file_out, jets)
-    create_targets(file_out, "h1", jets, file_dict[k])
-    create_targets(file_out, "h2", jets, file_dict[k])
-    file_out.close()
-
 
 # create the test and train datasets
 # and create differnt datasets with jetGood and jetGoodHiggs
@@ -164,6 +163,7 @@ jets_good = df.JetGood
 jets_good_higgs = df.JetGoodHiggs
 
 jets_list = []
+max_num_jets_list=[]
 for i, jets_all in enumerate([jets_good, jets_good_higgs]):
     print(f"Creating dataset for {'JetGood' if i == 0 else 'JetGoodHiggs'}")
     n_events = len(jets_all)
@@ -174,26 +174,25 @@ for i, jets_all in enumerate([jets_good, jets_good_higgs]):
     jets_train = jets_all[:idx_train_max]
     jets_test = jets_all[idx_train_max:]
 
-    for j, jets in enumerate([jets_train, jets_test]):
+    for jets in [jets_train, jets_test]:
         jets_list.append(jets)
-        # if j == 0:
-        #     print("Creating training dataset")
-        #     file_out = h5py.File(
-        #         f"{main_dir}/output_{'JetGood' if i == 0 else 'JetGoodHiggs'}_train.h5",
-        #         "w",
-        #     )
-        # else:
-        #     print("Creating testing dataset")
-        #     file_out = h5py.File(
-        #         f"{main_dir}/output_{'JetGood' if i == 0 else 'JetGoodHiggs'}_test.h5",
-        #         "w",
-        #     )
-        # file_out = create_groups(file_out)
-        # create_inputs(file_out, jets)
-        # create_targets(file_out, "h1", jets)
-        # create_targets(file_out, "h2", jets)
+        max_num_jets_list.append(5 if i == 0 else 4)
 
-        # file_out.close()
+
+def add_info_to_file(input_to_file):
+    k, jets = input_to_file
+    print(f"Adding info to file {file_dict[k]}")
+    file_out = h5py.File(f"{main_dir}/{file_dict[k]}", "w")
+    file_out = create_groups(file_out)
+    print("max_num_jets", max_num_jets_list[k])
+    create_inputs(file_out, jets, max_num_jets_list[k])
+    create_targets(file_out, "h1", jets, file_dict[k])
+    create_targets(file_out, "h2", jets, file_dict[k])
+    print("Completed file ", file_dict[k])
+    file_out.close()
+
+
+
 
 with Pool(4) as p:
     p.map(add_info_to_file, enumerate(jets_list))
