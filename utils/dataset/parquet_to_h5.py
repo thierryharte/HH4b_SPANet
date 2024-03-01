@@ -46,7 +46,7 @@ def create_groups(file):
     return file
 
 
-def create_targets(file, particle, jets, filename):
+def create_targets(file, particle, jets, filename, max_index):
     multiindex = ak.zip([ak.local_index(jets, i) for i in range(jets.ndim)])
 
     higgs_targets = {1: ["b1", "b2"], 2: ["b3", "b4"]}
@@ -65,11 +65,11 @@ def create_targets(file, particle, jets, filename):
                     b1_array.append(-1)
                     b2_array.append(-1)
                 elif len(i) == 1:
-                    b1_array.append(i[0].tolist()[1])
+                    b1_array.append(i[0].tolist()[1] if i[0].tolist()[1] < max_index else -1)
                     b2_array.append(-1)
                 elif len(i) == 2:
-                    b1_array.append(i[0].tolist()[1])
-                    b2_array.append(i[1].tolist()[1])
+                    b1_array.append(i[0].tolist()[1] if i[0].tolist()[1] < max_index else -1)
+                    b2_array.append(i[1].tolist()[1] if i[1].tolist()[1] < max_index else -1)
 
             file.create_dataset(
                 f"TARGETS/h{j}/{higgs_targets[j][0]}",
@@ -186,8 +186,8 @@ def add_info_to_file(input_to_file):
     file_out = create_groups(file_out)
     print("max_num_jets", max_num_jets_list[k])
     create_inputs(file_out, jets, max_num_jets_list[k])
-    create_targets(file_out, "h1", jets, file_dict[k])
-    create_targets(file_out, "h2", jets, file_dict[k])
+    create_targets(file_out, "h1", jets, file_dict[k], max_num_jets_list[k])
+    create_targets(file_out, "h2", jets, file_dict[k], max_num_jets_list[k])
     print("Completed file ", file_dict[k])
     file_out.close()
 
