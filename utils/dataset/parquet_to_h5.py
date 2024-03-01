@@ -65,11 +65,17 @@ def create_targets(file, particle, jets, filename, max_index):
                     b1_array.append(-1)
                     b2_array.append(-1)
                 elif len(i) == 1:
-                    b1_array.append(i[0].tolist()[1] if i[0].tolist()[1] < max_index else -1)
+                    b1_array.append(
+                        i[0].tolist()[1] if i[0].tolist()[1] < max_index else -1
+                    )
                     b2_array.append(-1)
                 elif len(i) == 2:
-                    b1_array.append(i[0].tolist()[1] if i[0].tolist()[1] < max_index else -1)
-                    b2_array.append(i[1].tolist()[1] if i[1].tolist()[1] < max_index else -1)
+                    b1_array.append(
+                        i[0].tolist()[1] if i[0].tolist()[1] < max_index else -1
+                    )
+                    b2_array.append(
+                        i[1].tolist()[1] if i[1].tolist()[1] < max_index else -1
+                    )
 
             file.create_dataset(
                 f"TARGETS/h{j}/{higgs_targets[j][0]}",
@@ -85,18 +91,16 @@ def create_targets(file, particle, jets, filename, max_index):
             )
 
 
-def create_inputs(file, jets, max_num_jets):
-    pt_array = ak.to_numpy(ak.fill_none(ak.pad_none(jets.pt, max_num_jets, clip=True), 0))
-    mask = ~(pt_array == 0)
-    mask_ds = file.create_dataset(
-        "INPUTS/Jet/MASK", np.shape(mask), dtype="bool", data=mask
+def create_inputs(file, jets, max_num_jets, global_fifth_jet):
+    pt_array = ak.to_numpy(
+        ak.fill_none(ak.pad_none(jets.pt, max_num_jets, clip=True), -999)
     )
     pt_ds = file.create_dataset(
         "INPUTS/Jet/pt", np.shape(pt_array), dtype="float32", data=pt_array
     )
 
     ptPnetRegNeutrino_array = ak.to_numpy(
-        ak.fill_none(ak.pad_none(jets.ptPnetRegNeutrino, max_num_jets, clip=True), 0)
+        ak.fill_none(ak.pad_none(jets.ptPnetRegNeutrino, max_num_jets, clip=True), -999)
     )
     ptPnetRegNeutrino_ds = file.create_dataset(
         "INPUTS/Jet/ptPnetRegNeutrino",
@@ -105,46 +109,73 @@ def create_inputs(file, jets, max_num_jets):
         data=ptPnetRegNeutrino_array,
     )
 
-    phi_array = ak.to_numpy(ak.fill_none(ak.pad_none(jets.phi, max_num_jets, clip=True), 0))
+    phi_array = ak.to_numpy(
+        ak.fill_none(ak.pad_none(jets.phi, max_num_jets, clip=True), -999)
+    )
     phi_ds = file.create_dataset(
         "INPUTS/Jet/phi", np.shape(phi_array), dtype="float32", data=phi_array
     )
 
-    eta_array = ak.to_numpy(ak.fill_none(ak.pad_none(jets.eta, max_num_jets, clip=True), 0))
+    eta_array = ak.to_numpy(
+        ak.fill_none(ak.pad_none(jets.eta, max_num_jets, clip=True), -999)
+    )
     eta_ds = file.create_dataset(
         "INPUTS/Jet/eta", np.shape(eta_array), dtype="float32", data=eta_array
     )
 
-    btag = ak.to_numpy(ak.fill_none(ak.pad_none(jets.btag, max_num_jets, clip=True), 0))
+    btag = ak.to_numpy(
+        ak.fill_none(ak.pad_none(jets.btag, max_num_jets, clip=True), -999)
+    )
     btag_ds = file.create_dataset(
         "INPUTS/Jet/btag", np.shape(btag), dtype="float32", data=btag
     )
 
     mass_array = ak.to_numpy(
-        ak.fill_none(ak.pad_none(jets.mass, max_num_jets, clip=True), 0)
+        ak.fill_none(ak.pad_none(jets.mass, max_num_jets, clip=True), -999)
     )
     mass_ds = file.create_dataset(
         "INPUTS/Jet/mass", np.shape(mass_array), dtype="float32", data=mass_array
     )
 
-    # # Fill ht
-    # pt_array = ak.to_numpy(ak.fill_none(ak.pad_none(jets.pt, 15, clip=True), 0))
-    # ht_array = np.sum(pt_array, axis=1)
-    # ht_ds = file.create_dataset(
-    #     "INPUTS/ht/ht", np.shape(ht_array), dtype="float32", data=ht_array
-    # )
+    # create new global variables for the fifth jet (if it exists) otherwise fill with -999
+    if global_fifth_jet is not None:
+        pt_array_5 = ak.to_numpy(ak.fill_none(ak.pad_none(global_fifth_jet.pt, 5, clip=True), -999)[:,4])
+        pt_ds_5 = file.create_dataset(
+            "INPUTS/fifthJet/pt", np.shape(pt_array_5), dtype="float32", data=pt_array_5
+        )
 
-    # # Fill ht
-    # ptPnetRegNeutrino_array = ak.to_numpy(
-    #     ak.fill_none(ak.pad_none(jets.ptPnetRegNeutrino, 15, clip=True), 0)
-    # )
-    # htPNetRegNeutrino_array = np.sum(ptPnetRegNeutrino_array, axis=1)
-    # htPNetRegNeutrino_ds = file.create_dataset(
-    #     "INPUTS/ht/htPNetRegNeutrino",
-    #     np.shape(htPNetRegNeutrino_array),
-    #     dtype="float32",
-    #     data=htPNetRegNeutrino_array,
-    # )
+        ptPnetRegNeutrino_array_5 = ak.to_numpy(
+            ak.fill_none(ak.pad_none(global_fifth_jet.ptPnetRegNeutrino, 5, clip=True), -999)[:,4]
+        )
+        ptPnetRegNeutrino_ds_5 = file.create_dataset(
+            "INPUTS/fifthJet/ptPnetRegNeutrino",
+            np.shape(ptPnetRegNeutrino_array_5),
+            dtype="float32",
+            data=ptPnetRegNeutrino_array_5,
+        )
+
+        phi_array_5 = ak.to_numpy(ak.fill_none(ak.pad_none(global_fifth_jet.phi, 5, clip=True), -999)[:,4])
+        phi_ds_5 = file.create_dataset(
+            "INPUTS/fifthJet/phi", np.shape(phi_array_5), dtype="float32", data=phi_array_5
+        )
+
+        eta_array_5 = ak.to_numpy(ak.fill_none(ak.pad_none(global_fifth_jet.eta, 5, clip=True), -999)[:,4])
+        eta_ds_5 = file.create_dataset(
+            "INPUTS/fifthJet/eta", np.shape(eta_array_5), dtype="float32", data=eta_array_5
+        )
+
+        btag_5 = ak.to_numpy(ak.fill_none(ak.pad_none(global_fifth_jet.btag, 5, clip=True), -999)[:,4])
+        btag_ds_5 = file.create_dataset(
+            "INPUTS/fifthJet/btag", np.shape(btag_5), dtype="float32", data=btag_5
+        )
+
+        mass_array_5 = ak.to_numpy(ak.fill_none(ak.pad_none(global_fifth_jet.mass, 5, clip=True), -999)[:,4])
+        mass_ds_5 = file.create_dataset(
+            "INPUTS/fifthJet/mass",
+            np.shape(mass_array_5),
+            dtype="float32",
+            data=mass_array_5,
+        )
 
 
 file_dict = {
@@ -155,7 +186,6 @@ file_dict = {
 }
 
 
-
 # create the test and train datasets
 # and create differnt datasets with jetGood and jetGoodHiggs
 
@@ -163,7 +193,7 @@ jets_good = df.JetGood
 jets_good_higgs = df.JetGoodHiggs
 
 jets_list = []
-max_num_jets_list=[]
+max_num_jets_list = []
 for i, jets_all in enumerate([jets_good, jets_good_higgs]):
     print(f"Creating dataset for {'JetGood' if i == 0 else 'JetGoodHiggs'}")
     n_events = len(jets_all)
@@ -185,13 +215,16 @@ def add_info_to_file(input_to_file):
     file_out = h5py.File(f"{main_dir}/{file_dict[k]}", "w")
     file_out = create_groups(file_out)
     print("max_num_jets", max_num_jets_list[k])
-    create_inputs(file_out, jets, max_num_jets_list[k])
+    global_fifth_jet= None
+    if file_dict[k] == "output_JetGoodHiggs_train.h5" :
+        global_fifth_jet = jets_list[0]
+    elif file_dict[k] == "output_JetGoodHiggs_test.h5":
+        global_fifth_jet = jets_list[1]
+    create_inputs(file_out, jets, max_num_jets_list[k], global_fifth_jet)
     create_targets(file_out, "h1", jets, file_dict[k], max_num_jets_list[k])
     create_targets(file_out, "h2", jets, file_dict[k], max_num_jets_list[k])
     print("Completed file ", file_dict[k])
     file_out.close()
-
-
 
 
 with Pool(4) as p:
