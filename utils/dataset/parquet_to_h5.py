@@ -144,39 +144,40 @@ def create_inputs(file, jets, max_num_jets, global_fifth_jet):
 
     # create new global variables for the fifth jet (if it exists) otherwise fill with -999
     if global_fifth_jet is not None:
-        pt_array_5 = ak.to_numpy(ak.fill_none(ak.pad_none(global_fifth_jet.pt, 5, clip=True), -999)[:,4])
+        pad_value=0
+        pt_array_5 = ak.to_numpy(ak.fill_none(ak.pad_none(global_fifth_jet.pt, 5, clip=True), pad_value)[:,4])
         pt_ds_5 = file.create_dataset(
-            "INPUTS/fifthJet/pt", np.shape(pt_array_5), dtype="float32", data=pt_array_5
+            "INPUTS/FifthJet/pt", np.shape(pt_array_5), dtype="float32", data=pt_array_5
         )
 
         ptPnetRegNeutrino_array_5 = ak.to_numpy(
-            ak.fill_none(ak.pad_none(global_fifth_jet.ptPnetRegNeutrino, 5, clip=True), -999)[:,4]
+            ak.fill_none(ak.pad_none(global_fifth_jet.ptPnetRegNeutrino, 5, clip=True), pad_value)[:,4]
         )
         ptPnetRegNeutrino_ds_5 = file.create_dataset(
-            "INPUTS/fifthJet/ptPnetRegNeutrino",
+            "INPUTS/FifthJet/ptPnetRegNeutrino",
             np.shape(ptPnetRegNeutrino_array_5),
             dtype="float32",
             data=ptPnetRegNeutrino_array_5,
         )
 
-        phi_array_5 = ak.to_numpy(ak.fill_none(ak.pad_none(global_fifth_jet.phi, 5, clip=True), -999)[:,4])
+        phi_array_5 = ak.to_numpy(ak.fill_none(ak.pad_none(global_fifth_jet.phi, 5, clip=True), pad_value)[:,4])
         phi_ds_5 = file.create_dataset(
-            "INPUTS/fifthJet/phi", np.shape(phi_array_5), dtype="float32", data=phi_array_5
+            "INPUTS/FifthJet/phi", np.shape(phi_array_5), dtype="float32", data=phi_array_5
         )
 
-        eta_array_5 = ak.to_numpy(ak.fill_none(ak.pad_none(global_fifth_jet.eta, 5, clip=True), -999)[:,4])
+        eta_array_5 = ak.to_numpy(ak.fill_none(ak.pad_none(global_fifth_jet.eta, 5, clip=True), pad_value)[:,4])
         eta_ds_5 = file.create_dataset(
-            "INPUTS/fifthJet/eta", np.shape(eta_array_5), dtype="float32", data=eta_array_5
+            "INPUTS/FifthJet/eta", np.shape(eta_array_5), dtype="float32", data=eta_array_5
         )
 
-        btag_5 = ak.to_numpy(ak.fill_none(ak.pad_none(global_fifth_jet.btag, 5, clip=True), -999)[:,4])
+        btag_5 = ak.to_numpy(ak.fill_none(ak.pad_none(global_fifth_jet.btag, 5, clip=True), pad_value)[:,4])
         btag_ds_5 = file.create_dataset(
-            "INPUTS/fifthJet/btag", np.shape(btag_5), dtype="float32", data=btag_5
+            "INPUTS/FifthJet/btag", np.shape(btag_5), dtype="float32", data=btag_5
         )
 
-        mass_array_5 = ak.to_numpy(ak.fill_none(ak.pad_none(global_fifth_jet.mass, 5, clip=True), -999)[:,4])
+        mass_array_5 = ak.to_numpy(ak.fill_none(ak.pad_none(global_fifth_jet.mass, 5, clip=True), pad_value)[:,4])
         mass_ds_5 = file.create_dataset(
-            "INPUTS/fifthJet/mass",
+            "INPUTS/FifthJet/mass",
             np.shape(mass_array_5),
             dtype="float32",
             data=mass_array_5,
