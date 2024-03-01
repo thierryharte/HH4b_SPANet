@@ -99,6 +99,11 @@ def create_inputs(file, jets, max_num_jets, global_fifth_jet):
         "INPUTS/Jet/pt", np.shape(pt_array), dtype="float32", data=pt_array
     )
 
+    mask = ~(pt_array == -999)
+    mask_ds = file.create_dataset(
+        "INPUTS/Jet/MASK", np.shape(mask), dtype="bool", data=mask
+    )
+
     ptPnetRegNeutrino_array = ak.to_numpy(
         ak.fill_none(ak.pad_none(jets.ptPnetRegNeutrino, max_num_jets, clip=True), -999)
     )
