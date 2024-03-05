@@ -19,7 +19,7 @@ parser = argparse.ArgumentParser(
     description="Convert awkward ntuples in coffea files to parquet files."
 )
 parser.add_argument("-i", "--input", type=str, required=True, help="Input coffea file")
-parser.add_argument("-o", "--output", type=str, required=True, help="Output directory")
+parser.add_argument("-o", "--output", type=str, default="", help="Output directory")
 parser.add_argument(
     "-c",
     "--cat",
@@ -36,8 +36,9 @@ args = parser.parse_args()
 
 if not os.path.exists(args.input):
     raise ValueError(f"Input file {args.input} does not exist.")
-if not os.path.exists(args.output):
-    os.makedirs(args.output)
+main_dir = args.output if args.output else os.path.dirname(args.input)
+if not os.path.exists(main_dir):
+    os.makedirs(main_dir)
 
 df = load(args.input)
 
@@ -209,7 +210,7 @@ for sample in samples:
             print("masked_arrays: ", masked_arrays)
             zipped_dict[matched_collection] = masked_arrays
             # Add the matched flag and the provenance to the matched jets
-            if collection == "JetGoodHiggs"or collection ==  "JetGood":
+            if collection == "JetGoodHiggs" or collection == "JetGood":
                 print(
                     "Adding the matched flag and the provenance to the matched jets..."
                 )
@@ -228,6 +229,6 @@ for sample in samples:
     # The Momentum4D arrays are zipped together to form the final dictionary of arrays.
     print("Zipping the collections into a single dictionary...")
     df_out = ak.zip(zipped_dict, depth_limit=1)
-    filename = os.path.join(args.output, f"{sample}.parquet")
+    filename = os.path.join(main_dir, f"{sample}.parquet")
     print(f"Saving the output dataset to file: {os.path.abspath(filename)}")
     ak.to_parquet(df_out, filename)
