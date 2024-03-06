@@ -134,7 +134,7 @@ def create_inputs(file, jets, max_num_jets, global_fifth_jet):
     # create new global variables for the fifth jet (if it exists) otherwise fill with PAD_VALUE
     if global_fifth_jet is not None:
         pt_array_5 = ak.to_numpy(
-            ak.fill_none(ak.pad_none(global_fifth_jet.pt, 5, clip=True), PAD_VALUE)[
+            ak.fill_none(ak.pad_none(global_fifth_jet.pt, 5, clip=True), PAD_VALUE+9999)[
                 :, 4
             ]
         )
@@ -144,7 +144,7 @@ def create_inputs(file, jets, max_num_jets, global_fifth_jet):
 
         ptPnetRegNeutrino_array_5 = ak.to_numpy(
             ak.fill_none(
-                ak.pad_none(global_fifth_jet.ptPnetRegNeutrino, 5, clip=True), PAD_VALUE
+                ak.pad_none(global_fifth_jet.ptPnetRegNeutrino, 5, clip=True), PAD_VALUE+9999
             )[:, 4]
         )
         ptPnetRegNeutrino_ds_5 = file.create_dataset(
@@ -155,7 +155,7 @@ def create_inputs(file, jets, max_num_jets, global_fifth_jet):
         )
 
         phi_array_5 = ak.to_numpy(
-            ak.fill_none(ak.pad_none(global_fifth_jet.phi, 5, clip=True), PAD_VALUE)[
+            ak.fill_none(ak.pad_none(global_fifth_jet.phi, 5, clip=True), PAD_VALUE+9999)[
                 :, 4
             ]
         )
@@ -167,7 +167,7 @@ def create_inputs(file, jets, max_num_jets, global_fifth_jet):
         )
 
         eta_array_5 = ak.to_numpy(
-            ak.fill_none(ak.pad_none(global_fifth_jet.eta, 5, clip=True), PAD_VALUE)[
+            ak.fill_none(ak.pad_none(global_fifth_jet.eta, 5, clip=True), PAD_VALUE+9999)[
                 :, 4
             ]
         )
@@ -179,7 +179,7 @@ def create_inputs(file, jets, max_num_jets, global_fifth_jet):
         )
 
         btag_5 = ak.to_numpy(
-            ak.fill_none(ak.pad_none(global_fifth_jet.btag, 5, clip=True), PAD_VALUE)[
+            ak.fill_none(ak.pad_none(global_fifth_jet.btag, 5, clip=True), PAD_VALUE+9999)[
                 :, 4
             ]
         )
@@ -188,7 +188,7 @@ def create_inputs(file, jets, max_num_jets, global_fifth_jet):
         )
 
         mass_array_5 = ak.to_numpy(
-            ak.fill_none(ak.pad_none(global_fifth_jet.mass, 5, clip=True), PAD_VALUE)[
+            ak.fill_none(ak.pad_none(global_fifth_jet.mass, 5, clip=True), PAD_VALUE+9999)[
                 :, 4
             ]
         )
