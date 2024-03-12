@@ -109,6 +109,21 @@ def create_inputs(file, jets, max_num_jets, global_fifth_jet):
     phi_ds = file.create_dataset(
         "INPUTS/Jet/phi", np.shape(phi_array), dtype="float32", data=phi_array
     )
+    # compute the cos and sin of phi
+    cos_phi = ak.to_numpy(
+        ak.fill_none(ak.pad_none(np.cos(jets.phi), max_num_jets, clip=True), PAD_VALUE)
+    )
+
+    cos_phi_ds = file.create_dataset(
+        "INPUTS/Jet/cosPhi", np.shape(cos_phi), dtype="float32", data=cos_phi
+    )
+
+    sin_phi = ak.to_numpy(
+        ak.fill_none(ak.pad_none(np.sin(jets.phi), max_num_jets, clip=True), PAD_VALUE)
+    )
+    sin_phi_ds = file.create_dataset(
+        "INPUTS/Jet/sinPhi", np.shape(sin_phi), dtype="float32", data=sin_phi
+    )
 
     eta_array = ak.to_numpy(
         ak.fill_none(ak.pad_none(jets.eta, max_num_jets, clip=True), PAD_VALUE)
@@ -134,9 +149,9 @@ def create_inputs(file, jets, max_num_jets, global_fifth_jet):
     # create new global variables for the fifth jet (if it exists) otherwise fill with PAD_VALUE
     if global_fifth_jet is not None:
         pt_array_5 = ak.to_numpy(
-            ak.fill_none(ak.pad_none(global_fifth_jet.pt, 5, clip=True), PAD_VALUE+9999)[
-                :, 4
-            ]
+            ak.fill_none(
+                ak.pad_none(global_fifth_jet.pt, 5, clip=True), PAD_VALUE + 9999
+            )[:, 4]
         )
         pt_ds_5 = file.create_dataset(
             "INPUTS/FifthJet/pt", np.shape(pt_array_5), dtype="float32", data=pt_array_5
@@ -144,7 +159,8 @@ def create_inputs(file, jets, max_num_jets, global_fifth_jet):
 
         ptPnetRegNeutrino_array_5 = ak.to_numpy(
             ak.fill_none(
-                ak.pad_none(global_fifth_jet.ptPnetRegNeutrino, 5, clip=True), PAD_VALUE+9999
+                ak.pad_none(global_fifth_jet.ptPnetRegNeutrino, 5, clip=True),
+                PAD_VALUE + 9999,
             )[:, 4]
         )
         ptPnetRegNeutrino_ds_5 = file.create_dataset(
@@ -155,9 +171,9 @@ def create_inputs(file, jets, max_num_jets, global_fifth_jet):
         )
 
         phi_array_5 = ak.to_numpy(
-            ak.fill_none(ak.pad_none(global_fifth_jet.phi, 5, clip=True), PAD_VALUE+9999)[
-                :, 4
-            ]
+            ak.fill_none(
+                ak.pad_none(global_fifth_jet.phi, 5, clip=True), PAD_VALUE + 9999
+            )[:, 4]
         )
         phi_ds_5 = file.create_dataset(
             "INPUTS/FifthJet/phi",
@@ -166,10 +182,36 @@ def create_inputs(file, jets, max_num_jets, global_fifth_jet):
             data=phi_array_5,
         )
 
+        cos_phi_5 = ak.to_numpy(
+            ak.fill_none(
+                ak.pad_none(np.cos(global_fifth_jet.phi), 5, clip=True),
+                PAD_VALUE + 9999,
+            )[:, 4]
+        )
+        cos_phi_ds_5 = file.create_dataset(
+            "INPUTS/FifthJet/cosPhi",
+            np.shape(cos_phi_5),
+            dtype="float32",
+            data=cos_phi_5,
+        )
+
+        sin_phi_5 = ak.to_numpy(
+            ak.fill_none(
+                ak.pad_none(np.sin(global_fifth_jet.phi), 5, clip=True),
+                PAD_VALUE + 9999,
+            )[:, 4]
+        )
+        sin_phi_ds_5 = file.create_dataset(
+            "INPUTS/FifthJet/sinPhi",
+            np.shape(sin_phi_5),
+            dtype="float32",
+            data=sin_phi_5,
+        )
+
         eta_array_5 = ak.to_numpy(
-            ak.fill_none(ak.pad_none(global_fifth_jet.eta, 5, clip=True), PAD_VALUE+9999)[
-                :, 4
-            ]
+            ak.fill_none(
+                ak.pad_none(global_fifth_jet.eta, 5, clip=True), PAD_VALUE + 9999
+            )[:, 4]
         )
         eta_ds_5 = file.create_dataset(
             "INPUTS/FifthJet/eta",
@@ -179,18 +221,18 @@ def create_inputs(file, jets, max_num_jets, global_fifth_jet):
         )
 
         btag_5 = ak.to_numpy(
-            ak.fill_none(ak.pad_none(global_fifth_jet.btag, 5, clip=True), PAD_VALUE+9999)[
-                :, 4
-            ]
+            ak.fill_none(
+                ak.pad_none(global_fifth_jet.btag, 5, clip=True), PAD_VALUE + 9999
+            )[:, 4]
         )
         btag_ds_5 = file.create_dataset(
             "INPUTS/FifthJet/btag", np.shape(btag_5), dtype="float32", data=btag_5
         )
 
         mass_array_5 = ak.to_numpy(
-            ak.fill_none(ak.pad_none(global_fifth_jet.mass, 5, clip=True), PAD_VALUE+9999)[
-                :, 4
-            ]
+            ak.fill_none(
+                ak.pad_none(global_fifth_jet.mass, 5, clip=True), PAD_VALUE + 9999
+            )[:, 4]
         )
         mass_ds_5 = file.create_dataset(
             "INPUTS/FifthJet/mass",
