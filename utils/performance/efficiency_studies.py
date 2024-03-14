@@ -34,9 +34,24 @@ if args.input_spanet_pred:
     labels_spanet_pred = [(f.split("_prediction_")[-1]).split(".h5")[-2] for f in list_spanet_pred]
     spanet_dict = dict(zip(labels_spanet_pred, list_spanet_pred))
 else:
+    spanet_dir="/eos/home-r/ramellar/out_prediction_files/"
     spanet_dict={
-        "example_name": "example_file.h5",
-        "example_name2": "example_file2.h5",
+        "4_jets":spanet_dir+ "out_0_spanet_prediction_4jets.h5",
+        #"5_jets":spanet_dir+ "out_1_spanet_prediction_5jets.h5",
+        #"5_jets_btag_presel":spanet_dir+ "out_2_spanet_prediction_5jets_btagpresel.h5",
+        "4_jets_5global":spanet_dir+ "out_3_spanet_prediction_4jets_5global_9999pad.h5",
+        "4_jets_5global_btagpresel":spanet_dir+ "out_4_spanet_prediction_4jets_5global_9999pad_btagpresel.h5",
+        "4_jets_5global_ATLAS":spanet_dir+ "out_5_spanet_prediction_ATLAS.h5",
+        "4_jets_5global_ptreg_klambda1":spanet_dir +  "out_7_spanet_prediction_4jets_5global_ptreg_klambda1.h5",
+        # "4_jets_5global_ptreg_klambda0":spanet_dir + "out_7_spanet_prediction_4jets_5global_ptreg_klambda0.h5",
+        # "4_jets_5global_ptreg_klambda2p45":spanet_dir + "out_7_spanet_prediction_4jets_5global_ptreg_klambda2p45.h5",
+        # "4_jets_5global_ptreg_klambda5":spanet_dir + "out_7_spanet_prediction_4jets_5global_ptreg_klambda5.h5",
+        "4_jets_5global_ATLAS_ptreg_klambda1":spanet_dir + "out_9_spanet_prediction_4jets_5global_ATLAS_ptreg_klambda1.h5",
+        # "4_jets_5global_ATLAS_ptreg_klambda0":spanet_dir + "out_9_spanet_prediction_4jets_5global_ATLAS_ptreg_klambda0.h5",
+        # "4_jets_5global_ATLAS_ptreg_klambda2p45":spanet_dir + "out_9_spanet_prediction_4jets_5global_ATLAS_ptreg_klambda2p45.h5",
+        # "4_jets_5global_ATLAS_ptreg_klambda5":spanet_dir + "out_9_spanet_prediction_4jets_5global_ATLAS_ptreg_klambda5.h5",
+        "4_jets_5global_ATLAS_ptreg_cos_sin_phi":spanet_dir + "out_01_spanet_prediction_ATLAS_4jets_5global_ptreg_cos_sin_phi.h5",
+        "4_jets_5global_ptreg_cos_sin_phi":spanet_dir + "out_01_spanet_prediction_4jets_5global_ptreg_cos_sin_phi.h5",
     }
 
 plot_dir = "plots"
@@ -330,7 +345,7 @@ for j in range(len(list(spanet_dict.keys()))):
         diff_eff_spanet_mask30[j].append(eff_spanet)
         unc_diff_eff_spanet_mask30[j].append(unc_eff_spanet)
 
-fig, ax = plt.subplots()
+fig, ax = plt.subplots(figsize=(10,8))
 plt.errorbar(
     0.5 * (mhh_bins[1:] + mhh_bins[:-1]),
     diff_eff_run2_mask30,
@@ -385,7 +400,7 @@ for j in range(len(list(spanet_dict.keys()))):
 print(unc_diff_eff_spanet)
 print(diff_eff_spanet)
 
-fig, ax = plt.subplots()
+fig, ax = plt.subplots(figsize=(10,8))
 for j in range(len(list(spanet_dict.keys()))):
     plt.errorbar(
         0.5 * (mhh_bins[1:] + mhh_bins[:-1]),
