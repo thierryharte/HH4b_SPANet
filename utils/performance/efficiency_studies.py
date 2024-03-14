@@ -4,6 +4,7 @@ import h5py
 import vector
 from math import sqrt
 import matplotlib.pyplot as plt
+import os 
 
 vector.register_numba()
 vector.register_awkward()
