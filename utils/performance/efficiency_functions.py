@@ -8,6 +8,19 @@ import mplhep as hep
 vector.register_awkward()
 vector.register_numba()
 
+def check_names(name):
+    if "klambda0" in name:
+        return 2
+    elif "klambda2p45" in name:
+        return 3
+    elif "klambda5" in name:
+        return 4
+    elif "4_jets" in name:
+        return 0
+    elif "5_jets" in name:
+        return 1
+    else:
+        raise ValueError(f"Name {name} not recognized")
 
 def distance_func(higgs_pair, k):
     higgs1 = higgs_pair[:, :, 0]
