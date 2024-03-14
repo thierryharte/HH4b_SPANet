@@ -77,7 +77,7 @@ if args.input_true:
     labels_true = [(f.split("_prediction_")[-1]).split(".h5")[-2] for f in input_true]
     true_dict = dict(zip(labels_true, input_true))
 else:
-    true_dir = "/eos/home-r/ramellar/out_prediction_files/"
+    true_dir = "/eos/home-r/ramellar/out_prediction_files/true_files/"
     true_dict = {
         "4_jets": true_dir + "output_JetGoodHiggs_test.h5",
         "5_jets": true_dir + "output_JetGood_test.h5",
