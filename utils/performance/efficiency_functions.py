@@ -110,6 +110,7 @@ def plot_histos(bins, true, run2, spanet, spanet_labels, num, name="", plot_dir=
     fig, (ax, ax_residuals) = plt.subplots(
         figsize=(10, 8), nrows=2, sharex=True, gridspec_kw={"height_ratios": [3, 1]}
     )
+    #TODO: normalize the histograms
     plt.xlabel(f"Higgs{num}Mass [GeV]")
     ax.hist(
         true,
