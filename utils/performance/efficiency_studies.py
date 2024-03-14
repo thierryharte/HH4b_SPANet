@@ -38,6 +38,8 @@ else:
         "example_name2": "example_file2.h5",
     }
 
+plot_dir = "plots"
+os.makedirs(plot_dir, exist_ok=True)
 
 # open files
 df_true = h5py.File(args.input_true, "r")
@@ -348,7 +350,7 @@ for eff, unc_eff, label in zip(
     )
 
 fig.legend()
-plt.savefig("diff_eff_mask30.png")
+plt.savefig(f"{plot_dir}/diff_eff_mask30.png")
 
 
 # do the same for all events
@@ -392,7 +394,7 @@ for j in range(len(list(spanet_dict.keys()))):
         marker="o",
     )
 fig.legend()
-plt.savefig(f"diff_eff_spanet.png")
+plt.savefig(f"{plot_dir}/diff_eff_spanet.png")
 
 
 mask_hh_mass_400 = (true_hh_fully_matched_mask30.mass>400) & (true_hh_fully_matched_mask30.mass<700)

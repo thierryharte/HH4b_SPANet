@@ -91,7 +91,7 @@ def best_reco_higgs(jet_collection, idx_collection):
     return higgs_candidates_unflatten_order
 
 
-def plot_histos(bins, true, run2, spanet, spanet_labels, num, name=""):
+def plot_histos(bins, true, run2, spanet, spanet_labels, num, name="", plot_dir="plots"):
     fig, (ax, ax_residuals) = plt.subplots(
         figsize=(8, 6), nrows=2, sharex=True, gridspec_kw={"height_ratios": [3, 1]}
     )
@@ -187,5 +187,5 @@ def plot_histos(bins, true, run2, spanet, spanet_labels, num, name=""):
         label=f"Private Work",
         ax=ax,
     )
-    plt.savefig(f"higgs_mass_{num}{name}.png")
+    plt.savefig(f"{plot_dir}/higgs_mass_{num}{name}.png")
     plt.show()
