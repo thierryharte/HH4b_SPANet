@@ -93,7 +93,7 @@ def best_reco_higgs(jet_collection, idx_collection):
 
 def plot_histos(bins, true, run2, spanet, spanet_labels, num, name="", plot_dir="plots"):
     fig, (ax, ax_residuals) = plt.subplots(
-        figsize=(8, 6), nrows=2, sharex=True, gridspec_kw={"height_ratios": [3, 1]}
+        figsize=(10, 8), nrows=2, sharex=True, gridspec_kw={"height_ratios": [3, 1]}
     )
     plt.xlabel(f"Higgs{num}Mass [GeV]")
     ax.hist(
