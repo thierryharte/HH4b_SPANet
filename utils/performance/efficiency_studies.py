@@ -5,6 +5,7 @@ import vector
 from math import sqrt
 import matplotlib.pyplot as plt
 import os
+import mplhep as hep
 
 vector.register_numba()
 vector.register_awkward()
@@ -49,8 +50,8 @@ else:
     spanet_dir = "/eos/home-r/ramellar/out_prediction_files/"
     spanet_dict = {
         "4_jets": spanet_dir + "out_0_spanet_prediction_4jets.h5",
-        # "5_jets":spanet_dir+ "out_1_spanet_prediction_5jets.h5",
-        # "5_jets_btag_presel":spanet_dir+ "out_2_spanet_prediction_5jets_btagpresel.h5",
+        "5_jets":spanet_dir+ "out_1_spanet_prediction_5jets.h5",
+        "5_jets_btag_presel":spanet_dir+ "out_2_spanet_prediction_5jets_btagpresel.h5",
         "4_jets_5global": spanet_dir
         + "out_3_spanet_prediction_4jets_5global_9999pad.h5",
         "4_jets_5global_btagpresel": spanet_dir
@@ -58,14 +59,14 @@ else:
         "4_jets_5global_ATLAS": spanet_dir + "out_5_spanet_prediction_ATLAS.h5",
         "4_jets_5global_ptreg": spanet_dir
         + "out_7_spanet_prediction_4jets_5global_ptreg_klambda1.h5",
-        # "4_jets_5global_ptreg_klambda0":spanet_dir + "out_7_spanet_prediction_4jets_5global_ptreg_klambda0.h5",
-        # "4_jets_5global_ptreg_klambda2p45":spanet_dir + "out_7_spanet_prediction_4jets_5global_ptreg_klambda2p45.h5",
-        # "4_jets_5global_ptreg_klambda5":spanet_dir + "out_7_spanet_prediction_4jets_5global_ptreg_klambda5.h5",
+        "4_jets_5global_ptreg_klambda0":spanet_dir + "out_7_spanet_prediction_4jets_5global_ptreg_klambda0.h5",
+        "4_jets_5global_ptreg_klambda2p45":spanet_dir + "out_7_spanet_prediction_4jets_5global_ptreg_klambda2p45.h5",
+        "4_jets_5global_ptreg_klambda5":spanet_dir + "out_7_spanet_prediction_4jets_5global_ptreg_klambda5.h5",
         "4_jets_5global_ATLAS_ptreg": spanet_dir
         + "out_9_spanet_prediction_4jets_5global_ATLAS_ptreg_klambda1.h5",
-        # "4_jets_5global_ATLAS_ptreg_klambda0":spanet_dir + "out_9_spanet_prediction_4jets_5global_ATLAS_ptreg_klambda0.h5",
-        # "4_jets_5global_ATLAS_ptreg_klambda2p45":spanet_dir + "out_9_spanet_prediction_4jets_5global_ATLAS_ptreg_klambda2p45.h5",
-        # "4_jets_5global_ATLAS_ptreg_klambda5":spanet_dir + "out_9_spanet_prediction_4jets_5global_ATLAS_ptreg_klambda5.h5",
+        "4_jets_5global_ATLAS_ptreg_klambda0":spanet_dir + "out_9_spanet_prediction_4jets_5global_ATLAS_ptreg_klambda0.h5",
+        "4_jets_5global_ATLAS_ptreg_klambda2p45":spanet_dir + "out_9_spanet_prediction_4jets_5global_ATLAS_ptreg_klambda2p45.h5",
+        "4_jets_5global_ATLAS_ptreg_klambda5":spanet_dir + "out_9_spanet_prediction_4jets_5global_ATLAS_ptreg_klambda5.h5",
         "4_jets_5global_ATLAS_ptreg_cos_sin_phi": spanet_dir
         + "out_01_spanet_prediction_ATLAS_4jets_5global_ptreg_cos_sin_phi.h5",
         "4_jets_5global_ptreg_cos_sin_phi": spanet_dir
@@ -81,6 +82,7 @@ else:
     true_dict = {
         "4_jets": true_dir + "output_JetGoodHiggs_test.h5",
         "5_jets": true_dir + "output_JetGood_test.h5",
+        "5_jets_btag_presel": true_dir + "output_JetGood_btag_presel_test.h5",
         "klambda0": true_dir + "kl0_output_JetGoodHiggs_test.h5",
         "klambda2p45": true_dir + "kl2p45_output_JetGoodHiggs_test.h5",
         "klambda5": true_dir + "kl5_output_JetGoodHiggs_test.h5",
@@ -204,7 +206,7 @@ for label, eff in zip(list(spanet_dict.keys()), efficiencies_fully_matched_spane
     print("Efficiency fully matched for {}: {:.4f}".format(label, eff))
 
 # do the same for partially matched events (only one higgs is matched)
-mask_1h = [ak.any(idx == -1, axis=-1) == 1 for idx in idx_true]
+mask_1h = [ak.sum(ak.any(idx == -1, axis=-1) == 1, axis=-1) == 1 for idx in idx_true]
 idx_true_partially_matched_1h = [idx[mask] for idx, mask in zip(idx_true, mask_1h)]
 idx_spanet_pred_partially_matched_1h = [
     idx_spanet_pred[i][mask_1h[check_names(list(spanet_dict.keys())[i])]]
@@ -255,7 +257,7 @@ for label, eff in zip(list(spanet_dict.keys()), efficiencies_partially_matched_s
     print("Efficiency partially matched for {}: {:.4f}".format(label, eff))
 
 # compute number of events with 0 higgs matched
-mask_0h = [ak.all(idx == -1, axis=-1) == 2 for idx in idx_true]
+mask_0h = [ak.sum(ak.any(idx == -1, axis=-1), axis=-1) == 2 for idx in idx_true]
 
 
 idx_true_unmatched = [idx[mask] for idx, mask in zip(idx_true, mask_0h)]
@@ -310,7 +312,7 @@ mask_30 = [m != -1 for m in min_idx]
 
 
 comb_idx_mask30 = [
-    np.tile(comb_idx, (len(m), 1, 1, 1))[mask] for m, mask in zip(comb_idx, mask_30)
+    np.tile(comb_idx, (len(m), 1, 1, 1))[mask] for m, mask in zip(min_idx, mask_30)
 ]
 min_idx_mask30 = [m[mask] for m, mask in zip(min_idx, mask_30)]
 # given the min_idx, select the correct combination corresponding to the index
@@ -487,14 +489,24 @@ for eff, unc_eff, label in zip(
     )
 
 fig.legend()
+ax.set_xlabel("mHH [GeV]")
+hep.cms.label(
+        year="2022",
+        com="13.6",
+        label=f"Private Work",
+        ax=ax,
+    )
 plt.savefig(f"{plot_dir}/diff_eff_mask30.png")
 
 
 # do the same for all events
 
 true_higgs_fully_matched = [
-    best_reco_higgs(j, idx)
-    for j, idx in zip(jet[mask_fully_matched], idx_true_fully_matched)
+    best_reco_higgs(
+        jet[i][mask_fully_matched[i]],
+        idx_true_fully_matched[i],
+    )
+    for i in range(len(jet))
 ]
 true_hh_fully_matched = [
     true_higgs_fully_matched[i][:, 0] + true_higgs_fully_matched[i][:, 1]
@@ -541,6 +553,13 @@ for j in range(len(list(spanet_dict.keys()))):
         marker="o",
     )
 fig.legend()
+ax.set_xlabel("mHH [GeV]")
+hep.cms.label(
+        year="2022",
+        com="13.6",
+        label=f"Private Work",
+        ax=ax,
+    )
 plt.savefig(f"{plot_dir}/diff_eff_spanet.png")
 
 
@@ -552,8 +571,8 @@ mask_hh_mass_400 = [
 
 plot_histos(
     mh_bins,
-    true_higgs_fully_matched_mask30[mask_hh_mass_400[0]][:, 0].mass,
-    run2_higgs_fully_matched_mask30[mask_hh_mass_400[0]][:, 0].mass,
+    true_higgs_fully_matched_mask30[0][mask_hh_mass_400[0]][:, 0].mass,
+    run2_higgs_fully_matched_mask30[0][mask_hh_mass_400[0]][:, 0].mass,
     [
         spanet_higgs_fully_matched_mask30[i][
             mask_hh_mass_400[check_names(list(spanet_dict.keys())[i])]
@@ -566,8 +585,8 @@ plot_histos(
 )
 plot_histos(
     mh_bins,
-    true_higgs_fully_matched_mask30[mask_hh_mass_400[0]][:, 1].mass,
-    run2_higgs_fully_matched_mask30[mask_hh_mass_400[0]][:, 1].mass,
+    true_higgs_fully_matched_mask30[0][mask_hh_mass_400[0]][:, 1].mass,
+    run2_higgs_fully_matched_mask30[0][mask_hh_mass_400[0]][:, 1].mass,
     [
         spanet_higgs_fully_matched_mask30[i][
             mask_hh_mass_400[check_names(list(spanet_dict.keys())[i])]
@@ -582,8 +601,8 @@ plot_histos(
 # plot the same but for the anti mask
 plot_histos(
     mh_bins,
-    true_higgs_fully_matched_mask30[~mask_hh_mass_400[0]][:, 0].mass,
-    run2_higgs_fully_matched_mask30[~mask_hh_mass_400[0]][:, 0].mass,
+    true_higgs_fully_matched_mask30[0][~mask_hh_mass_400[0]][:, 0].mass,
+    run2_higgs_fully_matched_mask30[0][~mask_hh_mass_400[0]][:, 0].mass,
     [
         spanet_higgs_fully_matched_mask30[i][
             ~mask_hh_mass_400[check_names(list(spanet_dict.keys())[i])]
@@ -597,8 +616,8 @@ plot_histos(
 
 plot_histos(
     mh_bins,
-    true_higgs_fully_matched_mask30[~mask_hh_mass_400][:, 1].mass,
-    run2_higgs_fully_matched_mask30[~mask_hh_mass_400][:, 1].mass,
+    true_higgs_fully_matched_mask30[0][~mask_hh_mass_400[0]][:, 1].mass,
+    run2_higgs_fully_matched_mask30[0][~mask_hh_mass_400[0]][:, 1].mass,
     [
         spanet_higgs_fully_matched_mask30[i][
             ~mask_hh_mass_400[check_names(list(spanet_dict.keys())[i])]

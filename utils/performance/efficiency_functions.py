@@ -10,11 +10,13 @@ vector.register_numba()
 
 def check_names(name):
     if "klambda0" in name:
-        return 2
-    elif "klambda2p45" in name:
         return 3
-    elif "klambda5" in name:
+    elif "klambda2p45" in name:
         return 4
+    elif "klambda5" in name:
+        return 5
+    elif "5_jets_btag_presel" in name:
+        return 2
     elif "4_jets" in name:
         return 0
     elif "5_jets" in name:
@@ -201,4 +203,4 @@ def plot_histos(bins, true, run2, spanet, spanet_labels, num, name="", plot_dir=
         ax=ax,
     )
     plt.savefig(f"{plot_dir}/higgs_mass_{num}{name}.png")
-    plt.show()
+    # plt.show()
