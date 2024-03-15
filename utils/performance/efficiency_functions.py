@@ -139,7 +139,7 @@ def plot_histos(
     for sn, label in zip(spanet, spanet_labels):
         ax.hist(
             sn,
-            bins,
+            bins[check_names(label)],
             label=f"SPANet {label}",
             histtype="step",
             linewidth=2,
@@ -149,7 +149,7 @@ def plot_histos(
             continue
         ax.hist(
             true[check_names(label)],
-            bins,
+            bins[check_names(label)],
             label=f"True {label}",
             histtype="step",
             linewidth=2,
@@ -157,7 +157,7 @@ def plot_histos(
         )
         ax.hist(
             run2[check_names(label)],
-            bins,
+            bins[check_names(label)],
             label=f"Run2 {label}",
             histtype="step",
             linewidth=2,
@@ -165,9 +165,12 @@ def plot_histos(
         )
         labels_list.append(check_names(label))
     ax.grid()
-    true_hist = [np.histogram(t, bins) for t in true]
-    run2_hist = [np.histogram(r, bins) for r in run2]
-    spanet_hists = [np.histogram(sn, bins) for sn in spanet]
+    true_hist = [np.histogram(true[i], bins[i]) for i in range(len(true))]
+    run2_hist = [np.histogram(run2[i], bins[i]) for i in range(len(run2))]
+    spanet_hists = [
+        np.histogram(spanet[i], bins[check_names(spanet_labels[i])])
+        for i in range(len(spanet_labels))
+    ]
     # plot error bars
     # ax.errorbar(
     #     0.5 * (bins[1:] + bins[:-1]),
@@ -214,7 +217,7 @@ def plot_histos(
     labels_list = []
     for sn, label, sn_err in zip(residuals_spanet, spanet_labels, residual_spanet_err):
         ax_residuals.errorbar(
-            true_hist[1][:-1],
+            true_hist[check_names(label)][1][:-1],
             sn,
             yerr=sn_err,
             marker=".",
@@ -224,9 +227,9 @@ def plot_histos(
         if check_names(label) in labels_list:
             continue
         ax_residuals.errorbar(
-            true_hist[1][:-1],
+            true_hist[check_names(label)][1][:-1],
             residuals_run2[check_names(label)],
-            yerr=residual_run2_err[check_names(label)],
+            # yerr=residual_run2_err[check_names(label)],
             marker=".",
             label=f"Run2 {label}",
             fmt="none",
