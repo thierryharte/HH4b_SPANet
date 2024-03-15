@@ -50,8 +50,9 @@ else:
     spanet_dir = "/eos/home-r/ramellar/out_prediction_files/"
     spanet_dict = {
         "4_jets": spanet_dir + "out_0_spanet_prediction_4jets.h5",
-        "5_jets":spanet_dir+ "out_1_spanet_prediction_5jets.h5",
-        "5_jets_btag_presel":spanet_dir+ "out_2_spanet_prediction_5jets_btagpresel.h5",
+        "5_jets": spanet_dir + "out_1_spanet_prediction_5jets.h5",
+        "5_jets_btag_presel": spanet_dir
+        + "out_2_spanet_prediction_5jets_btagpresel.h5",
         "4_jets_5global": spanet_dir
         + "out_3_spanet_prediction_4jets_5global_9999pad.h5",
         "4_jets_5global_btagpresel": spanet_dir
@@ -59,9 +60,12 @@ else:
         "4_jets_5global_ATLAS": spanet_dir + "out_5_spanet_prediction_ATLAS.h5",
         "4_jets_5global_ptreg": spanet_dir
         + "out_7_spanet_prediction_4jets_5global_ptreg_klambda1.h5",
-        "4_jets_5global_ptreg_klambda0":spanet_dir + "out_7_spanet_prediction_4jets_5global_ptreg_klambda0.h5",
-        "4_jets_5global_ptreg_klambda2p45":spanet_dir + "out_7_spanet_prediction_4jets_5global_ptreg_klambda2p45.h5",
-        "4_jets_5global_ptreg_klambda5":spanet_dir + "out_7_spanet_prediction_4jets_5global_ptreg_klambda5.h5",
+        "4_jets_5global_ptreg_klambda0": spanet_dir
+        + "out_7_spanet_prediction_4jets_5global_ptreg_klambda0.h5",
+        "4_jets_5global_ptreg_klambda2p45": spanet_dir
+        + "out_7_spanet_prediction_4jets_5global_ptreg_klambda2p45.h5",
+        "4_jets_5global_ptreg_klambda5": spanet_dir
+        + "out_7_spanet_prediction_4jets_5global_ptreg_klambda5.h5",
         "4_jets_5global_ATLAS_ptreg": spanet_dir
         + "out_9_spanet_prediction_4jets_5global_ATLAS_ptreg_klambda1.h5",
         "4_jets_5global_ATLAS_ptreg_klambda0": spanet_dir
@@ -184,25 +188,29 @@ idx_spanet_pred_fully_matched = [
 ]
 
 correctly_fully_matched_spanet = [
-    ak.all(
-        idx_true_fully_matched[check_names(list(spanet_dict.keys())[i])][:, 0]
-        == idx_spanet_pred_fully_matched[i][:, 0],
-        axis=1,
+    (
+        ak.all(
+            idx_true_fully_matched[check_names(list(spanet_dict.keys())[i])][:, 0]
+            == idx_spanet_pred_fully_matched[i][:, 0],
+            axis=1,
+        )
+        | ak.all(
+            idx_true_fully_matched[check_names(list(spanet_dict.keys())[i])][:, 0]
+            == idx_spanet_pred_fully_matched[i][:, 1],
+            axis=1,
+        )
     )
-    | ak.all(
-        idx_true_fully_matched[check_names(list(spanet_dict.keys())[i])][:, 0]
-        == idx_spanet_pred_fully_matched[i][:, 1],
-        axis=1,
-    )
-    | ak.all(
-        idx_true_fully_matched[check_names(list(spanet_dict.keys())[i])][:, 1]
-        == idx_spanet_pred_fully_matched[i][:, 0],
-        axis=1,
-    )
-    | ak.all(
-        idx_true_fully_matched[check_names(list(spanet_dict.keys())[i])][:, 1]
-        == idx_spanet_pred_fully_matched[i][:, 1],
-        axis=1,
+    & (
+        ak.all(
+            idx_true_fully_matched[check_names(list(spanet_dict.keys())[i])][:, 1]
+            == idx_spanet_pred_fully_matched[i][:, 0],
+            axis=1,
+        )
+        | ak.all(
+            idx_true_fully_matched[check_names(list(spanet_dict.keys())[i])][:, 1]
+            == idx_spanet_pred_fully_matched[i][:, 1],
+            axis=1,
+        )
     )
     for i in range(len(idx_spanet_pred_fully_matched))
 ]
@@ -303,6 +311,7 @@ jet = [
 
 
 # implement the Run2 pairing algorithm
+#TODO: extend to 5 jets cases (more comb idx)
 comb_idx = [[(0, 1), (2, 3)], [(0, 2), (1, 3)], [(0, 3), (1, 2)]]
 
 higgs_candidates_unflatten_order = [reco_higgs(j, comb_idx) for j in jet]
@@ -342,21 +351,25 @@ idx_true_fully_matched_mask30 = [
     idx[m_30][m[m_30]] for idx, m, m_30 in zip(idx_true, mask_fully_matched, mask_30)
 ]
 correctly_fully_matched_run2_mask30 = [
-    ak.all(
-        i[:, 0] == i2[:, 0],
-        axis=1,
+    (
+        ak.all(
+            i[:, 0] == i2[:, 0],
+            axis=1,
+        )
+        | ak.all(
+            i[:, 0] == i2[:, 1],
+            axis=1,
+        )
     )
-    | ak.all(
-        i[:, 0] == i2[:, 1],
-        axis=1,
-    )
-    | ak.all(
-        i[:, 1] == i2[:, 0],
-        axis=1,
-    )
-    | ak.all(
-        i[:, 1] == i2[:, 1],
-        axis=1,
+    & (
+        ak.all(
+            i[:, 1] == i2[:, 0],
+            axis=1,
+        )
+        | ak.all(
+            i[:, 1] == i2[:, 1],
+            axis=1,
+        )
     )
     for i, i2 in zip(idx_true_fully_matched_mask30, idx_run2_pred_fully_matched_mask30)
 ]
@@ -377,25 +390,37 @@ idx_spanet_pred_fully_matched_mask30 = [
     for i in range(len(idx_spanet_pred))
 ]
 correctly_fully_matched_spanet_mask30 = [
-    ak.all(
-        idx_true_fully_matched_mask30[check_names(list(spanet_dict.keys())[i])][:, 0]
-        == idx_spanet_pred_fully_matched_mask30[i][:, 0],
-        axis=1,
+    (
+        ak.all(
+            idx_true_fully_matched_mask30[check_names(list(spanet_dict.keys())[i])][
+                :, 0
+            ]
+            == idx_spanet_pred_fully_matched_mask30[i][:, 0],
+            axis=1,
+        )
+        | ak.all(
+            idx_true_fully_matched_mask30[check_names(list(spanet_dict.keys())[i])][
+                :, 0
+            ]
+            == idx_spanet_pred_fully_matched_mask30[i][:, 1],
+            axis=1,
+        )
     )
-    | ak.all(
-        idx_true_fully_matched_mask30[check_names(list(spanet_dict.keys())[i])][:, 0]
-        == idx_spanet_pred_fully_matched_mask30[i][:, 1],
-        axis=1,
-    )
-    | ak.all(
-        idx_true_fully_matched_mask30[check_names(list(spanet_dict.keys())[i])][:, 1]
-        == idx_spanet_pred_fully_matched_mask30[i][:, 0],
-        axis=1,
-    )
-    | ak.all(
-        idx_true_fully_matched_mask30[check_names(list(spanet_dict.keys())[i])][:, 1]
-        == idx_spanet_pred_fully_matched_mask30[i][:, 1],
-        axis=1,
+    & (
+        ak.all(
+            idx_true_fully_matched_mask30[check_names(list(spanet_dict.keys())[i])][
+                :, 1
+            ]
+            == idx_spanet_pred_fully_matched_mask30[i][:, 0],
+            axis=1,
+        )
+        | ak.all(
+            idx_true_fully_matched_mask30[check_names(list(spanet_dict.keys())[i])][
+                :, 1
+            ]
+            == idx_spanet_pred_fully_matched_mask30[i][:, 1],
+            axis=1,
+        )
     )
     for i in range(len(idx_spanet_pred_fully_matched_mask30))
 ]
