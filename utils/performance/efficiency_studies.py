@@ -49,35 +49,24 @@ if args.input_spanet_pred:
 else:
     spanet_dir = "/eos/home-r/ramellar/out_prediction_files/"
     spanet_dict = {
-        # "4_jets": spanet_dir + "out_0_spanet_prediction_4jets.h5",
-        # "5_jets": spanet_dir + "out_1_spanet_prediction_5jets.h5",
-        # "5_jets_btag_presel": spanet_dir
-        # + "out_2_spanet_prediction_5jets_btagpresel.h5",
-        # "4_jets_5global": spanet_dir
-        # + "out_3_spanet_prediction_4jets_5global_9999pad.h5",
-        # "4_jets_5global_btagpresel": spanet_dir
-        # + "out_4_spanet_prediction_4jets_5global_9999pad_btagpresel.h5",
-        # "4_jets_5global_ATLAS": spanet_dir + "out_5_spanet_prediction_ATLAS.h5",
-        # "4_jets_5global_ptreg": spanet_dir
-        # + "out_7_spanet_prediction_4jets_5global_ptreg_klambda1.h5",
-        # "4_jets_5global_ptreg_klambda0": spanet_dir
-        # + "out_7_spanet_prediction_4jets_5global_ptreg_klambda0.h5",
-        # "4_jets_5global_ptreg_klambda2p45": spanet_dir
-        # + "out_7_spanet_prediction_4jets_5global_ptreg_klambda2p45.h5",
-        # "4_jets_5global_ptreg_klambda5": spanet_dir
-        # + "out_7_spanet_prediction_4jets_5global_ptreg_klambda5.h5",
-        # "4_jets_5global_ATLAS_ptreg": spanet_dir
-        # + "out_9_spanet_prediction_4jets_5global_ATLAS_ptreg_klambda1.h5",
-        "4_jets_5global_ATLAS_ptreg_klambda0": spanet_dir
-        + "out_9_spanet_prediction_4jets_5global_ATLAS_ptreg_klambda0.h5",
-        # "4_jets_5global_ATLAS_ptreg_klambda2p45": spanet_dir
-        # + "out_9_spanet_prediction_4jets_5global_ATLAS_ptreg_klambda2p45.h5",
-        # "4_jets_5global_ATLAS_ptreg_klambda5": spanet_dir
-        # + "out_9_spanet_prediction_4jets_5global_ATLAS_ptreg_klambda5.h5",
-        # "4_jets_5global_ATLAS_ptreg_cos_sin_phi": spanet_dir
-        # + "out_01_spanet_prediction_ATLAS_4jets_5global_ptreg_cos_sin_phi.h5",
-        # "4_jets_5global_ptreg_cos_sin_phi": spanet_dir
-        # + "out_01_spanet_prediction_4jets_5global_ptreg_cos_sin_phi.h5",
+        # "4_jets":  f"{spanet_dir}out_0_spanet_prediction_4jets.h5",
+        "5_jets": f"{spanet_dir}out_1_spanet_prediction_5jets.h5",
+        "5_jets_ATLAS_ptreg": f"{spanet_dir}out_spanet_prediction_5jets_ptreg_ATLAS.h5",
+        "5_jets_btag_presel": f"{spanet_dir}out_2_spanet_prediction_5jets_btagpresel.h5",
+        "5_jets_btag_presel_ATLAS_ptreg": f"{spanet_dir}out_spanet_prediction_5jets_btagpresel_ptreg_ATLAS.h5",
+        # "4_jets_5global": f"{spanet_dir}out_3_spanet_prediction_4jets_5global_9999pad.h5",
+        # "4_jets_5global_btagpresel": f"{spanet_dir}out_4_spanet_prediction_4jets_5global_9999pad_btagpresel.h5",
+        # "4_jets_5global_ATLAS":  f"{spanet_dir}out_5_spanet_prediction_ATLAS.h5",
+        # "4_jets_5global_ptreg": f"{spanet_dir}out_7_spanet_prediction_4jets_5global_ptreg_klambda1.h5",
+        # "4_jets_5global_ptreg_klambda0": f"{spanet_dir}out_7_spanet_prediction_4jets_5global_ptreg_klambda0.h5",
+        # "4_jets_5global_ptreg_klambda2p45": f"{spanet_dir}out_7_spanet_prediction_4jets_5global_ptreg_klambda2p45.h5",
+        # "4_jets_5global_ptreg_klambda5": f"{spanet_dir}out_7_spanet_prediction_4jets_5global_ptreg_klambda5.h5",
+        "4_jets_5global_ATLAS_ptreg": f"{spanet_dir}out_9_spanet_prediction_4jets_5global_ATLAS_ptreg_klambda1.h5",
+        # "4_jets_5global_ATLAS_ptreg_klambda0": f"{spanet_dir}out_9_spanet_prediction_4jets_5global_ATLAS_ptreg_klambda0.h5",
+        # "4_jets_5global_ATLAS_ptreg_klambda2p45": f"{spanet_dir}out_9_spanet_prediction_4jets_5global_ATLAS_ptreg_klambda2p45.h5",
+        # "4_jets_5global_ATLAS_ptreg_klambda5": f"{spanet_dir}out_9_spanet_prediction_4jets_5global_ATLAS_ptreg_klambda5.h5",
+        # "4_jets_5global_ATLAS_ptreg_cos_sin_phi": f"{spanet_dir}out_01_spanet_prediction_ATLAS_4jets_5global_ptreg_cos_sin_phi.h5",
+        # "4_jets_5global_ptreg_cos_sin_phi": f"{spanet_dir}out_01_spanet_prediction_4jets_5global_ptreg_cos_sin_phi.h5",
     }
 
 if args.input_true:
@@ -87,12 +76,12 @@ if args.input_true:
 else:
     true_dir = "/eos/home-r/ramellar/out_prediction_files/true_files/"
     true_dict = {
-        "4_jets": true_dir + "output_JetGoodHiggs_test.h5",
-        "5_jets": true_dir + "output_JetGood_test.h5",
-        "5_jets_btag_presel": true_dir + "output_JetGood_btag_presel_test.h5",
-        "klambda0": true_dir + "kl0_output_JetGoodHiggs_test.h5",
-        "klambda2p45": true_dir + "kl2p45_output_JetGoodHiggs_test.h5",
-        "klambda5": true_dir + "kl5_output_JetGoodHiggs_test.h5",
+        "4_jets": f"{true_dir}output_JetGoodHiggs_test.h5",
+        "5_jets": f"{true_dir}output_JetGood_test.h5",
+        "5_jets_btag_presel": f"{true_dir}output_JetGood_btag_presel_test.h5",
+        "klambda0": f"{true_dir}kl0_output_JetGoodHiggs_test.h5",
+        "klambda2p45": f"{true_dir}kl2p45_output_JetGoodHiggs_test.h5",
+        "klambda5": f"{true_dir}kl5_output_JetGoodHiggs_test.h5",
     }
 
 
@@ -221,10 +210,27 @@ efficiencies_fully_matched_spanet = [
     for correctly_fully_matched in correctly_fully_matched_spanet
 ]
 frac_fully_matched = [ak.sum(mask) / len(mask) for mask in mask_fully_matched]
+print("\n")
 for label, frac in zip(list(true_dict.keys()), frac_fully_matched):
     print(f"Fraction of fully matched events for {label}: {frac:.4f}")
+
+print("\n")
 for label, eff in zip(list(spanet_dict.keys()), efficiencies_fully_matched_spanet):
     print("Efficiency fully matched for {}: {:.4f}".format(label, eff))
+print("\n")
+
+total_efficiencies_fully_matched_spanet = [
+    efficiencies_fully_matched_spanet[i]
+    * frac_fully_matched[check_names(list(spanet_dict.keys())[i])]
+    for i in range(len(efficiencies_fully_matched_spanet))
+]
+for i in range(len(total_efficiencies_fully_matched_spanet)):
+    print(
+        "Total efficiency fully matched for {}: {:.4f}".format(
+            list(spanet_dict.keys())[i],
+            total_efficiencies_fully_matched_spanet[i],
+        )
+    )
 
 # do the same for partially matched events (only one higgs is matched)
 mask_1h = [ak.sum(ak.any(idx == -1, axis=-1) == 1, axis=-1) == 1 for idx in idx_true]
@@ -272,17 +278,33 @@ efficiencies_partially_matched_spanet = [
     for correctly_partially_matched_1h in correctly_partially_matched_spanet
 ]
 frac_partially_matched_1h = [ak.sum(mask) / len(mask) for mask in mask_1h]
+print("\n")
 for label, frac in zip(list(true_dict.keys()), frac_partially_matched_1h):
     print(f"Fraction of partially matched events for {label}: {frac:.4f}")
+print("\n")
 for label, eff in zip(list(spanet_dict.keys()), efficiencies_partially_matched_spanet):
     print("Efficiency partially matched for {}: {:.4f}".format(label, eff))
+print("\n")
+total_efficiencies_partially_matched_spanet = [
+    efficiencies_partially_matched_spanet[i]
+    * frac_partially_matched_1h[check_names(list(spanet_dict.keys())[i])]
+    for i in range(len(efficiencies_partially_matched_spanet))
+]
 
+for i in range(len(total_efficiencies_partially_matched_spanet)):
+    print(
+        "Total efficiency partially matched for {}: {:.4f}".format(
+            list(spanet_dict.keys())[i],
+            total_efficiencies_partially_matched_spanet[i],
+        )
+    )
 # compute number of events with 0 higgs matched
 mask_0h = [ak.sum(ak.any(idx == -1, axis=-1), axis=-1) == 2 for idx in idx_true]
 
 
 idx_true_unmatched = [idx[mask] for idx, mask in zip(idx_true, mask_0h)]
 frac_unmatched = [ak.sum(mask) / len(mask) for mask in mask_0h]
+print("\n")
 for label, frac in zip(list(true_dict.keys()), frac_unmatched):
     print(f"Fraction of unmatched events for {label}: {frac:.4f}")
 
@@ -311,7 +333,7 @@ jet = [
 
 
 # implement the Run2 pairing algorithm
-#TODO: extend to 5 jets cases (more comb idx)
+# TODO: extend to 5 jets cases (more comb idx)
 comb_idx = [[(0, 1), (2, 3)], [(0, 2), (1, 3)], [(0, 3), (1, 2)]]
 
 higgs_candidates_unflatten_order = [reco_higgs(j, comb_idx) for j in jet]
@@ -379,6 +401,19 @@ efficiency_fully_matched_run2_mask30 = [
 for label, eff in zip(list(true_dict.keys()), efficiency_fully_matched_run2_mask30):
     print(f"Efficiency fully matched for {label} (DeltaR>30): {eff:.4f}")
 
+total_efficiency_fully_matched_run2_mask30= [
+    efficiency_fully_matched_run2_mask30[i]
+    * frac_fully_matched[check_names(list(true_dict.keys())[i])]
+    for i in range(len(efficiency_fully_matched_run2_mask30))
+]
+for i in range(len(total_efficiency_fully_matched_run2_mask30)):
+    print(
+        "Total efficiency fully matched for {} (DeltaR>30): {:.4f}".format(
+            list(true_dict.keys())[i],
+            total_efficiency_fully_matched_run2_mask30[i],
+        )
+    )
+
 
 # compute efficiencies for fully matched events for spanet
 idx_spanet_pred_fully_matched_mask30 = [
@@ -428,10 +463,25 @@ efficiencies_fully_matched_spanet_mask30 = [
     ak.sum(correctly_fully_matched) / len(correctly_fully_matched)
     for correctly_fully_matched in correctly_fully_matched_spanet_mask30
 ]
+print("\n")
 for label, eff in zip(
     list(spanet_dict.keys()), efficiencies_fully_matched_spanet_mask30
 ):
     print(f"Efficiency fully matched for {label} (DeltaR>30): {eff:.4f}")
+
+total_efficiencies_fully_matched_spanet_mask30 = [
+    efficiencies_fully_matched_spanet_mask30[i]
+    * frac_fully_matched[check_names(list(spanet_dict.keys())[i])]
+    for i in range(len(efficiencies_fully_matched_spanet_mask30))
+]
+for i in range(len(total_efficiencies_fully_matched_spanet_mask30)):
+    print(
+        "Total efficiency fully matched for {} (DeltaR>30): {:.4f}".format(
+            list(spanet_dict.keys())[i],
+            total_efficiencies_fully_matched_spanet_mask30[i],
+        )
+    )
+
 
 # Reconstruct the Higgs boson candidates with the four-vectors
 # of the jets considering the true pairings, the spanet pairings
@@ -456,7 +506,7 @@ run2_higgs_fully_matched_mask30 = [
 ]
 
 # for each event plot the mass of the higgs1 and higgs2
-mh_bins = [np.linspace(50, 200, n) for n in [80,80,80,40,40,40]]
+mh_bins = [np.linspace(60, 190, n) for n in [80, 80, 80, 40, 40, 40]]
 plot_histos(
     mh_bins,
     [true[:, 0].mass for true in true_higgs_fully_matched_mask30],
@@ -487,6 +537,7 @@ unc_diff_eff_spanet_mask30 = []
 
 mhh_bins = np.linspace(250, 700, 10)
 
+# TODO: compute the eff run2 for all possibilities of spanet
 for i in range(1, len(mhh_bins)):
     mask = (true_hh_fully_matched_mask30[0].mass > mhh_bins[i - 1]) & (
         true_hh_fully_matched_mask30[0].mass < mhh_bins[i]
@@ -524,7 +575,10 @@ for j in range(len(list(spanet_dict.keys()))):
         diff_eff_spanet_mask30[j].append(eff_spanet)
         unc_diff_eff_spanet_mask30[j].append(unc_eff_spanet)
 
+# TODO: compute the differential total efficiency for all spanet and run2
+#TODO: create a function to plot the differential efficiency
 fig, ax = plt.subplots(figsize=(10, 8))
+# TODO: plot this inside the loop
 plt.errorbar(
     0.5 * (mhh_bins[1:] + mhh_bins[:-1]),
     diff_eff_run2_mask30,
@@ -543,6 +597,8 @@ for eff, unc_eff, label in zip(
         label=f"SPANet {label}",
         marker="o",
     )
+
+# TODO: plot the total efficiency for all spanet and run2
 
 fig.legend()
 ax.set_xlabel(r"$m_{HH}$ [GeV]")
@@ -597,7 +653,7 @@ for j in range(len(list(spanet_dict.keys()))):
         diff_eff_spanet[j].append(eff_spanet)
         unc_diff_eff_spanet[j].append(unc_eff_spanet)
 
-
+# TODO: compute the eff run2 for all possibilities of spanet
 print(unc_diff_eff_spanet)
 print(diff_eff_spanet)
 
@@ -622,6 +678,7 @@ hep.cms.label(
 )
 plt.savefig(f"{plot_dir}/diff_eff_spanet.png")
 
+#TODO: plot the total efficiency for all spanet
 
 mask_hh_mass_400 = [
     (true_hh_fully_matched_mask30[i].mass > 400)

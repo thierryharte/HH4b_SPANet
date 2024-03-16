@@ -219,7 +219,7 @@ def plot_histos(
         ax_residuals.errorbar(
             true_hist[check_names(label)][1][:-1],
             sn,
-            yerr=sn_err,
+            # yerr=sn_err,
             marker=".",
             label=f"SPANet {label}",
             fmt="none",
