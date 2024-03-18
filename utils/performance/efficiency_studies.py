@@ -18,6 +18,7 @@ from efficiency_functions import (
     best_reco_higgs,
     plot_histos,
     check_names,
+    plot_diff_eff,
 )
 
 parser = argparse.ArgumentParser(
@@ -401,9 +402,13 @@ efficiency_fully_matched_run2_mask30 = [
 for label, eff in zip(list(true_dict.keys()), efficiency_fully_matched_run2_mask30):
     print(f"Efficiency fully matched for {label} (DeltaR>30): {eff:.4f}")
 
-total_efficiency_fully_matched_run2_mask30= [
+frac_fully_matched_mask30 = [
+    ak.sum(m[m_30]) / len(m[m_30]) for m, m_30 in zip(mask_fully_matched, mask_30)
+]
+
+total_efficiency_fully_matched_run2_mask30 = [
     efficiency_fully_matched_run2_mask30[i]
-    * frac_fully_matched[check_names(list(true_dict.keys())[i])]
+    * frac_fully_matched_mask30[check_names(list(true_dict.keys())[i])]
     for i in range(len(efficiency_fully_matched_run2_mask30))
 ]
 for i in range(len(total_efficiency_fully_matched_run2_mask30)):
@@ -471,7 +476,7 @@ for label, eff in zip(
 
 total_efficiencies_fully_matched_spanet_mask30 = [
     efficiencies_fully_matched_spanet_mask30[i]
-    * frac_fully_matched[check_names(list(spanet_dict.keys())[i])]
+    * frac_fully_matched_mask30[check_names(list(spanet_dict.keys())[i])]
     for i in range(len(efficiencies_fully_matched_spanet_mask30))
 ]
 for i in range(len(total_efficiencies_fully_matched_spanet_mask30)):
@@ -531,31 +536,46 @@ true_hh_fully_matched_mask30 = [
 
 diff_eff_run2_mask30 = []
 unc_diff_eff_run2_mask30 = []
+total_diff_eff_run2_mask30 = []
+unc_total_diff_eff_run2_mask30 = []
 diff_eff_spanet_mask30 = []
 unc_diff_eff_spanet_mask30 = []
+total_diff_eff_spanet_mask30 = []
+unc_total_diff_eff_spanet_mask30 = []
+# TODO compute uncertainity on the total efficiency
 
 
 mhh_bins = np.linspace(250, 700, 10)
 
-# TODO: compute the eff run2 for all possibilities of spanet
-for i in range(1, len(mhh_bins)):
-    mask = (true_hh_fully_matched_mask30[0].mass > mhh_bins[i - 1]) & (
-        true_hh_fully_matched_mask30[0].mass < mhh_bins[i]
-    )
-    eff_run2 = ak.sum(correctly_fully_matched_run2_mask30[0][mask]) / ak.count(
-        correctly_fully_matched_run2_mask30[0][mask]
-    )
-    unc_eff_run2 = sqrt(
-        eff_run2
-        * (1 - eff_run2)
-        / ak.count(correctly_fully_matched_run2_mask30[0][mask])
-    )
-    diff_eff_run2_mask30.append(eff_run2)
-    unc_diff_eff_run2_mask30.append(unc_eff_run2)
+for j in range(len(list(true_dict.keys()))):
+    diff_eff_run2_mask30.append([])
+    unc_diff_eff_run2_mask30.append([])
+    total_diff_eff_run2_mask30.append([])
+    unc_total_diff_eff_run2_mask30.append([])
+    for i in range(1, len(mhh_bins)):
+        mask = (true_hh_fully_matched_mask30[0].mass > mhh_bins[i - 1]) & (
+            true_hh_fully_matched_mask30[0].mass < mhh_bins[i]
+        )
+        eff_run2 = ak.sum(correctly_fully_matched_run2_mask30[j][mask]) / ak.count(
+            correctly_fully_matched_run2_mask30[j][mask]
+        )
+        unc_eff_run2 = sqrt(
+            eff_run2
+            * (1 - eff_run2)
+            / ak.count(correctly_fully_matched_run2_mask30[j][mask])
+        )
+        total_eff_run2 = eff_run2 * frac_fully_matched_mask30[j][mask]
+        unc_total_eff_run2 = np.zeros(len(total_eff_run2))
+        diff_eff_run2_mask30[j].append(eff_run2)
+        unc_diff_eff_run2_mask30[j].append(unc_eff_run2)
+        total_diff_eff_run2_mask30[j].append(total_eff_run2)
+        unc_total_diff_eff_run2_mask30[j].append(unc_total_eff_run2)
 
 for j in range(len(list(spanet_dict.keys()))):
     diff_eff_spanet_mask30.append([])
     unc_diff_eff_spanet_mask30.append([])
+    total_diff_eff_spanet_mask30.append([])
+    unc_total_diff_eff_spanet_mask30.append([])
     for i in range(1, len(mhh_bins)):
         mask = (
             true_hh_fully_matched_mask30[check_names(list(spanet_dict.keys())[j])].mass
@@ -572,45 +592,38 @@ for j in range(len(list(spanet_dict.keys()))):
             * (1 - eff_spanet)
             / ak.count(correctly_fully_matched_spanet_mask30[j][mask])
         )
+        total_eff_spanet = (
+            eff_spanet
+            * frac_fully_matched_mask30[check_names(list(spanet_dict.keys())[j])][mask]
+        )
+        unc_total_eff_spanet = np.zeros(len(total_eff_spanet))
         diff_eff_spanet_mask30[j].append(eff_spanet)
         unc_diff_eff_spanet_mask30[j].append(unc_eff_spanet)
+        total_diff_eff_spanet_mask30[j].append(total_eff_spanet)
+        unc_total_diff_eff_spanet_mask30[j].append(unc_total_eff_spanet)
 
-# TODO: compute the differential total efficiency for all spanet and run2
-#TODO: create a function to plot the differential efficiency
-fig, ax = plt.subplots(figsize=(10, 8))
-# TODO: plot this inside the loop
-plt.errorbar(
-    0.5 * (mhh_bins[1:] + mhh_bins[:-1]),
+plot_diff_eff(
+    mhh_bins,
     diff_eff_run2_mask30,
-    yerr=unc_diff_eff_run2_mask30,
-    label="Run2",
-    color="red",
-    marker="o",
+    unc_diff_eff_run2_mask30,
+    true_dict,
+    diff_eff_spanet_mask30,
+    unc_diff_eff_spanet_mask30,
+    spanet_dict,
+    plot_dir,
+    "diff_eff_mask30",
 )
-for eff, unc_eff, label in zip(
-    diff_eff_spanet_mask30, unc_diff_eff_spanet_mask30, list(spanet_dict.keys())
-):
-    plt.errorbar(
-        0.5 * (mhh_bins[1:] + mhh_bins[:-1]),
-        eff,
-        yerr=unc_eff,
-        label=f"SPANet {label}",
-        marker="o",
-    )
-
-# TODO: plot the total efficiency for all spanet and run2
-
-fig.legend()
-ax.set_xlabel(r"$m_{HH}$ [GeV]")
-ax.set_ylabel("Event Efficiency")
-ax.grid()
-hep.cms.label(
-    year="2022",
-    com="13.6",
-    label=f"Private Work",
-    ax=ax,
+plot_diff_eff(
+    mhh_bins,
+    total_diff_eff_run2_mask30,
+    total_diff_eff_run2_mask30,
+    true_dict,
+    total_diff_eff_spanet_mask30,
+    total_diff_eff_spanet_mask30,
+    spanet_dict,
+    plot_dir,
+    "total_diff_eff_mask30",
 )
-plt.savefig(f"{plot_dir}/diff_eff_mask30.png")
 
 
 # do the same for all events
@@ -630,10 +643,16 @@ true_hh_fully_matched = [
 
 diff_eff_spanet = []
 unc_diff_eff_spanet = []
+total_diff_eff_spanet = []
+unc_total_diff_eff_spanet = []
+
+# TODO: compute the uncertainties for the total efficiency
 
 for j in range(len(list(spanet_dict.keys()))):
     diff_eff_spanet.append([])
     unc_diff_eff_spanet.append([])
+    total_diff_eff_spanet.append([])
+    unc_total_diff_eff_spanet.append([])
     for i in range(1, len(mhh_bins)):
         mask = (
             true_hh_fully_matched[check_names(list(spanet_dict.keys())[j])].mass
@@ -650,35 +669,42 @@ for j in range(len(list(spanet_dict.keys()))):
             * (1 - eff_spanet)
             / ak.count(correctly_fully_matched_spanet[j][mask])
         )
+        total_eff_spanet = (
+            eff_spanet
+            * frac_fully_matched[check_names(list(spanet_dict.keys())[j])][mask]
+        )
+        unc_total_eff_spanet = np.zeros(len(total_eff_spanet))
         diff_eff_spanet[j].append(eff_spanet)
         unc_diff_eff_spanet[j].append(unc_eff_spanet)
+        total_diff_eff_spanet[j].append(total_eff_spanet)
+        unc_total_diff_eff_spanet[j].append(unc_total_eff_spanet)
 
-# TODO: compute the eff run2 for all possibilities of spanet
 print(unc_diff_eff_spanet)
 print(diff_eff_spanet)
 
-fig, ax = plt.subplots(figsize=(10, 8))
-for j in range(len(list(spanet_dict.keys()))):
-    plt.errorbar(
-        0.5 * (mhh_bins[1:] + mhh_bins[:-1]),
-        diff_eff_spanet[j],
-        yerr=unc_diff_eff_spanet[j],
-        label=f"SPANet {list(spanet_dict.keys())[j]}",
-        marker="o",
-    )
-fig.legend()
-ax.set_xlabel(r"$m_{HH}$ [GeV]")
-ax.set_ylabel("Event Efficiency")
-ax.grid()
-hep.cms.label(
-    year="2022",
-    com="13.6",
-    label=f"Private Work",
-    ax=ax,
+plot_diff_eff(
+    mhh_bins,
+    None,
+    None,
+    None,
+    diff_eff_spanet,
+    unc_diff_eff_spanet,
+    spanet_dict,
+    plot_dir,
+    "diff_eff_spanet",
 )
-plt.savefig(f"{plot_dir}/diff_eff_spanet.png")
+plot_diff_eff(
+    mhh_bins,
+    None,
+    None,
+    None,
+    total_diff_eff_spanet,
+    unc_total_diff_eff_spanet,
+    spanet_dict,
+    plot_dir,
+    "total_diff_eff_spanet",
+)
 
-#TODO: plot the total efficiency for all spanet
 
 mask_hh_mass_400 = [
     (true_hh_fully_matched_mask30[i].mass > 400)

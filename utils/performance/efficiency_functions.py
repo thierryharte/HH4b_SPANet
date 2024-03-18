@@ -251,3 +251,41 @@ def plot_histos(
     )
     plt.savefig(f"{plot_dir}/higgs_mass_{num}{name}.png")
     # plt.show()
+
+
+def plot_diff_eff(mhh_bins, run2, unc_run2, true_dict, spanet, unc_spanet, spanet_dict, plot_dir, file_name):
+    fig, ax = plt.subplots(figsize=(10, 8))
+    if run2:
+        for eff, unc_eff, label in zip(
+            run2, unc_run2, list(true_dict.keys())
+        ):
+            plt.errorbar(
+                0.5 * (mhh_bins[1:] + mhh_bins[:-1]),
+                eff,
+                yerr=unc_eff,
+                label=f"Run2 {label}",
+                # color="red",
+                marker="o",
+            )
+
+    for eff, unc_eff, label in zip(
+        spanet, unc_spanet, list(spanet_dict.keys())
+    ):
+        plt.errorbar(
+            0.5 * (mhh_bins[1:] + mhh_bins[:-1]),
+            eff,
+            yerr=unc_eff,
+            label=f"SPANet {label}",
+            marker="o",
+        )
+    fig.legend()
+    ax.set_xlabel(r"$m_{HH}$ [GeV]")
+    ax.set_ylabel("Event Efficiency")
+    ax.grid()
+    hep.cms.label(
+        year="2022",
+        com="13.6",
+        label=f"Private Work",
+        ax=ax,
+    )
+    plt.savefig(f"{plot_dir}/{file_name}.png")
