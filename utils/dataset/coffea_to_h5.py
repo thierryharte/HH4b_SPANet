@@ -12,7 +12,7 @@ parser.add_argument(
     "-c",
     "--cat",
     type=str,
-    default="baseline",
+    default="4b_region",
     required=False,
     help="Event category",
 )
