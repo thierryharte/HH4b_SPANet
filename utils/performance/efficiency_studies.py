@@ -12,14 +12,7 @@ vector.register_awkward()
 
 import argparse
 
-from efficiency_functions import (
-    distance_func,
-    reco_higgs,
-    best_reco_higgs,
-    plot_histos,
-    check_names,
-    plot_diff_eff,
-)
+from efficiency_functions import *
 
 parser = argparse.ArgumentParser(
     description="Convert awkward ntuples in parquet files to h5 files."
@@ -38,6 +31,12 @@ parser.add_argument(
     default=[],
     help="Input files with predicted pairing",
 )
+parser.add_argument(
+    "-pd",
+    "--plot-dir",
+    default="plots",
+    help="Directory to save the plots",
+)
 
 args = parser.parse_args()
 
@@ -51,10 +50,18 @@ else:
     spanet_dir = "/eos/home-r/ramellar/out_prediction_files/"
     spanet_dict = {
         # "4_jets":  f"{spanet_dir}out_0_spanet_prediction_4jets.h5",
-        "5_jets": f"{spanet_dir}out_1_spanet_prediction_5jets.h5",
-        "5_jets_ATLAS_ptreg": f"{spanet_dir}out_spanet_prediction_5jets_ptreg_ATLAS.h5",
-        "5_jets_btag_presel": f"{spanet_dir}out_2_spanet_prediction_5jets_btagpresel.h5",
-        "5_jets_btag_presel_ATLAS_ptreg": f"{spanet_dir}out_spanet_prediction_5jets_btagpresel_ptreg_ATLAS.h5",
+        # "5_jets": f"{spanet_dir}out_1_spanet_prediction_5jets.h5",
+        # "5_jets_ATLAS_ptreg": f"{spanet_dir}out_spanet_prediction_5jets_ptreg_ATLAS.h5",
+        # "4_jets_ATLAS_ptreg_5train": f"{spanet_dir}out_spanet_prediction_4jets_5training.h5",
+        # "5_jets_ATLAS_ptreg_5train_klambda0": f"{spanet_dir}out_spanet_prediction_5jets_klambda0.h5",
+        # "5_jets_ATLAS_ptreg_5train_klambda2p45": f"{spanet_dir}out_spanet_prediction_5jets_klambda2p45.h5",
+        # "5_jets_ATLAS_ptreg_5train_klambda5": f"{spanet_dir}out_spanet_prediction_5jets_klambda5.h5",
+        "4_jets_ATLAS_ptreg_5train_klambda0": f"{spanet_dir}out_spanet_prediction_4jets_klambda0_5jetstrainig.h5",
+        "4_jets_ATLAS_ptreg_5train_klambda2p45": f"{spanet_dir}out_spanet_prediction_4jets_klambda2p45_5jetstrainig.h5",
+        "4_jets_ATLAS_ptreg_5train_klambda5": f"{spanet_dir}out_spanet_prediction_4jets_klambda5_5jetstrainig.h5",
+        # "4_jets_ATLAS_ptreg_5train_btagpresel": f"{spanet_dir}out_spanet_prediction_4jets_5training_btag.h5",
+        # "5_jets_btag_presel": f"{spanet_dir}out_2_spanet_prediction_5jets_btagpresel.h5",
+        # "5_jets_btag_presel_ATLAS_ptreg": f"{spanet_dir}out_spanet_prediction_5jets_btagpresel_ptreg_ATLAS.h5",
         # "4_jets_5global": f"{spanet_dir}out_3_spanet_prediction_4jets_5global_9999pad.h5",
         # "4_jets_5global_btagpresel": f"{spanet_dir}out_4_spanet_prediction_4jets_5global_9999pad_btagpresel.h5",
         # "4_jets_5global_ATLAS":  f"{spanet_dir}out_5_spanet_prediction_ATLAS.h5",
@@ -62,7 +69,7 @@ else:
         # "4_jets_5global_ptreg_klambda0": f"{spanet_dir}out_7_spanet_prediction_4jets_5global_ptreg_klambda0.h5",
         # "4_jets_5global_ptreg_klambda2p45": f"{spanet_dir}out_7_spanet_prediction_4jets_5global_ptreg_klambda2p45.h5",
         # "4_jets_5global_ptreg_klambda5": f"{spanet_dir}out_7_spanet_prediction_4jets_5global_ptreg_klambda5.h5",
-        "4_jets_5global_ATLAS_ptreg": f"{spanet_dir}out_9_spanet_prediction_4jets_5global_ATLAS_ptreg_klambda1.h5",
+        # "4_jets_5global_ATLAS_ptreg": f"{spanet_dir}out_9_spanet_prediction_4jets_5global_ATLAS_ptreg_klambda1.h5",
         # "4_jets_5global_ATLAS_ptreg_klambda0": f"{spanet_dir}out_9_spanet_prediction_4jets_5global_ATLAS_ptreg_klambda0.h5",
         # "4_jets_5global_ATLAS_ptreg_klambda2p45": f"{spanet_dir}out_9_spanet_prediction_4jets_5global_ATLAS_ptreg_klambda2p45.h5",
         # "4_jets_5global_ATLAS_ptreg_klambda5": f"{spanet_dir}out_9_spanet_prediction_4jets_5global_ATLAS_ptreg_klambda5.h5",
@@ -76,6 +83,7 @@ if args.input_true:
     true_dict = dict(zip(labels_true, input_true))
 else:
     true_dir = "/eos/home-r/ramellar/out_prediction_files/true_files/"
+    # TODO: add kl bsm for 5jets
     true_dict = {
         "4_jets": f"{true_dir}output_JetGoodHiggs_test.h5",
         "5_jets": f"{true_dir}output_JetGood_test.h5",
@@ -86,7 +94,7 @@ else:
     }
 
 
-plot_dir = "plots"
+plot_dir = args.plot_dir
 os.makedirs(plot_dir, exist_ok=True)
 
 # open files
@@ -512,22 +520,49 @@ run2_higgs_fully_matched_mask30 = [
 
 # for each event plot the mass of the higgs1 and higgs2
 mh_bins = [np.linspace(60, 190, n) for n in [80, 80, 80, 40, 40, 40]]
-plot_histos(
+plot_histos_1d(
     mh_bins,
     [true[:, 0].mass for true in true_higgs_fully_matched_mask30],
     [run2[:, 0].mass for run2 in run2_higgs_fully_matched_mask30],
     [higgs[:, 0].mass for higgs in spanet_higgs_fully_matched_mask30],
     list(spanet_dict.keys()),
+    list(true_dict.keys()),
     1,
+    plot_dir=plot_dir,
 )
-plot_histos(
+plot_histos_1d(
     mh_bins,
     [true[:, 1].mass for true in true_higgs_fully_matched_mask30],
     [run2[:, 1].mass for run2 in run2_higgs_fully_matched_mask30],
     [higgs[:, 1].mass for higgs in spanet_higgs_fully_matched_mask30],
     list(spanet_dict.keys()),
+    list(true_dict.keys()),
     2,
+    plot_dir=plot_dir,
+
 )
+
+# 2D histograms of the mass of the higgs1 and higgs2
+labels_list = []
+for sn, label in zip(
+    [higgs for higgs in spanet_higgs_fully_matched_mask30], list(spanet_dict.keys())
+):
+    plot_histos_2d(mh_bins[check_names(label)], sn, label, "SPANet")
+    if check_names(label) in labels_list:
+        continue
+
+    plot_histos_2d(
+        mh_bins[check_names(label)],
+        true_higgs_fully_matched_mask30[check_names(label)],
+        list(true_dict.keys())[check_names(label)], "True"
+    )
+    plot_histos_2d(
+        mh_bins[check_names(label)],
+        run2_higgs_fully_matched_mask30[check_names(label)],
+        list(true_dict.keys())[check_names(label)], "Run2"
+    )
+    labels_list.append(check_names(label))
+
 
 true_hh_fully_matched_mask30 = [
     true_higgs_fully_matched_mask30[i][:, 0] + true_higgs_fully_matched_mask30[i][:, 1]
@@ -542,7 +577,6 @@ diff_eff_spanet_mask30 = []
 unc_diff_eff_spanet_mask30 = []
 total_diff_eff_spanet_mask30 = []
 unc_total_diff_eff_spanet_mask30 = []
-# TODO compute uncertainity on the total efficiency
 
 
 mhh_bins = np.linspace(250, 700, 10)
@@ -553,8 +587,8 @@ for j in range(len(list(true_dict.keys()))):
     total_diff_eff_run2_mask30.append([])
     unc_total_diff_eff_run2_mask30.append([])
     for i in range(1, len(mhh_bins)):
-        mask = (true_hh_fully_matched_mask30[0].mass > mhh_bins[i - 1]) & (
-            true_hh_fully_matched_mask30[0].mass < mhh_bins[i]
+        mask = (true_hh_fully_matched_mask30[j].mass > mhh_bins[i - 1]) & (
+            true_hh_fully_matched_mask30[j].mass < mhh_bins[i]
         )
         eff_run2 = ak.sum(correctly_fully_matched_run2_mask30[j][mask]) / ak.count(
             correctly_fully_matched_run2_mask30[j][mask]
@@ -564,8 +598,14 @@ for j in range(len(list(true_dict.keys()))):
             * (1 - eff_run2)
             / ak.count(correctly_fully_matched_run2_mask30[j][mask])
         )
-        total_eff_run2 = eff_run2 * frac_fully_matched_mask30[j][mask]
-        unc_total_eff_run2 = np.zeros(len(total_eff_run2))
+        frac_fully_matched = ak.sum(mask_fully_matched[j][mask_30[j]][mask]) / len(
+            mask_fully_matched[j][mask_30[j]][mask]
+        )
+        total_eff_run2 = eff_run2 * frac_fully_matched
+        unc_total_eff_run2 = sqrt(
+            (total_eff_run2 * (1 - total_eff_run2))
+            / len(mask_fully_matched[j][mask_30[j]][mask])
+        )
         diff_eff_run2_mask30[j].append(eff_run2)
         unc_diff_eff_run2_mask30[j].append(unc_eff_run2)
         total_diff_eff_run2_mask30[j].append(total_eff_run2)
@@ -592,11 +632,24 @@ for j in range(len(list(spanet_dict.keys()))):
             * (1 - eff_spanet)
             / ak.count(correctly_fully_matched_spanet_mask30[j][mask])
         )
-        total_eff_spanet = (
-            eff_spanet
-            * frac_fully_matched_mask30[check_names(list(spanet_dict.keys())[j])][mask]
+        frac_fully_matched = ak.sum(
+            mask_fully_matched[check_names(list(spanet_dict.keys())[j])][
+                mask_30[check_names(list(spanet_dict.keys())[j])]
+            ][mask]
+        ) / len(
+            mask_fully_matched[check_names(list(spanet_dict.keys())[j])][
+                mask_30[check_names(list(spanet_dict.keys())[j])]
+            ][mask]
         )
-        unc_total_eff_spanet = np.zeros(len(total_eff_spanet))
+        total_eff_spanet = eff_spanet * frac_fully_matched
+        unc_total_eff_spanet = sqrt(
+            (total_eff_spanet * (1 - total_eff_spanet))
+            / len(
+                mask_fully_matched[check_names(list(spanet_dict.keys())[j])][
+                    mask_30[check_names(list(spanet_dict.keys())[j])]
+                ][mask]
+            )
+        )
         diff_eff_spanet_mask30[j].append(eff_spanet)
         unc_diff_eff_spanet_mask30[j].append(unc_eff_spanet)
         total_diff_eff_spanet_mask30[j].append(total_eff_spanet)
@@ -616,10 +669,10 @@ plot_diff_eff(
 plot_diff_eff(
     mhh_bins,
     total_diff_eff_run2_mask30,
-    total_diff_eff_run2_mask30,
+    unc_total_diff_eff_run2_mask30,
     true_dict,
     total_diff_eff_spanet_mask30,
-    total_diff_eff_spanet_mask30,
+    unc_total_diff_eff_spanet_mask30,
     spanet_dict,
     plot_dir,
     "total_diff_eff_mask30",
@@ -646,7 +699,6 @@ unc_diff_eff_spanet = []
 total_diff_eff_spanet = []
 unc_total_diff_eff_spanet = []
 
-# TODO: compute the uncertainties for the total efficiency
 
 for j in range(len(list(spanet_dict.keys()))):
     diff_eff_spanet.append([])
@@ -669,11 +721,15 @@ for j in range(len(list(spanet_dict.keys()))):
             * (1 - eff_spanet)
             / ak.count(correctly_fully_matched_spanet[j][mask])
         )
-        total_eff_spanet = (
-            eff_spanet
-            * frac_fully_matched[check_names(list(spanet_dict.keys())[j])][mask]
+        frac_fully_matched = ak.sum(
+            mask_fully_matched[check_names(list(spanet_dict.keys())[j])][mask]
+        ) / len(mask_fully_matched[check_names(list(spanet_dict.keys())[j])][mask])
+
+        total_eff_spanet = eff_spanet * frac_fully_matched
+        unc_total_eff_spanet = sqrt(
+            (total_eff_spanet * (1 - total_eff_spanet))
+            / len(mask_fully_matched[check_names(list(spanet_dict.keys())[j])][mask])
         )
-        unc_total_eff_spanet = np.zeros(len(total_eff_spanet))
         diff_eff_spanet[j].append(eff_spanet)
         unc_diff_eff_spanet[j].append(unc_eff_spanet)
         total_diff_eff_spanet[j].append(total_eff_spanet)
@@ -712,7 +768,7 @@ mask_hh_mass_400 = [
     for i in range(len(true_hh_fully_matched_mask30))
 ]
 
-plot_histos(
+plot_histos_1d(
     mh_bins,
     [
         true[mask][:, 0].mass
@@ -729,10 +785,12 @@ plot_histos(
         for i in range(len(spanet_higgs_fully_matched_mask30))
     ],
     list(spanet_dict.keys()),
+    list(true_dict.keys()),
     1,
     "_mass400_700",
+    plot_dir=plot_dir,
 )
-plot_histos(
+plot_histos_1d(
     mh_bins,
     [
         true[mask][:, 1].mass
@@ -749,12 +807,14 @@ plot_histos(
         for i in range(len(spanet_higgs_fully_matched_mask30))
     ],
     list(spanet_dict.keys()),
+    list(true_dict.keys()),
     2,
     "_mass400_700",
+    plot_dir=plot_dir,
 )
 
 # plot the same but for the anti mask
-plot_histos(
+plot_histos_1d(
     mh_bins,
     [
         true[~mask][:, 0].mass
@@ -771,11 +831,14 @@ plot_histos(
         for i in range(len(spanet_higgs_fully_matched_mask30))
     ],
     list(spanet_dict.keys()),
+    list(true_dict.keys()),
     1,
     "_mass0_400",
+    plot_dir=plot_dir,
+
 )
 
-plot_histos(
+plot_histos_1d(
     mh_bins,
     [
         true[~mask][:, 1].mass
@@ -792,6 +855,9 @@ plot_histos(
         for i in range(len(spanet_higgs_fully_matched_mask30))
     ],
     list(spanet_dict.keys()),
+    list(true_dict.keys()),
     2,
     "_mass0_400",
+    plot_dir=plot_dir,
+
 )
