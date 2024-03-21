@@ -13,7 +13,6 @@ parser.add_argument(
     "--cat",
     type=str,
     default="4b_region",
-    required=False,
     help="Event category",
 )
 parser.add_argument(
@@ -36,7 +35,10 @@ args = parser.parse_args()
 out_dir = args.output if args.output else os.path.dirname(args.input)
 
 coffea_to_parquet = f"python coffea_to_parquet.py -i {args.input} -o {os.path.dirname(args.input)} -c {args.cat}"
-subprocess.run(coffea_to_parquet, shell=True)
+#subprocess.run(coffea_to_parquet, shell=True)
 
 parquet_to_h5 = f"python parquet_to_h5.py -i {os.path.dirname(args.input)}/{args.dataset}.parquet -o {out_dir} -f {args.frac_train}"
-subprocess.run(parquet_to_h5, shell=True)
+#subprocess.run(parquet_to_h5, shell=True)
+
+total_command=f"{coffea_to_parquet} && {parquet_to_h5}"
+subprocess.run(total_command, shell=True)
