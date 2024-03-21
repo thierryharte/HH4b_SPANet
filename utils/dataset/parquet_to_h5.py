@@ -54,15 +54,20 @@ def create_targets(file, particle, jets, filename, max_num_jets):
 
     for j in [1, 2]:
         if particle == f"h{j}":
-            mask = jets.prov == j  # H->b1b2
-            indices_prov = ak.fill_none(ak.pad_none(indices[mask], 2), -1)
-            print(filename, particle, indices_prov)
+            if ak.all(jets.prov == -1):
+                index_b1 = ak.full_like(jets.pt[:,0], 0)
+                index_b2 = ak.full_like(jets.pt[:,0], 0)
+                print(filename, particle, index_b1, index_b2)
+            else:
+                mask = jets.prov == j  # H->b1b2
+                indices_prov = ak.fill_none(ak.pad_none(indices[mask], 2), -1)
+                print(filename, particle, indices_prov)
 
-            index_b1 = indices_prov[:, 0]
-            index_b2 = indices_prov[:, 1]
+                index_b1 = indices_prov[:, 0]
+                index_b2 = indices_prov[:, 1]
 
-            index_b1 = ak.where(index_b1 < max_num_jets, index_b1, -1)
-            index_b2 = ak.where(index_b2 < max_num_jets, index_b2, -1)
+                index_b1 = ak.where(index_b1 < max_num_jets, index_b1, -1)
+                index_b2 = ak.where(index_b2 < max_num_jets, index_b2, -1)
 
             file.create_dataset(
                 f"TARGETS/h{j}/{higgs_targets[j][0]}",

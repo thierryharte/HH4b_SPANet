@@ -156,10 +156,10 @@ for sample in samples:
     ## Normalize the genweights
     # Since the array `weight` is filled on the fly with the weight associated with the event, it does not take into account the overall scaling by the sum of genweights (`sum_genweights`).
     # In order to correct for this, we have to scale by hand the `weight` array dividing by the sum of genweights.
-    for dataset in datasets:
-        weight = df["columns"][sample][dataset][args.cat]["weight"].value
-        weight_new = column_accumulator(weight / df["sum_genweights"][dataset])
-        df["columns"][sample][dataset][args.cat]["weight"] = weight_new
+    # for dataset in datasets:
+    #     weight = df["columns"][sample][dataset][args.cat]["weight"].value
+    #     weight_new = column_accumulator(weight / df["sum_genweights"][dataset])
+    #     df["columns"][sample][dataset][args.cat]["weight"] = weight_new
 
     ## Accumulate ntuples from different data-taking eras
     # In order to enlarge our training sample, we merge ntuples coming from different data-taking eras.
