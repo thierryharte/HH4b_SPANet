@@ -51,17 +51,20 @@ else:
     spanet_dict = {
         # "4_jets":  f"{spanet_dir}out_0_spanet_prediction_4jets.h5",
         # "5_jets": f"{spanet_dir}out_1_spanet_prediction_5jets.h5",
-        # "5_jets_ATLAS_ptreg": f"{spanet_dir}out_spanet_prediction_5jets_ptreg_ATLAS.h5",
-        # "4_jets_ATLAS_ptreg_5train": f"{spanet_dir}out_spanet_prediction_4jets_5training.h5",
+
+        #BEST
+        "5_jets_ATLAS_ptreg": f"{spanet_dir}out_spanet_prediction_5jets_ptreg_ATLAS.h5", # THIS
+        # "4_jets_ATLAS_ptreg_5train": f"{spanet_dir}out_spanet_prediction_4jets_5training.h5", # THIS
         # "5_jets_ATLAS_ptreg_5train_klambda0": f"{spanet_dir}out_spanet_prediction_5jets_klambda0.h5",
         # "5_jets_ATLAS_ptreg_5train_klambda2p45": f"{spanet_dir}out_spanet_prediction_5jets_klambda2p45.h5",
         # "5_jets_ATLAS_ptreg_5train_klambda5": f"{spanet_dir}out_spanet_prediction_5jets_klambda5.h5",
-        "4_jets_ATLAS_ptreg_5train_klambda0": f"{spanet_dir}out_spanet_prediction_4jets_klambda0_5jetstrainig.h5",
-        "4_jets_ATLAS_ptreg_5train_klambda2p45": f"{spanet_dir}out_spanet_prediction_4jets_klambda2p45_5jetstrainig.h5",
-        "4_jets_ATLAS_ptreg_5train_klambda5": f"{spanet_dir}out_spanet_prediction_4jets_klambda5_5jetstrainig.h5",
-        # "4_jets_ATLAS_ptreg_5train_btagpresel": f"{spanet_dir}out_spanet_prediction_4jets_5training_btag.h5",
+        # "4_jets_ATLAS_ptreg_5train_klambda0": f"{spanet_dir}out_spanet_prediction_4jets_klambda0_5jetstrainig.h5",
+        # "4_jets_ATLAS_ptreg_5train_klambda2p45": f"{spanet_dir}out_spanet_prediction_4jets_klambda2p45_5jetstrainig.h5",
+        # "4_jets_ATLAS_ptreg_5train_klambda5": f"{spanet_dir}out_spanet_prediction_4jets_klambda5_5jetstrainig.h5",
+
+        # "4_jets_ATLAS_ptreg_5train_btagpresel": f"{spanet_dir}out_spanet_prediction_4jets_5training_btag.h5", # THIS
         # "5_jets_btag_presel": f"{spanet_dir}out_2_spanet_prediction_5jets_btagpresel.h5",
-        # "5_jets_btag_presel_ATLAS_ptreg": f"{spanet_dir}out_spanet_prediction_5jets_btagpresel_ptreg_ATLAS.h5",
+        # "5_jets_btag_presel_ATLAS_ptreg": f"{spanet_dir}out_spanet_prediction_5jets_btagpresel_ptreg_ATLAS.h5", # THIS
         # "4_jets_5global": f"{spanet_dir}out_3_spanet_prediction_4jets_5global_9999pad.h5",
         # "4_jets_5global_btagpresel": f"{spanet_dir}out_4_spanet_prediction_4jets_5global_9999pad_btagpresel.h5",
         # "4_jets_5global_ATLAS":  f"{spanet_dir}out_5_spanet_prediction_ATLAS.h5",
@@ -69,12 +72,18 @@ else:
         # "4_jets_5global_ptreg_klambda0": f"{spanet_dir}out_7_spanet_prediction_4jets_5global_ptreg_klambda0.h5",
         # "4_jets_5global_ptreg_klambda2p45": f"{spanet_dir}out_7_spanet_prediction_4jets_5global_ptreg_klambda2p45.h5",
         # "4_jets_5global_ptreg_klambda5": f"{spanet_dir}out_7_spanet_prediction_4jets_5global_ptreg_klambda5.h5",
-        # "4_jets_5global_ATLAS_ptreg": f"{spanet_dir}out_9_spanet_prediction_4jets_5global_ATLAS_ptreg_klambda1.h5",
+
+        # "4_jets_5global_ATLAS_ptreg": f"{spanet_dir}out_9_spanet_prediction_4jets_5global_ATLAS_ptreg_klambda1.h5", # THIS
         # "4_jets_5global_ATLAS_ptreg_klambda0": f"{spanet_dir}out_9_spanet_prediction_4jets_5global_ATLAS_ptreg_klambda0.h5",
         # "4_jets_5global_ATLAS_ptreg_klambda2p45": f"{spanet_dir}out_9_spanet_prediction_4jets_5global_ATLAS_ptreg_klambda2p45.h5",
         # "4_jets_5global_ATLAS_ptreg_klambda5": f"{spanet_dir}out_9_spanet_prediction_4jets_5global_ATLAS_ptreg_klambda5.h5",
         # "4_jets_5global_ATLAS_ptreg_cos_sin_phi": f"{spanet_dir}out_01_spanet_prediction_ATLAS_4jets_5global_ptreg_cos_sin_phi.h5",
         # "4_jets_5global_ptreg_cos_sin_phi": f"{spanet_dir}out_01_spanet_prediction_4jets_5global_ptreg_cos_sin_phi.h5",
+
+        # 2b data samples
+        "4_jets_data_ATLAS_ptreg_5train": f"{spanet_dir}out_spanet_prediction_data_ev4jets_training5jet_ptreg_ATLAS.h5",
+        # "5_jets_data_ATLAS_ptreg_5train": f"{spanet_dir}out_spanet_prediction_data_ev5jets_training5jet_ptreg_ATLAS.h5",
+        # "4_jets_data_ATLAS_5global_ptreg": f"{spanet_dir}out_spanet_prediction_data_4jets_5global_ptreg_ATLAS.h5",
     }
 
 if args.input_true:
@@ -91,7 +100,16 @@ else:
         "klambda0": f"{true_dir}kl0_output_JetGoodHiggs_test.h5",
         "klambda2p45": f"{true_dir}kl2p45_output_JetGoodHiggs_test.h5",
         "klambda5": f"{true_dir}kl5_output_JetGoodHiggs_test.h5",
+        "4_jets_data": f"{spanet_dir}out_spanet_prediction_data_ev4jets_training5jet_ptreg_ATLAS.h5",
+        "5_jets_data": f"{spanet_dir}out_spanet_prediction_data_ev5jets_training5jet_ptreg_ATLAS.h5",
     }
+
+
+# bin definitions
+mh_bins = [np.linspace(60, 190, n) for n in [80, 80, 80, 40, 40, 40, 80, 80]]
+mh_bins_peak = [np.linspace(100, 140, n) for n in [20, 20, 20, 10, 10, 10, 20, 20]]
+mh_bins_2d = [np.linspace(0, 300, n) for n in [100, 100, 100, 50, 50, 50, 100, 100]]
+mhh_bins = np.linspace(250, 700, 10)
 
 
 plot_dir = args.plot_dir
@@ -179,7 +197,7 @@ idx_spanet_pred = [
 mask_fully_matched = [ak.all(ak.all(idx >= 0, axis=-1), axis=-1) for idx in idx_true]
 
 idx_true_fully_matched = [idx[mask] for idx, mask in zip(idx_true, mask_fully_matched)]
-
+print("idx_true_fully_matched", [len(idx) for idx in idx_true_fully_matched])
 idx_spanet_pred_fully_matched = [
     idx_spanet_pred[i][mask_fully_matched[check_names(list(spanet_dict.keys())[i])]]
     for i in range(len(idx_spanet_pred))
@@ -218,6 +236,7 @@ efficiencies_fully_matched_spanet = [
     ak.sum(correctly_fully_matched) / len(correctly_fully_matched)
     for correctly_fully_matched in correctly_fully_matched_spanet
 ]
+print("correctly_fully_matched_spanet", [len(c) for c in correctly_fully_matched_spanet])
 frac_fully_matched = [ak.sum(mask) / len(mask) for mask in mask_fully_matched]
 print("\n")
 for label, frac in zip(list(true_dict.keys()), frac_fully_matched):
@@ -363,6 +382,10 @@ min_idx = [
 ]
 mask_30 = [m != -1 for m in min_idx]
 
+print("\n")
+for label, m in zip(list(true_dict.keys()), mask_30):
+    print(f"Fraction of events with DeltaR>30 for {label}: {ak.sum(m) / len(m):.4f}")
+
 
 comb_idx_mask30 = [
     np.tile(comb_idx, (len(m), 1, 1, 1))[mask] for m, mask in zip(min_idx, mask_30)
@@ -407,6 +430,7 @@ correctly_fully_matched_run2_mask30 = [
 efficiency_fully_matched_run2_mask30 = [
     ak.sum(corr) / len(corr) for corr in correctly_fully_matched_run2_mask30
 ]
+print("\n")
 for label, eff in zip(list(true_dict.keys()), efficiency_fully_matched_run2_mask30):
     print(f"Efficiency fully matched for {label} (DeltaR>30): {eff:.4f}")
 
@@ -419,9 +443,11 @@ total_efficiency_fully_matched_run2_mask30 = [
     * frac_fully_matched_mask30[check_names(list(true_dict.keys())[i])]
     for i in range(len(efficiency_fully_matched_run2_mask30))
 ]
+
+print("\n")
 for i in range(len(total_efficiency_fully_matched_run2_mask30)):
     print(
-        "Total efficiency fully matched for {} (DeltaR>30): {:.4f}".format(
+        "Total efficiency fully matched for Run2 {} (DeltaR>30): {:.4f}".format(
             list(true_dict.keys())[i],
             total_efficiency_fully_matched_run2_mask30[i],
         )
@@ -519,7 +545,6 @@ run2_higgs_fully_matched_mask30 = [
 ]
 
 # for each event plot the mass of the higgs1 and higgs2
-mh_bins = [np.linspace(60, 190, n) for n in [80, 80, 80, 40, 40, 40]]
 plot_histos_1d(
     mh_bins,
     [true[:, 0].mass for true in true_higgs_fully_matched_mask30],
@@ -528,6 +553,7 @@ plot_histos_1d(
     list(spanet_dict.keys()),
     list(true_dict.keys()),
     1,
+    name="_mask30",
     plot_dir=plot_dir,
 )
 plot_histos_1d(
@@ -538,8 +564,30 @@ plot_histos_1d(
     list(spanet_dict.keys()),
     list(true_dict.keys()),
     2,
+    name="_mask30",
     plot_dir=plot_dir,
-
+)
+plot_histos_1d(
+    mh_bins_peak,
+    [true[:, 0].mass for true in true_higgs_fully_matched_mask30],
+    [run2[:, 0].mass for run2 in run2_higgs_fully_matched_mask30],
+    [higgs[:, 0].mass for higgs in spanet_higgs_fully_matched_mask30],
+    list(spanet_dict.keys()),
+    list(true_dict.keys()),
+    1,
+    name="_peak_mask30",
+    plot_dir=plot_dir,
+)
+plot_histos_1d(
+    mh_bins_peak,
+    [true[:, 1].mass for true in true_higgs_fully_matched_mask30],
+    [run2[:, 1].mass for run2 in run2_higgs_fully_matched_mask30],
+    [higgs[:, 1].mass for higgs in spanet_higgs_fully_matched_mask30],
+    list(spanet_dict.keys()),
+    list(true_dict.keys()),
+    2,
+    name="_peak_mask30",
+    plot_dir=plot_dir,
 )
 
 # 2D histograms of the mass of the higgs1 and higgs2
@@ -547,19 +595,24 @@ labels_list = []
 for sn, label in zip(
     [higgs for higgs in spanet_higgs_fully_matched_mask30], list(spanet_dict.keys())
 ):
-    plot_histos_2d(mh_bins[check_names(label)], sn, label, "SPANet")
+    plot_histos_2d(mh_bins[check_names(label)], sn, label, "SPANet_mask30", plot_dir=plot_dir)
     if check_names(label) in labels_list:
         continue
 
-    plot_histos_2d(
-        mh_bins[check_names(label)],
-        true_higgs_fully_matched_mask30[check_names(label)],
-        list(true_dict.keys())[check_names(label)], "True"
-    )
+    if "data" not in label:
+        plot_histos_2d(
+            mh_bins[check_names(label)],
+            true_higgs_fully_matched_mask30[check_names(label)],
+            list(true_dict.keys())[check_names(label)],
+            "True_mask30",
+            plot_dir=plot_dir,
+        )
     plot_histos_2d(
         mh_bins[check_names(label)],
         run2_higgs_fully_matched_mask30[check_names(label)],
-        list(true_dict.keys())[check_names(label)], "Run2"
+        list(true_dict.keys())[check_names(label)],
+        "Run2_mask30",
+        plot_dir=plot_dir,
     )
     labels_list.append(check_names(label))
 
@@ -579,7 +632,6 @@ total_diff_eff_spanet_mask30 = []
 unc_total_diff_eff_spanet_mask30 = []
 
 
-mhh_bins = np.linspace(250, 700, 10)
 
 for j in range(len(list(true_dict.keys()))):
     diff_eff_run2_mask30.append([])
@@ -679,7 +731,7 @@ plot_diff_eff(
 )
 
 
-# do the same for all events
+# All events
 
 true_higgs_fully_matched = [
     best_reco_higgs(
@@ -693,6 +745,15 @@ true_hh_fully_matched = [
     for i in range(len(true_higgs_fully_matched))
 ]
 
+spanet_higgs_fully_matched = [
+    best_reco_higgs(
+        jet[check_names(list(spanet_dict.keys())[i])][
+            mask_fully_matched[check_names(list(spanet_dict.keys())[i])]
+        ],
+        idx_spanet_pred_fully_matched[i],
+    )
+    for i in range(len(idx_spanet_pred_fully_matched))
+]
 
 diff_eff_spanet = []
 unc_diff_eff_spanet = []
@@ -761,6 +822,72 @@ plot_diff_eff(
     "total_diff_eff_spanet",
 )
 
+
+plot_histos_1d(
+    mh_bins,
+    [true[:, 0].mass for true in true_higgs_fully_matched],
+    None,
+    [higgs[:, 0].mass for higgs in spanet_higgs_fully_matched],
+    list(spanet_dict.keys()),
+    list(true_dict.keys()),
+    1,
+    name="_all",
+    plot_dir=plot_dir,
+)
+plot_histos_1d(
+    mh_bins,
+    [true[:, 1].mass for true in true_higgs_fully_matched],
+    None,
+    [higgs[:, 1].mass for higgs in spanet_higgs_fully_matched],
+    list(spanet_dict.keys()),
+    list(true_dict.keys()),
+    2,
+    name="_all",
+    plot_dir=plot_dir,
+)
+
+plot_histos_1d(
+    mh_bins_peak,
+    [true[:, 0].mass for true in true_higgs_fully_matched],
+    None,
+    [higgs[:, 0].mass for higgs in spanet_higgs_fully_matched],
+    list(spanet_dict.keys()),
+    list(true_dict.keys()),
+    1,
+    name="_peak_all",
+    plot_dir=plot_dir,
+)
+plot_histos_1d(
+    mh_bins_peak,
+    [true[:, 1].mass for true in true_higgs_fully_matched],
+    None,
+    [higgs[:, 1].mass for higgs in spanet_higgs_fully_matched],
+    list(spanet_dict.keys()),
+    list(true_dict.keys()),
+    2,
+    name="_peak_all",
+    plot_dir=plot_dir,
+)
+
+# 2D histograms of the mass of the higgs1 and higgs2
+labels_list = []
+for sn, label in zip(
+    [higgs for higgs in spanet_higgs_fully_matched], list(spanet_dict.keys())
+):
+    plot_histos_2d(mh_bins[check_names(label)], sn, label, "SPANet", plot_dir=plot_dir)
+    if check_names(label) in labels_list or "data" in label:
+        continue
+    plot_histos_2d(
+        mh_bins[check_names(label)],
+        true_higgs_fully_matched[check_names(label)],
+        list(true_dict.keys())[check_names(label)],
+        "True",
+        plot_dir=plot_dir,
+    )
+    labels_list.append(check_names(label))
+
+
+# separate between high and low mhh spectrum
 
 mask_hh_mass_400 = [
     (true_hh_fully_matched_mask30[i].mass > 400)
@@ -835,7 +962,6 @@ plot_histos_1d(
     1,
     "_mass0_400",
     plot_dir=plot_dir,
-
 )
 
 plot_histos_1d(
@@ -859,5 +985,4 @@ plot_histos_1d(
     2,
     "_mass0_400",
     plot_dir=plot_dir,
-
 )
