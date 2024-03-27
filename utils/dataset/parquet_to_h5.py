@@ -28,7 +28,13 @@ parser.add_argument(
     default=0.8,
     help="Fraction of events to use for training",
 )
-
+parser.add_argument(
+    "-n",
+    "--num-jets",
+    type=int,
+    default=5,
+    help="Number of JetGood to use in the dataset",
+)
 
 args = parser.parse_args()
 
@@ -275,7 +281,7 @@ for i, jets_all in enumerate([jets_good, jets_good_higgs]):
 
     for jets in [jets_train, jets_test]:
         jets_list.append(jets)
-        max_num_jets_list.append(5 if i == 0 else 4)
+        max_num_jets_list.append(args.num_jets if i == 0 else 4)
 
 
 def add_info_to_file(input_to_file):
