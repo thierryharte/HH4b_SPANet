@@ -50,25 +50,25 @@ else:
     spanet_dir = "/eos/home-r/ramellar/out_prediction_files/"
     spanet_dir = "/afs/cern.ch/user/m/mmalucch/public/out_prediction_files/"
     spanet_dict = {
-        # "5_jets_ATLAS_ptreg": f"{spanet_dir}out_spanet_prediction_5jets_ptreg_ATLAS.h5",  # THIS
-        # "5_jets_ATLAS_ptreg_5train_klambda0": f"{spanet_dir}out_spanet_prediction_5jets_klambda0.h5",
-        # "5_jets_ATLAS_ptreg_5train_klambda2p45": f"{spanet_dir}out_spanet_prediction_5jets_klambda2p45.h5",
-        # "5_jets_ATLAS_ptreg_5train_klambda5": f"{spanet_dir}out_spanet_prediction_5jets_klambda5.h5",
-        # #
-        # "4_jets_ATLAS_ptreg_5train": f"{spanet_dir}out_spanet_prediction_5jets_ptreg_ATLAS.h5", # THIS
-        # "4_jets_ATLAS_ptreg_5train_klambda0": f"{spanet_dir}out_spanet_prediction_5jets_klambda0.h5",
-        # "4_jets_ATLAS_ptreg_5train_klambda2p45": f"{spanet_dir}out_spanet_prediction_5jets_klambda2p45.h5",
-        # "4_jets_ATLAS_ptreg_5train_klambda5": f"{spanet_dir}out_spanet_prediction_5jets_klambda5.h5",
+         "5_jets_ATLAS_ptreg": f"{spanet_dir}out_spanet_prediction_5jets_ptreg_ATLAS.h5",  # THIS
+         "5_jets_ATLAS_ptreg_5train_klambda0": f"{spanet_dir}out_spanet_prediction_5jets_klambda0.h5",
+         "5_jets_ATLAS_ptreg_5train_klambda2p45": f"{spanet_dir}out_spanet_prediction_5jets_klambda2p45.h5",
+         "5_jets_ATLAS_ptreg_5train_klambda5": f"{spanet_dir}out_spanet_prediction_5jets_klambda5.h5",
+         #
+         "4_jets_ATLAS_ptreg_5train": f"{spanet_dir}out_spanet_prediction_5jets_ptreg_ATLAS.h5", # THIS
+         "4_jets_ATLAS_ptreg_5train_klambda0": f"{spanet_dir}out_spanet_prediction_5jets_klambda0.h5",
+         "4_jets_ATLAS_ptreg_5train_klambda2p45": f"{spanet_dir}out_spanet_prediction_5jets_klambda2p45.h5",
+         "4_jets_ATLAS_ptreg_5train_klambda5": f"{spanet_dir}out_spanet_prediction_5jets_klambda5.h5",
         #
         # "4_jets_ATLAS_ptreg_5train": f"{spanet_dir}out_spanet_prediction_4jets_5training.h5", # THIS
         # "4_jets_ATLAS_ptreg_5train_klambda0": f"{spanet_dir}out_spanet_prediction_4jets_klambda0_5jetstrainig.h5",
         # "4_jets_ATLAS_ptreg_5train_klambda2p45": f"{spanet_dir}out_spanet_prediction_4jets_klambda2p45_5jetstrainig.h5",
         # "4_jets_ATLAS_ptreg_5train_klambda5": f"{spanet_dir}out_spanet_prediction_4jets_klambda5_5jetstrainig.h5",
         #
-        # "4_jets_5global_ATLAS_ptreg": f"{spanet_dir}out_9_spanet_prediction_4jets_5global_ATLAS_ptreg_klambda1.h5", # THIS
-        # "4_jets_5global_ATLAS_ptreg_klambda0": f"{spanet_dir}out_9_spanet_prediction_4jets_5global_ATLAS_ptreg_klambda0.h5",
-        # "4_jets_5global_ATLAS_ptreg_klambda2p45": f"{spanet_dir}out_9_spanet_prediction_4jets_5global_ATLAS_ptreg_klambda2p45.h5",
-        # "4_jets_5global_ATLAS_ptreg_klambda5": f"{spanet_dir}out_9_spanet_prediction_4jets_5global_ATLAS_ptreg_klambda5.h5",
+         "4_jets_5global_ATLAS_ptreg": f"{spanet_dir}out_9_spanet_prediction_4jets_5global_ATLAS_ptreg_klambda1.h5", # THIS
+         "4_jets_5global_ATLAS_ptreg_klambda0": f"{spanet_dir}out_9_spanet_prediction_4jets_5global_ATLAS_ptreg_klambda0.h5",
+         "4_jets_5global_ATLAS_ptreg_klambda2p45": f"{spanet_dir}out_9_spanet_prediction_4jets_5global_ATLAS_ptreg_klambda2p45.h5",
+         "4_jets_5global_ATLAS_ptreg_klambda5": f"{spanet_dir}out_9_spanet_prediction_4jets_5global_ATLAS_ptreg_klambda5.h5",
         #
         # "4_jets":  f"{spanet_dir}out_0_spanet_prediction_4jets.h5",
         # "5_jets": f"{spanet_dir}out_1_spanet_prediction_5jets.h5",
@@ -89,8 +89,8 @@ else:
         #
         # "4_jets_data_ATLAS_ptreg_5train": f"{spanet_dir}out_spanet_prediction_data_ev4jets_training5jet_ptreg_ATLAS.h5",
         # "4_jets_data_ATLAS_ptreg_5train": f"{spanet_dir}out_spanet_prediction_data_ev5jets_training5jet_ptreg_ATLAS.h5",
-        "5_jets_data_ATLAS_ptreg_5train": f"{spanet_dir}out_spanet_prediction_data_ev5jets_training5jet_ptreg_ATLAS.h5",
-        "4_jets_data_ATLAS_5global_ptreg": f"{spanet_dir}out_spanet_prediction_data_4jets_5global_ptreg_ATLAS.h5",
+        #"5_jets_data_ATLAS_ptreg_5train": f"{spanet_dir}out_spanet_prediction_data_ev5jets_training5jet_ptreg_ATLAS.h5",
+        #"4_jets_data_ATLAS_5global_ptreg": f"{spanet_dir}out_spanet_prediction_data_4jets_5global_ptreg_ATLAS.h5",
     }
 
 if args.input_true:
