@@ -19,6 +19,7 @@ parser.add_argument('--interactive', action="store_true")
 parser.add_argument('--ngpu', type=int, default=1)
 parser.add_argument('--ncpu', type=int, default=3)
 parser.add_argument("--good-gpus", action="store_true")
+parser.add_argument("--seed", type=int, default=None, help="Random seed")
 parser.add_argument("--args", nargs="+", type=str, help="additional args")
 args = parser.parse_args()
 
@@ -49,7 +50,7 @@ if interactive:
 
 if model in ["jet_assignment", "classification"]:
     sub['Executable'] = f"{basedir}/jobs/{model}.sh"
-    sub['arguments'] = f"{args.options_file} {args.log_dir}"
+    sub['arguments'] = f"{args.options_file} {args.log_dir} {args.seed}"
     sub['Output'] = f"{basedir}/jobs/output/{model}-$(ClusterId).$(ProcId).out"
     sub['Error'] = f"{basedir}/jobs/error/{model}-$(ClusterId).$(ProcId).err"
     sub['Log'] = f"{basedir}/jobs/log/{model}-$(ClusterId).log"

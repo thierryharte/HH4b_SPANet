@@ -16,6 +16,8 @@ pip install -e .
 cd $HH4b_SPANET_DIR
 # pip install -e .
 
+export SEED=$3
+
 # Launch training
 if [ $# -eq 2 ]; then
     python -m spanet.train \
@@ -27,7 +29,7 @@ elif [ $# -eq 3 ]; then
     python -m spanet.train \
            --options_file $1 \
            --log_dir $2\
-           --checkpoint $3\
+           --checkpoint $4\
            --time_limit 07:00:00:00\
            --gpus $NUM_GPU
 fi
