@@ -1,0 +1,5 @@
+path: /afs/cern.ch/user/r/ramellar/HH4b_SPANet
+model: jet_assignment
+job_flavour: longlunch
+ngpu: 1
+ncpu: 3
