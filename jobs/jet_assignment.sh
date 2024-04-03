@@ -9,11 +9,12 @@ source myenv/bin/activate
 
 # Install SPANet in virtual environment
 cd $SPANET_DIR
+pip install torch===2.2.2
 pip install -e .
 
 # Install ttHbb_SPANet in virtual environment
 cd $HH4b_SPANET_DIR
-pip install -e .
+# pip install -e .
 
 # Launch training
 if [ $# -eq 2 ]; then
