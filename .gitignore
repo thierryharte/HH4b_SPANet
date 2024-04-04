@@ -3,3 +3,7 @@ logs_condor
 *out*
 *.png
 *.pyc
+inputs_files/
+*/log/
+*/error/
+*/output/

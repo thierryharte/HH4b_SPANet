@@ -29,8 +29,8 @@
 
     "skip_connections": true,
     "initial_embedding_skip_connections": true,
-    "event_info_file": "event_files/hh4b_5globaljet_ptreg.yaml",
-    "training_file": "inputs_files/input_4jets_5global_JetGoodHiggs_train.h5",
+    "event_info_file": "event_files/hh4b_ptreg.yaml",
+    "training_file": "inputs_files/input_5jets_JetGood_train_2.h5",
 
     "normalize_features": true,
     "limit_to_num_jets": 0,
@@ -62,7 +62,7 @@
     "gradient_clip": 0.425,
     "dropout": 0.0059,
 
-    "epochs": 300,
+    "epochs": 50,
     "num_gpu": 1,
     "verbose_output": true
 }
