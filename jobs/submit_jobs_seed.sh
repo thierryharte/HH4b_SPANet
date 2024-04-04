@@ -10,5 +10,5 @@ SEED_END=$2
 for ((SEED=$SEED_START; SEED<=$SEED_END; SEED++))
 do
     # submit the job
-    python3 scripts/submit_to_condor.py --cfg jobs/config/jet_assignment_deep_network.yaml -of options_files/hh4b_5jets_ATLAS_ptreg.json -l $HOME/HH4b_SPANet/out_seed_trainings_$SEED -s $SEED --basedir $HOME/HH4b_SPANet
+    python3 scripts/submit_to_condor.py --cfg jobs/config/jet_assignment_deep_network.yaml -of options_files/hh4b_5jets_ATLAS_ptreg.json -l $HOME/HH4b_SPANet/out_seed_trainings_$SEED --seed $SEED --basedir $HOME/HH4b_SPANet
 done
