@@ -20,6 +20,7 @@ parser.add_argument('--ngpu', type=int, default=1)
 parser.add_argument('--ncpu', type=int, default=3)
 parser.add_argument("--good-gpus", action="store_true")
 parser.add_argument("--seed", type=int, default=None, help="Random seed")
+parser.add_argument("--basedir", type=str, default=None, help="Base directory")
 parser.add_argument("--args", nargs="+", type=str, help="additional args")
 args = parser.parse_args()
 
@@ -30,7 +31,7 @@ credd = htcondor.Credd()
 credd.add_user_cred(htcondor.CredTypes.Kerberos, None)
 
 cfg = OmegaConf.load(args.cfg)
-basedir = cfg['path']
+basedir = cfg['path'] if not args.basedir else args.basedir
 model = cfg['model']
 job_flavour = cfg['job_flavour']
 ngpu = cfg['ngpu']
@@ -51,9 +52,9 @@ if interactive:
 if model in ["jet_assignment", "classification"]:
     sub['Executable'] = f"{basedir}/jobs/{model}.sh"
     sub['arguments'] = f"{args.options_file} {args.log_dir} {args.seed}"
-    sub['Output'] = f"{basedir}/jobs/output/{model}-$(ClusterId).$(ProcId).out"
-    sub['Error'] = f"{basedir}/jobs/error/{model}-$(ClusterId).$(ProcId).err"
-    sub['Log'] = f"{basedir}/jobs/log/{model}-$(ClusterId).log"
+    sub['Output'] = f"{basedir}/{args.log_dir}/{model}-$(ClusterId).$(ProcId).out"
+    sub['Error'] = f"{basedir}/{args.log_dir}/{model}-$(ClusterId).$(ProcId).err"
+    sub['Log'] = f"{basedir}/{args.log_dir}/{model}-$(ClusterId).log"
     sub['MY.SendCredential'] = True
     sub['MY.SingularityImage'] = '"/cvmfs/unpacked.cern.ch/registry.hub.docker.com/cmsml/cmsml:latest"'
     sub['+JobFlavour'] = f'"{job_flavour}"'
