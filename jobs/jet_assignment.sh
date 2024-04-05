@@ -10,6 +10,7 @@ source myenv/bin/activate
 # Install SPANet in virtual environment
 cd $SPANET_DIR
 pip install torch===2.2.2
+# pip install torch===2.0.1
 pip install -e .
 
 # Install ttHbb_SPANet in virtual environment

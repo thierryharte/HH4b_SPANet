@@ -21,9 +21,10 @@ parser.add_argument('--ncpu', type=int, default=3)
 parser.add_argument("--good-gpus", action="store_true")
 parser.add_argument("--seed", type=int, default=None, help="Random seed")
 parser.add_argument("--basedir", type=str, default=None, help="Base directory")
-parser.add_argument("--args", nargs="+", type=str, help="additional args")
+parser.add_argument("--args", default="", type=str, help="additional args")
 args = parser.parse_args()
 
+print("\nargs:", args.args)
 interactive = args.interactive
 
 col = htcondor.Collector()
