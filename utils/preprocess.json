@@ -1,0 +1,74 @@
+{
+  "output_names": [
+    "h1_assignment_probability",
+    "h2_assignment_probability",
+    "h1_detection_probability",
+    "h2_detection_probability"
+  ],
+  "input_names": [
+    "Jet_data",
+    "Jet_mask"
+  ],
+  "Jet_data": {
+    "var_names": [
+      "jet_log_ptPnetRegNeutrino",
+      "jet_eta",
+      "jet_phi",
+      "jet_btag"
+    ],
+    "var_infos": {
+      "jet_log_ptPnetRegNeutrino": {
+        "median": 0,
+        "norm_factor": 1,
+        "replace_inf_value": 0,
+        "lower_bound": -1e+32,
+        "upper_bound": 1e+32,
+        "pad": 0
+      },
+      "jet_eta": {
+        "median": 0,
+        "norm_factor": 1,
+        "replace_inf_value": 0,
+        "lower_bound": -1e+32,
+        "upper_bound": 1e+32,
+        "pad": 0
+      },
+      "jet_phi": {
+        "median": 0,
+        "norm_factor": 1,
+        "replace_inf_value": 0,
+        "lower_bound": -1e+32,
+        "upper_bound": 1e+32,
+        "pad": 0
+      },
+      "jet_btag": {
+        "median": 0,
+        "norm_factor": 1,
+        "replace_inf_value": 0,
+        "lower_bound": -1e+32,
+        "upper_bound": 1e+32,
+        "pad": 0
+      }
+
+    },
+    "min_length": 4,
+    "max_length": 5
+  },
+  "Jet_mask": {
+    "var_names": [
+      "jet_mask"
+    ],
+    "var_infos": {
+      "jet_mask": {
+        "median": 0,
+        "norm_factor": 1,
+        "replace_inf_value": 0,
+        "lower_bound": -1e+32,
+        "upper_bound": 1e+32,
+        "pad": 0
+      }
+    },
+    "min_length": 4,
+    "max_length": 5
+  }
+}
