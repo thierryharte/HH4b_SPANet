@@ -9,7 +9,10 @@ SEED_START=$2
 SEED_END=$3
 dir_name=$(basename $OPTION .json)
 
-ADDITIONAL_ARGS="--args ${@:4}"
+ADDITIONAL_ARGS=""
+if [ $# -gt 3 ]; then
+    ADDITIONAL_ARGS="--args ${@:4}"
+fi
 
 # if SEED_START is not None, do the loop over the seeds
 if [ ! -z "$SEED_END" ]; then
