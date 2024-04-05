@@ -51,7 +51,7 @@ if interactive:
 
 if model in ["jet_assignment", "classification"]:
     sub['Executable'] = f"{basedir}/jobs/{model}.sh"
-    sub['arguments'] = f"{args.options_file} {args.log_dir} {args.seed}"
+    sub['arguments'] = f"{args.options_file} {basedir}/{args.log_dir} {args.seed}"
     sub['Output'] = f"{basedir}/{args.log_dir}/{model}-$(ClusterId).$(ProcId).out"
     sub['Error'] = f"{basedir}/{args.log_dir}/{model}-$(ClusterId).$(ProcId).err"
     sub['Log'] = f"{basedir}/{args.log_dir}/{model}-$(ClusterId).log"

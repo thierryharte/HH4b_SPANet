@@ -1,14 +1,27 @@
 #!/bin/bash
 
 source $HOME/condor_env/bin/activate
+echo $HOME 
 
+OPTION=$1
 # get the seeds boundaries from the command line
-SEED_START=$1
-SEED_END=$2
+SEED_START=$2
+SEED_END=$3
+dir_name=$(basename $OPTION .json)
 
-# loop over the seeds
-for ((SEED=$SEED_START; SEED<=$SEED_END; SEED++))
-do
-    # submit the job
-    python3 scripts/submit_to_condor.py --cfg jobs/config/jet_assignment_deep_network.yaml -of options_files/hh4b_5jets_ATLAS_ptreg.json -l $HOME/HH4b_SPANet/out_seed_trainings_$SEED --seed $SEED --basedir $HOME/HH4b_SPANet
-done
+# if SEED_START is not None, do the loop over the seeds
+if [ ! -z "$SEED_END" ]; then
+    # loop over the seeds
+    for ((SEED=$SEED_START; SEED<=$SEED_END; SEED++))
+    do
+        # submit the job
+        python3 scripts/submit_to_condor.py --cfg jobs/config/jet_assignment_deep_network.yaml -of $OPTION -l out_spanet_outputs/out_$dir_name/out_seed_trainings_$SEED --seed $SEED --basedir $HOME/HH4b_SPANet
+    done
+else
+    for ((i=0; i<$SEED_START; i++))
+    do
+        # submit the job
+        python3 scripts/submit_to_condor.py --cfg jobs/config/jet_assignment_deep_network.yaml -of $OPTION -l out_spanet_outputs/out_$dir_name/out_no_seed_trainings_$i --basedir $HOME/HH4b_SPANet
+    done
+fi
+

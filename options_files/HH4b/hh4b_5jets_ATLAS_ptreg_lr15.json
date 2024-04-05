@@ -29,8 +29,8 @@
 
     "skip_connections": true,
     "initial_embedding_skip_connections": true,
-    "event_info_file": "event_files/hh4b_5globaljet_ptreg.yaml",
-    "training_file": "/afs/cern.ch/user/r/ramellar/public/inputs_files/input_4jets_JetGoodHiggs_train.h5",
+    "event_info_file": "event_files/hh4b_ptreg.yaml",
+    "training_file": "/afs/cern.ch/user/r/ramellar/public/inputs_files/input_5jets_JetGood_train.h5",
 
     "normalize_features": true,
     "limit_to_num_jets": 0,
@@ -48,7 +48,7 @@
     "combine_pair_loss": "min",
     "optimizer": "AdamW",
     "focal_gamma": 0.0,
-    "learning_rate": 0.00659,
+    "learning_rate": 0.0015,
     "learning_rate_cycles": 1,
     "learning_rate_warmup_epochs": 1.0,
 
