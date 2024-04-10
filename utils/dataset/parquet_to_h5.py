@@ -89,7 +89,7 @@ def create_targets(file, particle, jets, filename, max_num_jets):
             )
 
 
-def create_inputs(file, jets, max_num_jets, global_fifth_jet):
+def create_inputs(file, jets, max_num_jets, global_fifth_jet, kl=None):
     pt_array = ak.to_numpy(
         ak.fill_none(ak.pad_none(jets.pt, max_num_jets, clip=True), PAD_VALUE)
     )
@@ -156,6 +156,13 @@ def create_inputs(file, jets, max_num_jets, global_fifth_jet):
     mass_ds = file.create_dataset(
         "INPUTS/Jet/mass", np.shape(mass_array), dtype="float32", data=mass_array
     )
+
+    kl_array = ak.to_numpy(
+        kl.kl)
+    kl_ds = file.create_dataset(
+        "INPUTS/kl", np.shape(kl_array), dtype="float32", data=kl_array
+    )
+
 
     # create new global variables for the fifth jet (if it exists) otherwise fill with PAD_VALUE
     if global_fifth_jet is not None:
@@ -267,7 +274,10 @@ file_dict = {
 jets_good = df.JetGood
 jets_good_higgs = df.JetGoodHiggs
 
+kl_tot=df.kl
+
 jets_list = []
+kl_list = []
 max_num_jets_list = []
 for i, jets_all in enumerate([jets_good, jets_good_higgs]):
     print(f"Creating dataset for {'JetGood' if i == 0 else 'JetGoodHiggs'}")
@@ -276,11 +286,16 @@ for i, jets_all in enumerate([jets_good, jets_good_higgs]):
     idx_train_max = int(np.ceil(n_events * args.frac_train))
     print(f"Number of events for training: {idx_train_max}")
     print(f"Number of events for testing: {n_events - idx_train_max}")
+
+    # TODO: shuffle te events
     jets_train = jets_all[:idx_train_max]
     jets_test = jets_all[idx_train_max:]
+    kl_train = kl_tot[:idx_train_max]
+    kl_test = kl_tot[idx_train_max:]
 
-    for jets in [jets_train, jets_test]:
+    for jets, kl in zip([jets_train, jets_test], [kl_train, kl_test]):
         jets_list.append(jets)
+        kl_list.append(kl)
         max_num_jets_list.append(args.num_jets if i == 0 else 4)
 
 
@@ -295,7 +310,7 @@ def add_info_to_file(input_to_file):
         global_fifth_jet = jets_list[0]
     elif file_dict[k] == "output_JetGoodHiggs_test.h5":
         global_fifth_jet = jets_list[1]
-    create_inputs(file_out, jets, max_num_jets_list[k], global_fifth_jet)
+    create_inputs(file_out, jets, max_num_jets_list[k], global_fifth_jet, kl_list[k])
     create_targets(file_out, "h1", jets, file_dict[k], max_num_jets_list[k])
     create_targets(file_out, "h2", jets, file_dict[k], max_num_jets_list[k])
     print("Completed file ", file_dict[k])

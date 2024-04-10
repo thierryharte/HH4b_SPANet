@@ -110,6 +110,20 @@ features = {
     "by_sample": {},
 }
 
+kl_dict = {
+    "kl-1p00": 1.00,
+    "kl-0p00": 0.00,
+    "kl-2p45": 2.45,
+    "kl-5p00": 5.00,
+    "kl-m2p00": -2.00,
+    "kl-m1p00": -1.00,
+    "kl-0p50": 0.50,
+    "kl-1p50": 1.50,
+    "kl-2p00": 2.00,
+    "kl-3p00": 3.00,
+    "kl-4p00": 4.00,
+}
+
 # Dictionary of features to pad with a default value
 features_pad = {
     "common": {
@@ -164,6 +178,25 @@ for sample in samples:
     ## Accumulate ntuples from different data-taking eras
     # In order to enlarge our training sample, we merge ntuples coming from different data-taking eras.
     cs = accumulate([df["columns"][sample][dataset][args.cat] for dataset in datasets])
+
+    kl_list = []
+    for dataset in datasets:
+        for kl in kl_dict.keys():
+            if kl in dataset:
+                kl_list.append(kl_dict[kl])
+    print("kl_list: ", kl_list)
+    dataset_lenght = [
+        len(
+            df["columns"][sample][dataset][args.cat][
+                f"{list(features_dict.keys())[0]}_N"
+            ].value
+        )
+        for dataset in datasets
+    ]
+    print("dataset_lenght: ", dataset_lenght)
+    kl_dataset = np.repeat(kl_list, dataset_lenght)
+    print("kl_dataset: ", kl_dataset)
+    print("kl_dataset shape: ", kl_dataset.shape)
 
     ## Build the Momentum4D arrays for the jets, partons, leptons, met and higgs
     # In order to get the numpy array from the column_accumulator, we have to access the `value` attribute.
@@ -225,6 +258,9 @@ for sample in samples:
                     ak.fill_none(masked_arrays.prov, -1),
                     "prov",
                 )
+    ## Add the kl coefficient to the dataset
+    # The kl coefficient is added to the dataset as a new feature.
+    zipped_dict["kl"] = ak.zip({"kl": kl_dataset}, with_name="Momentum4D")
 
     # The Momentum4D arrays are zipped together to form the final dictionary of arrays.
     print("Zipping the collections into a single dictionary...")
