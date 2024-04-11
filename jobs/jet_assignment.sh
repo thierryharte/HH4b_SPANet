@@ -28,7 +28,7 @@ if [ $# -eq 3 ]; then
            --log_dir $2\
            --time_limit 07:00:00:00\
            --gpus $NUM_GPU
-elif [ $# -eq 4 ]; then
+else
     python -m spanet.train \
            --options_file $1 \
            -n $2 \
