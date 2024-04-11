@@ -35,22 +35,22 @@ parser.add_argument(
     default=5,
     help="Number of JetGood to use in the dataset",
 )
+parser.add_argument(
+    "-s",
+    "--no-shuffle",
+    action="store_true",
+    default=False,
+    help="Do not shuffle the dataset"
+)
 
 args = parser.parse_args()
-
-
-filename = f"{args.input}"
-main_dir = args.output if args.output else os.path.dirname(filename)
-os.makedirs(main_dir, exist_ok=True)
-df = ak.from_parquet(filename)
 
 
 def create_groups(file):
     file.create_group("TARGETS/h1")  # higgs 1 -> b1 b2
     file.create_group("TARGETS/h2")  # higgs 2 -> b3 b4
     file.create_group("INPUTS")
-    # file.create_group("INPUTS/Source")
-    # file.create_group("INPUTS/ht")
+
     return file
 
 
@@ -160,7 +160,7 @@ def create_inputs(file, jets, max_num_jets, global_fifth_jet, kl=None):
     kl_array = ak.to_numpy(
         kl.kl)
     kl_ds = file.create_dataset(
-        "INPUTS/kl", np.shape(kl_array), dtype="float32", data=kl_array
+        "INPUTS/Event/kl", np.shape(kl_array), dtype="float32", data=kl_array
     )
 
 
@@ -259,6 +259,30 @@ def create_inputs(file, jets, max_num_jets, global_fifth_jet, kl=None):
             data=mass_array_5,
         )
 
+def add_info_to_file(input_to_file):
+    k, jets = input_to_file
+    print(f"Adding info to file {file_dict[k]}")
+    file_out = h5py.File(f"{main_dir}/{file_dict[k]}", "w")
+    file_out = create_groups(file_out)
+    print("max_num_jets", max_num_jets_list[k])
+    global_fifth_jet = None
+    if file_dict[k] == "output_JetGoodHiggs_train.h5":
+        global_fifth_jet = jets_list[0]
+    elif file_dict[k] == "output_JetGoodHiggs_test.h5":
+        global_fifth_jet = jets_list[1]
+    create_inputs(file_out, jets, max_num_jets_list[k], global_fifth_jet, kl_list[k])
+    create_targets(file_out, "h1", jets, file_dict[k], max_num_jets_list[k])
+    create_targets(file_out, "h2", jets, file_dict[k], max_num_jets_list[k])
+    print("Completed file ", file_dict[k])
+    file_out.close()
+
+
+
+filename = f"{args.input}"
+main_dir = args.output if args.output else os.path.dirname(filename)
+os.makedirs(main_dir, exist_ok=True)
+df = ak.from_parquet(filename)
+
 
 file_dict = {
     0: "output_JetGood_train.h5",
@@ -287,7 +311,11 @@ for i, jets_all in enumerate([jets_good, jets_good_higgs]):
     print(f"Number of events for training: {idx_train_max}")
     print(f"Number of events for testing: {n_events - idx_train_max}")
 
-    # TODO: shuffle te events
+    if not args.no_shuffle:
+        idx = np.random.permutation(n_events)
+        jets_all = jets_all[idx]
+        kl_tot = kl_tot[idx]
+
     jets_train = jets_all[:idx_train_max]
     jets_test = jets_all[idx_train_max:]
     kl_train = kl_tot[:idx_train_max]
@@ -299,22 +327,6 @@ for i, jets_all in enumerate([jets_good, jets_good_higgs]):
         max_num_jets_list.append(args.num_jets if i == 0 else 4)
 
 
-def add_info_to_file(input_to_file):
-    k, jets = input_to_file
-    print(f"Adding info to file {file_dict[k]}")
-    file_out = h5py.File(f"{main_dir}/{file_dict[k]}", "w")
-    file_out = create_groups(file_out)
-    print("max_num_jets", max_num_jets_list[k])
-    global_fifth_jet = None
-    if file_dict[k] == "output_JetGoodHiggs_train.h5":
-        global_fifth_jet = jets_list[0]
-    elif file_dict[k] == "output_JetGoodHiggs_test.h5":
-        global_fifth_jet = jets_list[1]
-    create_inputs(file_out, jets, max_num_jets_list[k], global_fifth_jet, kl_list[k])
-    create_targets(file_out, "h1", jets, file_dict[k], max_num_jets_list[k])
-    create_targets(file_out, "h2", jets, file_dict[k], max_num_jets_list[k])
-    print("Completed file ", file_dict[k])
-    file_out.close()
 
 
 with Pool(4) as p:
