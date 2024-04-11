@@ -29,7 +29,7 @@
 
     "skip_connections": true,
     "initial_embedding_skip_connections": true,
-    "event_info_file": "event_files/hh4b_ptreg_mass.yaml",
+    "event_info_file": "event_files/HH4b_input_studies/hh4b_ptreg_mass.yaml",
     "training_file": "../9999padglobal/output_JetGood_train.h5",
 
     "normalize_features": true,

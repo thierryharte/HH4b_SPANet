@@ -29,7 +29,7 @@ cod{
 
     "skip_connections": true,
     "initial_embedding_skip_connections": true,
-    "event_info_file": "event_files/hh4b_ptreg.yaml",
+    "event_info_file": "event_files/HH4b/hh4b_ptreg.yaml",
     "training_file": "/eos/home-m/mmalucch/spanet_inputs/9999padglobal/output_JetGood_train.h5",
 
     "normalize_features": true,

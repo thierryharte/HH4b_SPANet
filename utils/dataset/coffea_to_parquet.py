@@ -28,7 +28,6 @@ parser.add_argument(
     required=False,
     help="Event category",
 )
-
 args = parser.parse_args()
 
 ## Loading the exported dataset
