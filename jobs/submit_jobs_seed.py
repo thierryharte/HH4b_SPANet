@@ -40,9 +40,7 @@ if args.seeds:
 # get the file name without extension and use it as the directory name
 dir_name = os.path.splitext(os.path.basename(args.option))[0] + args.suffix
 
-print(args.add_args)
 add_args = f'--args "{args.add_args}"' if args.add_args else ""
-print(add_args)
 
 if args.seeds:
     for seed in range(seed_start, seed_end + 1):
