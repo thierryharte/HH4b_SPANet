@@ -1,0 +1,5 @@
+{
+    "hidden_dim": "tune.choice([32, 64])",
+
+    "num_encoder_layers": "tune.choice([1, 2])"
+}

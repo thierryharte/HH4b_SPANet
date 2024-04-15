@@ -50,7 +50,7 @@ sub = htcondor.Submit()
 if interactive:
     sub['InteractiveJob'] = True
 
-if model in ["jet_assignment", "classification"]:
+if model in ["jet_assignment", "classification","jet_assignment_tune"]:
     sub['Executable'] = f"{basedir}/jobs/{model}.sh"
     sub['arguments'] = f"{args.options_file} {basedir}/{args.log_dir} {args.seed} {args.args}"
     sub['Output'] = f"{basedir}/{args.log_dir}/{model}-$(ClusterId).$(ProcId).out"
@@ -61,6 +61,8 @@ if model in ["jet_assignment", "classification"]:
     sub['+JobFlavour'] = f'"{job_flavour}"'
 else:
     raise ValueError(f"Model {model} not implemented")
+
+#here add an else maybe and keep everything for jet_assignment_tune except the arguments
 
 # Load checkpoint
 if args.checkpoint:
