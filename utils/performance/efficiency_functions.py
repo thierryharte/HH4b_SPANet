@@ -10,6 +10,8 @@ vector.register_awkward()
 vector.register_numba()
 
 
+k_lambda = [-2.0, -1.0, 0.0, 0.5, 1.0, 1.5, 2.0, 2.45, 3.0, 4.0, 5.0]
+
 names_dict = {
     "total_diff_eff_spanet": "Total Pairing Efficiency",
     "diff_eff_spanet": "Pairing Efficiency",
@@ -38,6 +40,9 @@ def check_names(name):
     elif "klambda5" in name and "5_jets" in name:
         return 8
     elif "allklambda" in name and "5_jets" in name:
+        for kl in k_lambda:
+            if f"{kl}" in name:
+                return 12 + k_lambda.index(kl)
         return 11
     elif "5_jets_btag_presel" in name:
         return 2
@@ -463,29 +468,27 @@ def separate_klambda(
     # mask the list df_true with the true_mask
     true_allklambda = []
     idx_true_allklambda = []
-    for (df, mask, idx) in   (zip(df_true, true_mask, idx_true)):
+    for df, mask, idx in zip(df_true, true_mask, idx_true):
         if mask:
             true_allklambda.append(df)
             idx_true_allklambda.append(idx)
 
-
     spanet_mask = [True if "allklambda" in key else False for key in spanet_dict.keys()]
-    allkl_names=  [key for key in spanet_dict.keys() if "allklambda" in key]
-
+    allkl_names = [key for key in spanet_dict.keys() if "allklambda" in key]
 
     spanet_allklambda = []
     idx_spanet_allklambda = []
 
-    for (df, mask, idx) in (zip(df_spanet_pred, spanet_mask, idx_spanet_pred)):
+    for df, mask, idx in zip(df_spanet_pred, spanet_mask, idx_spanet_pred):
         if mask:
             spanet_allklambda.append(df)
             idx_spanet_allklambda.append(idx)
 
-    print(true_allklambda)
-    print(spanet_allklambda)
+    print(true_allklambda, len(true_allklambda))
+    print(spanet_allklambda, len(spanet_allklambda))
 
-    kl_arrays = [df["INPUTS"]["Event"]["kl"][()] for df in true_allklambda]
-
+    kl_arrays = [df["INPUTS"]["Event"]["kl"][()] for df in spanet_allklambda]
+    print("kl_arrays", kl_arrays)
 
     # for each kl_array, separate the array based on the kl value
     # and create a list of arrays with the same kl value
@@ -494,7 +497,7 @@ def separate_klambda(
     kl_values = []
     for i, kl_array in enumerate(kl_arrays):
         kl_unique = np.unique(kl_array)
-        kl_values+=kl_unique.tolist()
+        kl_values += kl_unique.tolist()
         print("kl_unique", kl_unique)
         # true_separate_klambda.append([])
         # spanet_separate_klambda.append([])
@@ -503,11 +506,14 @@ def separate_klambda(
             mask = kl_array == kl
             print("mask", mask)
             print("kl_array[mask]", kl_array[mask])
-            true_separate_klambda.append(idx_true_allklambda[i][mask])
+            true_separate_klambda.append(idx_true_allklambda[check_names(allkl_names[i])-len(true_dict)+len(true_allklambda)-1][mask])
             spanet_separate_klambda.append(idx_spanet_allklambda[i][mask])
 
-    print(true_separate_klambda)
-    print(spanet_separate_klambda)
+    print(true_separate_klambda,    len(true_separate_klambda))
+    print(spanet_separate_klambda, len(spanet_separate_klambda))
+
+    # keep only two decimal in the kl_values
+    kl_values = np.round(kl_values, 2).tolist()
 
     # remove the allklambda from the list
     # idx_true = [idx for i, idx in enumerate(idx_true) if i not in all_kl_idx]
@@ -516,10 +522,28 @@ def separate_klambda(
     idx_true.extend(true_separate_klambda)
     idx_spanet_pred.extend(spanet_separate_klambda)
 
+    spanet_dict_add = {}
+    true_dict_add = {}
+    for key in spanet_dict.keys():
+        if "allklambda" in key:
+            for kl in kl_values:
+                if f"{key}_{kl}" not in spanet_dict:
+                    spanet_dict_add[f"{key}_{kl}"] = spanet_dict[key]
+    for key in true_dict.keys():
+        if "allklambda" in key:
+            for kl in kl_values:
+                if f"{key}_{kl}" not in true_dict:
+                    true_dict_add[f"{key}_{kl}"] = true_dict[key]
+
+    spanet_dict.update(spanet_dict_add)
+    true_dict.update(true_dict_add)
+
     print(len(idx_true))
     print(len(idx_spanet_pred))
-    print(kl_values)
+    print("kl_values", kl_values)
     print(allkl_names)
+    print(spanet_dict)
+    print(true_dict)
 
     return idx_true, idx_spanet_pred, kl_values, allkl_names
 
@@ -527,27 +551,24 @@ def separate_klambda(
 def plot_diff_eff_klambda(eff, kl_values, allkl_names, name, plot_dir="plots"):
     # split the arrays depending on how many times the first kl value appears
     kl_values_split = np.split(np.array(kl_values), kl_values.count(kl_values[0]))
+    eff_split = np.split(np.array(eff), kl_values.count(kl_values[0]))
     print(kl_values_split)
 
+    fig, ax = plt.subplots(figsize=(6, 6))
     for i, (net_name, kls) in enumerate(zip(allkl_names, kl_values_split)):
-        fig, ax = plt.subplots(figsize=(6, 6))
-        for  kl in kls:
-            ax.errorbar(
-                kl,
-                eff[i],
-                label=f"{net_name} kl {kl}",
-                marker="o",
-            )
-        ax.legend(frameon=False)
-        ax.set_xlabel("kl")
-        ax.set_ylabel("efficiency")
-        ax.grid()
-        hep.cms.label(
-            year="2022",
-            com="13.6",
-            label=f"Private Work",
-            ax=ax,
-        )
-        plt.savefig(f"{plot_dir}/{name}_kl_{net_name}.png", dpi=300, bbox_inches="tight")
-        plt.close()
-        
+        ax.plot(kls, eff_split[i], label=f"{net_name}", linestyle="-")
+
+    ax.legend(frameon=False)
+    ax.set_xlabel("kl")
+    ax.set_ylabel("efficiency")
+    ax.grid()
+    hep.cms.label(
+        year="2022",
+        com="13.6",
+        label=f"Private Work",
+        ax=ax,
+    )
+    plt.savefig(
+        f"{plot_dir}/{name}_allklambda.png", dpi=300, bbox_inches="tight"
+    )
+    plt.close()

@@ -77,9 +77,8 @@ else:
         # "4_jets_5global_ATLAS_ptreg_klambda2p45": f"{spanet_dir}out_9_spanet_prediction_4jets_5global_ATLAS_ptreg_klambda2p45.h5",
         # "4_jets_5global_ATLAS_ptreg_klambda5": f"{spanet_dir}out_9_spanet_prediction_4jets_5global_ATLAS_ptreg_klambda5.h5",
         #
-        "5_jets_ATLAS_ptreg": "/work/mmalucch/out_hh4b/out_spanet/output_JetGood_test.h5",  # HERE
-        "5_jets_ATLAS_ptreg_allklambda": "/work/mmalucch/out_hh4b/out_spanet/output_JetGood_test.h5",  # HERE
-        "4_jets_ATLAS_ptreg_allklambda": "/work/mmalucch/out_hh4b/out_spanet/output_JetGood_test.h5",  # HERE
+        "5_jets_ATLAS_ptreg_allklambda_train": f"{spanet_dir}spanet_prediction_all_kl.h5", #"/work/mmalucch/out_hh4b/out_spanet/output_JetGood_test.h5",  # HERE
+        "5_jets_ATLAS_ptreg_allklambda_eval": f"{spanet_dir}out_spanet_prediction_lr1e4_evkl.h5", #"/work/mmalucch/out_hh4b/out_spanet/output_JetGood_test.h5",  # HERE
         #
         # "4_jets":  f"{spanet_dir}out_0_spanet_prediction_4jets.h5",
         # "5_jets": f"{spanet_dir}out_1_spanet_prediction_5jets.h5",
@@ -123,7 +122,7 @@ else:
         "5_jets_klambda5": f"{true_dir}kl5_output_JetGood_test.h5",
         "4_jets_data": f"{spanet_dir}out_spanet_prediction_data_ev4jets_training5jet_ptreg_ATLAS.h5",
         "5_jets_data": f"{spanet_dir}out_spanet_prediction_data_ev5jets_training5jet_ptreg_ATLAS.h5",
-        "5_jets_allklambda": "/work/mmalucch/out_hh4b/out_spanet/output_JetGood_test.h5",  # HERE
+        "5_jets_allklambda": f"{true_dir}output_JetGood_allkl_test.h5",#"/work/mmalucch/out_hh4b/out_spanet/output_JetGood_test.h5",
         # "4_jets_allklambda": "/work/mmalucch/out_hh4b/out_spanet/output_JetGood_test.h5",  # HERE
     }
 
@@ -301,19 +300,28 @@ for i in range(len(total_efficiencies_fully_matched_spanet)):
         )
     )
 
-efficiencies_fully_matched_spanet_allklambda = efficiencies_fully_matched_spanet[
-    -len(kl_values) :
-]
-total_efficiencies_fully_matched_spanet_allklambda = (
-    total_efficiencies_fully_matched_spanet[-len(kl_values) :]
-)
-plot_diff_eff_klambda(
-    efficiencies_fully_matched_spanet_allklambda,
-    kl_values,
-    allkl_names,
-    "eff_fully_matched_spanet_allklambda",
-    plot_dir,
-)
+if args.klambda:
+    efficiencies_fully_matched_spanet_allklambda = efficiencies_fully_matched_spanet[
+        -len(kl_values) :
+    ]
+    print(efficiencies_fully_matched_spanet_allklambda)
+    total_efficiencies_fully_matched_spanet_allklambda = (
+        total_efficiencies_fully_matched_spanet[-len(kl_values) :]
+    )
+    plot_diff_eff_klambda(
+        efficiencies_fully_matched_spanet_allklambda,
+        kl_values,
+        allkl_names,
+        "eff_fully_matched_spanet_allklambda",
+        plot_dir,
+    )
+    plot_diff_eff_klambda(
+        total_efficiencies_fully_matched_spanet_allklambda,
+        kl_values,
+        allkl_names,
+        "tot_eff_fully_matched_spanet_allklambda",
+        plot_dir,
+    )
 
 # do the same for partially matched events (only one higgs is matched)
 mask_1h = [ak.sum(ak.any(idx == -1, axis=-1) == 1, axis=-1) == 1 for idx in idx_true]
@@ -392,6 +400,9 @@ frac_unmatched = [ak.sum(mask) / len(mask) for mask in mask_0h]
 print("\n")
 for label, frac in zip(list(true_dict.keys()), frac_unmatched):
     print(f"Fraction of unmatched events for {label}: {frac:.4f}")
+
+#TODO: do something about the fact that now the jets are
+# not separated according to their k lambda value and it crashs
 
 
 # load jet information
