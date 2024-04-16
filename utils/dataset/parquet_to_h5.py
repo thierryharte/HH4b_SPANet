@@ -298,21 +298,21 @@ file_dict = {
 jets_good = df.JetGood
 jets_good_higgs = df.JetGoodHiggs
 
-kl_tot=df.kl
 
 jets_list = []
 kl_list = []
 max_num_jets_list = []
+n_events = len(jets_good)
+idx = np.random.permutation(n_events)
 for i, jets_all in enumerate([jets_good, jets_good_higgs]):
+    kl_tot=df.kl
     print(f"Creating dataset for {'JetGood' if i == 0 else 'JetGoodHiggs'}")
-    n_events = len(jets_all)
     print(f"Number of events: {n_events}")
     idx_train_max = int(np.ceil(n_events * args.frac_train))
     print(f"Number of events for training: {idx_train_max}")
     print(f"Number of events for testing: {n_events - idx_train_max}")
 
     if not args.no_shuffle:
-        idx = np.random.permutation(n_events)
         jets_all = jets_all[idx]
         kl_tot = kl_tot[idx]
 
