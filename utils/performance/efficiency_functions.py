@@ -537,7 +537,7 @@ def separate_klambda(
             mask = kl_array == kl
             print("mask", mask)
             print("kl_array[mask]", kl_array[mask])
-            spanet_separate_klambda.append(idx_spanet_allklambda[i][mask])
+            spanet_separate_klambda.append( [i][mask])
 
     print(true_separate_klambda, len(true_separate_klambda))
     print(spanet_separate_klambda, len(spanet_separate_klambda))
