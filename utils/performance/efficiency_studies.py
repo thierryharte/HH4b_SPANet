@@ -77,9 +77,8 @@ else:
         # "4_jets_5global_ATLAS_ptreg_klambda2p45": f"{spanet_dir}out_9_spanet_prediction_4jets_5global_ATLAS_ptreg_klambda2p45.h5",
         # "4_jets_5global_ATLAS_ptreg_klambda5": f"{spanet_dir}out_9_spanet_prediction_4jets_5global_ATLAS_ptreg_klambda5.h5",
         #
-        "5_jets_ATLAS_ptreg": "/work/mmalucch/out_hh4b/out_spanet/output_JetGood_test.h5",  # HERE
-        "5_jets_ATLAS_ptreg_allklambda": "/work/mmalucch/out_hh4b/out_spanet/output_JetGood_test.h5",  # HERE
-        "4_jets_ATLAS_ptreg_allklambda": "/work/mmalucch/out_hh4b/out_spanet/output_JetGood_test.h5",  # HERE
+        "5_jets_ATLAS_ptreg_allklambda_train": f"{spanet_dir}spanet_prediction_all_kl.h5",  # "/work/mmalucch/out_hh4b/out_spanet/output_JetGood_test.h5",  # HERE
+        # "5_jets_ATLAS_ptreg_allklambda_eval": f"{spanet_dir}out_spanet_prediction_lr1e4_evkl.h5",  # "/work/mmalucch/out_hh4b/out_spanet/output_JetGood_test.h5",  # HERE
         #
         # "4_jets":  f"{spanet_dir}out_0_spanet_prediction_4jets.h5",
         # "5_jets": f"{spanet_dir}out_1_spanet_prediction_5jets.h5",
@@ -123,22 +122,23 @@ else:
         "5_jets_klambda5": f"{true_dir}kl5_output_JetGood_test.h5",
         "4_jets_data": f"{spanet_dir}out_spanet_prediction_data_ev4jets_training5jet_ptreg_ATLAS.h5",
         "5_jets_data": f"{spanet_dir}out_spanet_prediction_data_ev5jets_training5jet_ptreg_ATLAS.h5",
-        "5_jets_allklambda": "/work/mmalucch/out_hh4b/out_spanet/output_JetGood_test.h5",  # HERE
-        # "4_jets_allklambda": "/work/mmalucch/out_hh4b/out_spanet/output_JetGood_test.h5",  # HERE
+        "4_jets_allklambda": f"{true_dir}output_JetGoodHiggs_allkl_test.h5",
+        "5_jets_allklambda": f"{true_dir}output_JetGood_allkl_test.h5",  # "/work/mmalucch/out_hh4b/out_spanet/output_JetGood_test.h5",
     }
 
 
 # bin definitions
 mh_bins = [
-    np.linspace(60, 190, n) for n in [80, 80, 80, 40, 40, 40, 40, 40, 40, 80, 80]
+    np.linspace(60, 190, n) for n in [80, 80, 80, 40, 40, 40, 40, 40, 40, 80, 80, 80, 80]
 ]
 mh_bins_peak = [
-    np.linspace(100, 140, n) for n in [20, 20, 20, 10, 10, 10, 10, 10, 10, 20, 20]
+    np.linspace(100, 140, n) for n in [20, 20, 20, 10, 10, 10, 10, 10, 10, 20, 20, 20, 20]
 ]
 mh_bins_2d = (
     [np.linspace(50, 200, 80) for _ in range(3)]
     + [np.linspace(50, 200, 40) for _ in range(6)]
     + [np.linspace(0, 500, 50) for _ in range(2)]
+    + [np.linspace(50, 200, 80) for _ in range(2)]
 )
 mhh_bins = np.linspace(250, 700, 10)
 
@@ -224,13 +224,37 @@ idx_spanet_pred = [
     for idx_h1, idx_h2 in zip(idx_h1_spanet_pred, idx_h2_spanet_pred)
 ]
 
+
+# load jet information
+jet_ptPNetRegNeutrino = [df["INPUTS"]["Jet"]["ptPnetRegNeutrino"][()] for df in df_true]
+jet_eta = [df["INPUTS"]["Jet"]["eta"][()] for df in df_true]
+jet_phi = [df["INPUTS"]["Jet"]["phi"][()] for df in df_true]
+jet_mass = [df["INPUTS"]["Jet"]["mass"][()] for df in df_true]
+
+jet_infos = [jet_ptPNetRegNeutrino, jet_eta, jet_phi, jet_mass]
+
 if args.klambda:
-    idx_true, idx_spanet_pred, kl_values, allkl_names = separate_klambda(
+    # separate the different klambdas
+    (
+        idx_true,
+        idx_spanet_pred,
+        true_dict,
+        spanet_dict,
+        jet_infos_separate_klambda,
+        kl_values_true,
+        kl_values_spanet,
+        allkl_names_true,
+        allkl_names_spanet,
+    ) = separate_klambda(
         df_true, df_spanet_pred, idx_true, idx_spanet_pred, true_dict, spanet_dict
     )
-    mh_bins += [np.linspace(60, 190, 80) for _ in range(len(kl_values))]
-    mh_bins_peak += [np.linspace(100, 140, 20) for _ in range(len(kl_values))]
-    mh_bins_2d += [np.linspace(50, 200, 80) for _ in range(len(kl_values))]
+    mh_bins += [np.linspace(60, 190, 80) for _ in range(len(kl_values_true))]
+    mh_bins_peak += [np.linspace(100, 140, 20) for _ in range(len(kl_values_true))]
+    mh_bins_2d += [np.linspace(50, 200, 80) for _ in range(len(kl_values_true))]
+
+    for i in range(len(jet_infos_separate_klambda)):
+        jet_infos[i].extend(jet_infos_separate_klambda[i])
+    print("jet_infos", len(jet_infos), len(jet_infos[0]))
 
 # Fully matched events
 mask_fully_matched = [ak.all(ak.all(idx >= 0, axis=-1), axis=-1) for idx in idx_true]
@@ -301,19 +325,28 @@ for i in range(len(total_efficiencies_fully_matched_spanet)):
         )
     )
 
-efficiencies_fully_matched_spanet_allklambda = efficiencies_fully_matched_spanet[
-    -len(kl_values) :
-]
-total_efficiencies_fully_matched_spanet_allklambda = (
-    total_efficiencies_fully_matched_spanet[-len(kl_values) :]
-)
-plot_diff_eff_klambda(
-    efficiencies_fully_matched_spanet_allklambda,
-    kl_values,
-    allkl_names,
-    "eff_fully_matched_spanet_allklambda",
-    plot_dir,
-)
+if args.klambda:
+    efficiencies_fully_matched_spanet_allklambda = efficiencies_fully_matched_spanet[
+        -len(kl_values_spanet) :
+    ]
+    print(efficiencies_fully_matched_spanet_allklambda)
+    total_efficiencies_fully_matched_spanet_allklambda = (
+        total_efficiencies_fully_matched_spanet[-len(kl_values_spanet) :]
+    )
+    plot_diff_eff_klambda(
+        efficiencies_fully_matched_spanet_allklambda,
+        kl_values_spanet,
+        allkl_names_spanet,
+        "eff_fully_matched_spanet_allklambda",
+        plot_dir,
+    )
+    plot_diff_eff_klambda(
+        total_efficiencies_fully_matched_spanet_allklambda,
+        kl_values_spanet,
+        allkl_names_spanet,
+        "tot_eff_fully_matched_spanet_allklambda",
+        plot_dir,
+    )
 
 # do the same for partially matched events (only one higgs is matched)
 mask_1h = [ak.sum(ak.any(idx == -1, axis=-1) == 1, axis=-1) == 1 for idx in idx_true]
@@ -394,30 +427,25 @@ for label, frac in zip(list(true_dict.keys()), frac_unmatched):
     print(f"Fraction of unmatched events for {label}: {frac:.4f}")
 
 
-# load jet information
-jet_ptPNetRegNeutrino = [df["INPUTS"]["Jet"]["ptPnetRegNeutrino"][()] for df in df_true]
-jet_eta = [df["INPUTS"]["Jet"]["eta"][()] for df in df_true]
-jet_phi = [df["INPUTS"]["Jet"]["phi"][()] for df in df_true]
-jet_mass = [df["INPUTS"]["Jet"]["mass"][()] for df in df_true]
-
 # create a LorentzVector for the jets
 jet = [
     ak.zip(
         {
-            "pt": ptPNetRegNeutrino,
-            "eta": eta,
-            "phi": phi,
-            "mass": mass,
+            "pt": jet_infos[0][i],
+            "eta": jet_infos[1][i],
+            "phi": jet_infos[2][i],
+            "mass": jet_infos[3][i],
         },
         with_name="Momentum4D",
     )
-    for ptPNetRegNeutrino, eta, phi, mass in zip(
-        jet_ptPNetRegNeutrino, jet_eta, jet_phi, jet_mass
-    )
+    for i in range(len(jet_infos[0]))
 ]
 
+print("len(jet)", len(jet), len(jet[0]))
+
 # HERE
-jet[0] = jet[1]
+# the jets for the file with 4jets are the same as the 5jets
+# jet[0] = jet[1]
 
 
 # implement the Run 2 pairing algorithm
@@ -582,6 +610,44 @@ for i in range(len(total_efficiencies_fully_matched_spanet_mask30)):
             list(spanet_dict.keys())[i],
             total_efficiencies_fully_matched_spanet_mask30[i],
         )
+    )
+
+
+if args.klambda:
+    efficiencies_fully_matched_spanet_mask30_allklambda = (
+        efficiencies_fully_matched_spanet_mask30[-len(kl_values_spanet) :]
+    )
+    total_efficiencies_fully_matched_spanet_mask30_allklambda = (
+        total_efficiencies_fully_matched_spanet_mask30[-len(kl_values_spanet) :]
+    )
+    efficiency_fully_matched_run2_mask30_allklambda = (
+        efficiency_fully_matched_run2_mask30[-len(kl_values_true) :]
+    )
+    total_efficiency_fully_matched_run2_mask30_allklambda = (
+        total_efficiency_fully_matched_run2_mask30[-len(kl_values_true) :]
+    )
+    efficiencies_fully_matched_mask30_allklambda = (
+        efficiency_fully_matched_run2_mask30_allklambda
+        + efficiencies_fully_matched_spanet_mask30_allklambda
+    )
+    total_efficiencies_fully_matched_mask30_allklambda = (
+        total_efficiency_fully_matched_run2_mask30_allklambda
+        + total_efficiencies_fully_matched_spanet_mask30_allklambda
+    )
+
+    plot_diff_eff_klambda(
+        efficiencies_fully_matched_mask30_allklambda,
+        kl_values_true + kl_values_spanet,
+        allkl_names_true + allkl_names_spanet,
+        "eff_fully_matched_mask30_allklambda",
+        plot_dir,
+    )
+    plot_diff_eff_klambda(
+        total_efficiencies_fully_matched_mask30_allklambda,
+        kl_values_true + kl_values_spanet,
+        allkl_names_true + allkl_names_spanet,
+        "tot_eff_fully_matched_mask30_allklambda",
+        plot_dir,
     )
 
 

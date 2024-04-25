@@ -28,6 +28,13 @@ parser.add_argument(
     required=False,
     help="Event category",
 )
+parser.add_argument(
+    "-kl",
+    type=str,
+    default="",
+    required=False,
+    help="kl coefficient to consider. If not specified, all the kl coefficients are considered.",
+)
 args = parser.parse_args()
 
 ## Loading the exported dataset
@@ -164,6 +171,9 @@ for sample in samples:
     # Create a default dictionary of dictionaries to store the arrays
     array_dict = {k: defaultdict(dict) for k in features_dict.keys()}
     datasets = df["columns"][sample].keys()
+
+    if args.kl:
+        datasets = [dataset for dataset in datasets if args.kl in dataset]
     print("Datasets: ", datasets)
 
     ## Normalize the genweights
