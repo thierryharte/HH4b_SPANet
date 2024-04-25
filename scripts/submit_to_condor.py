@@ -16,7 +16,7 @@ parser.add_argument("-cf", "--checkpoint", type=str, default=None,
                          "Fully restores model weights and optimizer state.")
 parser.add_argument('--dry', action="store_true")
 parser.add_argument('--interactive', action="store_true")
-parser.add_argument('--ngpu', type=int, default=1)
+parser.add_argument('--ngpu', type=int, default=2)
 parser.add_argument('--ncpu', type=int, default=3)
 parser.add_argument("--good-gpus", action="store_true")
 parser.add_argument("--seed", type=int, default=None, help="Random seed")
@@ -52,7 +52,7 @@ if interactive:
 
 if model in ["jet_assignment", "classification","jet_assignment_tune"]:
     sub['Executable'] = f"{basedir}/jobs/{model}.sh"
-    sub['arguments'] = f"{args.options_file} {basedir}/{args.log_dir} {args.seed} {args.args}"
+    sub['arguments'] = f"{basedir}/{args.options_file} {basedir}/{args.log_dir} {args.seed} {args.args}"
     sub['Output'] = f"{basedir}/{args.log_dir}/{model}-$(ClusterId).$(ProcId).out"
     sub['Error'] = f"{basedir}/{args.log_dir}/{model}-$(ClusterId).$(ProcId).err"
     sub['Log'] = f"{basedir}/{args.log_dir}/{model}-$(ClusterId).log"

@@ -1,5 +1,9 @@
 {
     "hidden_dim": "tune.choice([32, 64])",
 
-    "num_encoder_layers": "tune.choice([1, 2])"
+    "num_encoder_layers": "tune.choice([1, 2])",
+
+    "learning_rate": 1e-4,
+    "focal_gamma": 0.0,
+    "l2_penalty": "tune.loguniform(1e-6, 1e-2)"
 }
