@@ -128,6 +128,7 @@ kl_dict = {
     "kl-2p00": 2.00,
     "kl-3p00": 3.00,
     "kl-4p00": 4.00,
+    "kl-3p50": 3.50,
 }
 
 # Dictionary of features to pad with a default value

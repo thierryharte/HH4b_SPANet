@@ -225,6 +225,8 @@ def plot_histos_1d(
         spanet_hists[i][0] / true_hist[check_names(spanet_labels[i])][0]
         for i in range(len(spanet_labels))
     ]
+
+    #TODO: compute the error correctly
     residual_run2_err = (
         [np.sqrt(r[0]) / t[0] for r, t in zip(run2_hist, true_hist)] if run2 else []
     )
