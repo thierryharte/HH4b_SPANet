@@ -15,25 +15,25 @@ pip install -e .
 
 # Install ttHbb_SPANet in virtual environment
 cd $HH4b_SPANET_DIR
+pip install "ray[tune]" hyperopt
 # pip install -e .
 
 export SEED=$3
 
 
 # Launch training
-#maybe add some sort of flag for the option file
 if [ $# -eq 3 ]; then
     python -m spanet.tune \
-           $1 \ 
+           -o $1 \
            -n $2 \
            --log_dir $2\
            -g $NUM_GPU
 else
     python -m spanet.tune \
-            $1 \ 
+           -o $1 \
            -n $2 \
            --log_dir $2\
-           -g $NUM_GPU
+           -g $NUM_GPU\
            "${@:4}"
 fi
 # elif [ $# -eq 5 ]; then

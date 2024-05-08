@@ -1,5 +1,5 @@
 path: /afs/cern.ch/user/r/ramellar/HH4b_SPANet
 model: jet_assignment_tune
-job_flavour: longlunch
+job_flavour: microcentury
 ngpu: 1
 ncpu: 3

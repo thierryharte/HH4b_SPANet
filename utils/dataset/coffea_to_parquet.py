@@ -28,6 +28,13 @@ parser.add_argument(
     required=False,
     help="Event category",
 )
+parser.add_argument(
+    "-kl",
+    type=str,
+    default="",
+    required=False,
+    help="kl coefficient to consider. If not specified, all the kl coefficients are considered.",
+)
 args = parser.parse_args()
 
 ## Loading the exported dataset
@@ -121,6 +128,7 @@ kl_dict = {
     "kl-2p00": 2.00,
     "kl-3p00": 3.00,
     "kl-4p00": 4.00,
+    "kl-3p50": 3.50,
 }
 
 # Dictionary of features to pad with a default value
@@ -164,6 +172,9 @@ for sample in samples:
     # Create a default dictionary of dictionaries to store the arrays
     array_dict = {k: defaultdict(dict) for k in features_dict.keys()}
     datasets = df["columns"][sample].keys()
+
+    if args.kl:
+        datasets = [dataset for dataset in datasets if args.kl in dataset]
     print("Datasets: ", datasets)
 
     ## Normalize the genweights
@@ -264,6 +275,6 @@ for sample in samples:
     # The Momentum4D arrays are zipped together to form the final dictionary of arrays.
     print("Zipping the collections into a single dictionary...")
     df_out = ak.zip(zipped_dict, depth_limit=1)
-    filename = os.path.join(main_dir, f"{sample}.parquet")
+    filename = os.path.join(main_dir, f"{sample}{args.kl}.parquet")
     print(f"Saving the output dataset to file: {os.path.abspath(filename)}")
     ak.to_parquet(df_out, filename)

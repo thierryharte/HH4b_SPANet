@@ -233,6 +233,8 @@ def plot_histos_1d(
         spanet_hists[i][0] / true_hist[check_names(spanet_labels[i])][0]
         for i in range(len(spanet_labels))
     ]
+
+    #TODO: compute the error correctly
     residual_run2_err = (
         [np.sqrt(r[0]) / t[0] for r, t in zip(run2_hist, true_hist)] if run2 else []
     )
@@ -545,7 +547,7 @@ def separate_klambda(
             mask = kl_array == kl
             print("mask", mask)
             print("kl_array[mask]", kl_array[mask])
-            spanet_separate_klambda.append(idx_spanet_allklambda[i][mask])
+            spanet_separate_klambda.append( [i][mask])
 
     print(true_separate_klambda, len(true_separate_klambda))
     print(spanet_separate_klambda, len(spanet_separate_klambda))
