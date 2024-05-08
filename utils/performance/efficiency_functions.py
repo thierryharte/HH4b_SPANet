@@ -10,7 +10,7 @@ vector.register_awkward()
 vector.register_numba()
 
 
-k_lambda = [-2.0, -1.0, 0.0, 0.5, 1.0, 1.5, 2.0, 2.45, 3.0, 4.0, 5.0]
+k_lambda = [-2.0, -1.0, 0.0, 0.5, 1.0, 1.5, 2.0, 2.45, 3.0, 3.5, 4.0, 5.0]
 
 names_dict = {
     "total_diff_eff_spanet": "Total Pairing Efficiency",
@@ -47,15 +47,20 @@ def check_names(name):
         return 7
     elif "klambda5" in name and "5_jets" in name:
         return 8
+    elif "allklambda" in name and "5_jets" in name and "newCuts" in name:
+        for kl in k_lambda:
+            if f"{kl}" in name:
+                return 14 + k_lambda.index(kl)+ len(k_lambda)*2
+        return 13
     elif "allklambda" in name and "4_jets" in name:
         for kl in k_lambda:
             if f"{kl}" in name:
-                return 13 + k_lambda.index(kl)
+                return 14 + k_lambda.index(kl)
         return 11
     elif "allklambda" in name and "5_jets" in name:
         for kl in k_lambda:
             if f"{kl}" in name:
-                return 13 + k_lambda.index(kl) + len(k_lambda)
+                return 14 + k_lambda.index(kl) + len(k_lambda)
         return 12
     elif "5_jets_btag_presel" in name:
         return 2
@@ -72,6 +77,8 @@ def check_names(name):
 
 
 def distance_func(higgs_pair, k):
+    if len(higgs_pair[0,0]) == 0:
+        return np.array([])
     higgs1 = higgs_pair[:, :, 0]
     higgs2 = higgs_pair[:, :, 1]
     dist = abs(higgs1.mass - higgs2.mass * k) / sqrt(1 + k**2)
@@ -79,6 +86,10 @@ def distance_func(higgs_pair, k):
 
 
 def reco_higgs(jet_collection, idx_collection):
+    if len(jet_collection) == 0:
+        higgs_candidates_unflatten_order = ak.Array([[[], []], [[], []], [[], []]])
+        return higgs_candidates_unflatten_order
+
     higgs_01 = ak.unflatten(
         jet_collection[:, idx_collection[0][0][0]]
         + jet_collection[:, idx_collection[0][0][1]],
@@ -528,6 +539,7 @@ def separate_klambda(
     kl_values_true = []
     for i, kl_array in enumerate(kl_arrays_true):
         kl_unique = np.unique(kl_array)
+        kl_unique=np.array(k_lambda)
         kl_values_true += kl_unique.tolist()
 
         for kl in kl_unique:
@@ -547,7 +559,7 @@ def separate_klambda(
             mask = kl_array == kl
             print("mask", mask)
             print("kl_array[mask]", kl_array[mask])
-            spanet_separate_klambda.append( [i][mask])
+            spanet_separate_klambda.append(idx_spanet_allklambda[i][mask])
 
     print(true_separate_klambda, len(true_separate_klambda))
     print(spanet_separate_klambda, len(spanet_separate_klambda))
@@ -556,6 +568,10 @@ def separate_klambda(
     # keep only two decimal in the kl_values
     kl_values_true = np.round(kl_values_true, 2).tolist()
     kl_values_spanet = np.round(kl_values_spanet, 2).tolist()
+
+
+    kl_values_true = k_lambda * 3
+
 
     # remove the allklambda from the list
     # idx_true = [idx for i, idx in enumerate(idx_true) if i not in all_kl_idx]

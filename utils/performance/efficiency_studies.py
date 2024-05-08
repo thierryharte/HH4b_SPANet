@@ -80,7 +80,10 @@ else:
         # "5_jets_ATLAS_ptreg_allklambda_train_klinput": f"{spanet_dir}out_spanet_prediction_5jets_lr1e4_kl_300e.h5",  # "/work/mmalucch/out_hh4b/out_spanet/output_JetGood_test.h5",  # HERE
         # "5_jets_ATLAS_ptreg_allklambda_train": f"{spanet_dir}out_spanet_prediction_5jets_lr1e4_noevkl_300e.h5",  # "/work/mmalucch/out_hh4b/out_spanet/output_JetGood_test.h5",  # HERE
         # "5_jets_ATLAS_ptreg_allklambda_eval": f"{spanet_dir}out_spanet_prediction_SMtraining_lr1e4_evkl.h5",  # "/work/mmalucch/out_hh4b/out_spanet/output_JetGood_test.h5",  # HERE
-        "5_jets_ATLAS_ptreg_allklambda_train_klinput_newkl_newCuts": f"{spanet_dir}out_spanet_prediction_5jets_lr1e4_kl_300e.h5",
+        #
+        "5_jets_ATLAS_ptreg_allklambda_train_klinput_newkl_newCuts": f"{spanet_dir}spanet_prediction_nc_on_nc.h5",
+        # "5_jets_ATLAS_ptreg_allklambda_train_klinput_newkl_newCuts_oldCutsEval": f"{spanet_dir}.h5",
+        # "5_jets_ATLAS_ptreg_allklambda_train_klinput_newkl_oldCuts_oldCutsEval": f"{spanet_dir}.h5",
         #
         # "4_jets":  f"{spanet_dir}out_0_spanet_prediction_4jets.h5",
         # "5_jets": f"{spanet_dir}out_1_spanet_prediction_5jets.h5",
@@ -127,8 +130,10 @@ else:
         "5_jets_klambda5": f"{true_dir}kl5_output_JetGood_test.h5",
         "4_jets_data": f"{spanet_dir}out_spanet_prediction_data_ev4jets_training5jet_ptreg_ATLAS.h5",
         "5_jets_data": f"{spanet_dir}out_spanet_prediction_data_ev5jets_training5jet_ptreg_ATLAS.h5",
-        "4_jets_allklambda": f"{true_dir}output_JetGoodHiggs_allkl_test.h5",
-        "5_jets_allklambda": f"{true_dir}output_JetGood_allkl_test.h5",  # "/work/mmalucch/out_hh4b/out_spanet/output_JetGood_test.h5",
+        "4_jets_allklambda": f"{true_dir}output_JetGood_test_allkl_new_kl_newcuts.h5", #output_JetGoodHiggs_allkl_test
+        "5_jets_allklambda": f"{true_dir}output_JetGood_test_allkl_new_kl_newcuts.h5",  #output_JetGood_allkl_test
+        "5_jets_allklambda_newkl_newCuts": f"{true_dir}output_JetGood_test_allkl_new_kl_newcuts.h5",  # "/work/mmalucch/out_hh4b/out_spanet/output_JetGood_test.h5",
+        # "5_jets_allklambda_newkl": f"{true_dir}.h5",  # "/work/mmalucch/out_hh4b/out_spanet/output_JetGood_test.h5",
     }
 
 
