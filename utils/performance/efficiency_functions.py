@@ -17,12 +17,20 @@ names_dict = {
     "diff_eff_spanet": "Pairing Efficiency",
     "total_diff_eff_mask30": r"Total Efficiency ($\Delta D_{HH} > 30$ GeV)",
     "diff_eff_mask30": r"Efficiency ($\Delta D_{HH} > 30$ GeV)",
-    "5_jets_ATLAS_ptreg": "Lite 5 jets",
-    "4_jets_ATLAS_ptreg_5train": "Lite 5 jets (4 jets eval)",
-    "4_jets_5global_ATLAS_ptreg": "Lite 4 jets",
-    "5_jets_data_ATLAS_ptreg_5train": "Lite 5 jets",
-    "4_jets_data_ATLAS_ptreg_5train": "Lite 5 jets (4 jets eval)",
-    "4_jets_data_ATLAS_5global_ptreg": "Lite 4 jets",
+    "5_jets_ATLAS_ptreg": "SPANet Lite 5 jets",
+    "4_jets_ATLAS_ptreg_5train": "SPANet Lite 5 jets (4 jets eval)",
+    "4_jets_5global_ATLAS_ptreg": "SPANet Lite 4 jets",
+    "5_jets_data_ATLAS_ptreg_5train": "SPANet Lite 5 jets",
+    "4_jets_data_ATLAS_ptreg_5train": "SPANet Lite 5 jets (4 jets eval)",
+    "4_jets_data_ATLAS_5global_ptreg": "SPANet Lite 4 jets",
+    "5_jets_ATLAS_ptreg_allklambda_train_klinput": r"SPANet Lite 5 jets all $k_{\lambda}$ ($k_{\lambda}$ inputs)",
+    "5_jets_ATLAS_ptreg_allklambda_train": r"SPANet Lite 5 jets all $k_{\lambda}$",
+    "5_jets_ATLAS_ptreg_allklambda_eval": "SPANet Lite 5 jets SM",
+    "4_jets_allklambda": "Run 2",
+    "eff_fully_matched_allklambda": "Pairing Efficiency",
+    "tot_eff_fully_matched_allklambda": "Total Pairing Efficiency",
+    "eff_fully_matched_mask30_allklambda": r"Pairing Efficiency ($\Delta D_{HH} > 30$ GeV)",
+    "tot_eff_fully_matched_mask30_allklambda": r"Total Pairing Efficiency ($\Delta D_{HH} > 30$ GeV)",
 }
 
 
@@ -167,7 +175,7 @@ def plot_histos_1d(
         ax.hist(
             sn,
             bins[check_names(label)],
-            label=f"SPANet {names_dict[label] if label in names_dict else label}",
+            label=f"{names_dict[label] if label in names_dict else label}",
             histtype="step",
             linewidth=1,
             density=True,
@@ -244,7 +252,7 @@ def plot_histos_1d(
                 yerr=sn_err,
                 marker=".",
                 # markersize=1,
-                label=f"SPANet {names_dict[label] if label in names_dict else label}",
+                label=f"{names_dict[label] if label in names_dict else label}",
                 linestyle="None",
             )
             if check_names(label) in labels_list:
@@ -371,7 +379,7 @@ def plot_diff_eff(
             0.5 * (mhh_bins[1:] + mhh_bins[:-1]),
             eff,
             yerr=unc_eff,
-            label=f"SPANet {names_dict[label] if label in names_dict else label}",
+            label=f"{names_dict[label] if label in names_dict else label}",
             marker="o",
         )
 
@@ -598,11 +606,17 @@ def plot_diff_eff_klambda(eff, kl_values, allkl_names, name, plot_dir="plots"):
 
     fig, ax = plt.subplots(figsize=(6, 6))
     for i, (net_name, kls) in enumerate(zip(allkl_names, kl_values_split)):
-        ax.plot(kls, eff_split[i], label=f"{net_name}", linestyle="-")
+        ax.plot(
+            kls,
+            eff_split[i],
+            label=names_dict[net_name] if net_name in names_dict else net_name,
+            linestyle="-",
+            marker="o",
+        )
 
-    ax.legend(frameon=False)
-    ax.set_xlabel("kl")
-    ax.set_ylabel("efficiency")
+    ax.legend(frameon=False, loc="lower left")
+    ax.set_xlabel(r"$k_{\lambda}$")
+    ax.set_ylabel(names_dict[name] if name in names_dict else name)
     ax.grid()
     hep.cms.label(
         year="2022",

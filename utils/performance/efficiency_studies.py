@@ -77,8 +77,10 @@ else:
         # "4_jets_5global_ATLAS_ptreg_klambda2p45": f"{spanet_dir}out_9_spanet_prediction_4jets_5global_ATLAS_ptreg_klambda2p45.h5",
         # "4_jets_5global_ATLAS_ptreg_klambda5": f"{spanet_dir}out_9_spanet_prediction_4jets_5global_ATLAS_ptreg_klambda5.h5",
         #
-        "5_jets_ATLAS_ptreg_allklambda_train": f"{spanet_dir}spanet_prediction_all_kl.h5",  # "/work/mmalucch/out_hh4b/out_spanet/output_JetGood_test.h5",  # HERE
-        # "5_jets_ATLAS_ptreg_allklambda_eval": f"{spanet_dir}out_spanet_prediction_lr1e4_evkl.h5",  # "/work/mmalucch/out_hh4b/out_spanet/output_JetGood_test.h5",  # HERE
+        # "5_jets_ATLAS_ptreg_allklambda_train_klinput": f"{spanet_dir}out_spanet_prediction_5jets_lr1e4_kl_300e.h5",  # "/work/mmalucch/out_hh4b/out_spanet/output_JetGood_test.h5",  # HERE
+        # "5_jets_ATLAS_ptreg_allklambda_train": f"{spanet_dir}out_spanet_prediction_5jets_lr1e4_noevkl_300e.h5",  # "/work/mmalucch/out_hh4b/out_spanet/output_JetGood_test.h5",  # HERE
+        # "5_jets_ATLAS_ptreg_allklambda_eval": f"{spanet_dir}out_spanet_prediction_SMtraining_lr1e4_evkl.h5",  # "/work/mmalucch/out_hh4b/out_spanet/output_JetGood_test.h5",  # HERE
+        "5_jets_ATLAS_ptreg_allklambda_train_klinput_newkl_newCuts": f"{spanet_dir}out_spanet_prediction_5jets_lr1e4_kl_300e.h5",
         #
         # "4_jets":  f"{spanet_dir}out_0_spanet_prediction_4jets.h5",
         # "5_jets": f"{spanet_dir}out_1_spanet_prediction_5jets.h5",
@@ -114,7 +116,10 @@ else:
         "4 jets": f"{true_dir}output_JetGoodHiggs_test.h5",
         "5 jets": f"{true_dir}output_JetGood_test.h5",
         "5_jets_btag_presel": f"{true_dir}output_JetGood_btag_presel_test.h5",
+
         "4_jets_klambda0": f"{true_dir}kl0_output_JetGoodHiggs_test.h5",
+        # "4_jets_klambda0": f"{true_dir}output_JetGoodHiggs_test_kl0_private.h5",
+
         "4_jets_klambda2p45": f"{true_dir}kl2p45_output_JetGoodHiggs_test.h5",
         "4_jets_klambda5": f"{true_dir}kl5_output_JetGoodHiggs_test.h5",
         "5_jets_klambda0": f"{true_dir}kl0_output_JetGood_test.h5",
@@ -129,10 +134,12 @@ else:
 
 # bin definitions
 mh_bins = [
-    np.linspace(60, 190, n) for n in [80, 80, 80, 40, 40, 40, 40, 40, 40, 80, 80, 80, 80]
+    np.linspace(60, 190, n)
+    for n in [80, 80, 80, 40, 40, 40, 40, 40, 40, 80, 80, 80, 80]
 ]
 mh_bins_peak = [
-    np.linspace(100, 140, n) for n in [20, 20, 20, 10, 10, 10, 10, 10, 10, 20, 20, 20, 20]
+    np.linspace(100, 140, n)
+    for n in [20, 20, 20, 10, 10, 10, 10, 10, 10, 20, 20, 20, 20]
 ]
 mh_bins_2d = (
     [np.linspace(50, 200, 80) for _ in range(3)]
@@ -305,11 +312,11 @@ print(
 frac_fully_matched = [ak.sum(mask) / len(mask) for mask in mask_fully_matched]
 print("\n")
 for label, frac in zip(list(true_dict.keys()), frac_fully_matched):
-    print(f"Fraction of fully matched events for {label}: {frac:.4f}")
+    print(f"Fraction of fully matched events for {label}: {frac:.3f}")
 
 print("\n")
 for label, eff in zip(list(spanet_dict.keys()), efficiencies_fully_matched_spanet):
-    print("Efficiency fully matched for {}: {:.4f}".format(label, eff))
+    print("Efficiency fully matched for {}: {:.3f}".format(label, eff))
 print("\n")
 
 total_efficiencies_fully_matched_spanet = [
@@ -319,7 +326,7 @@ total_efficiencies_fully_matched_spanet = [
 ]
 for i in range(len(total_efficiencies_fully_matched_spanet)):
     print(
-        "Total efficiency fully matched for {}: {:.4f}".format(
+        "Total efficiency fully matched for {}: {:.3f}".format(
             list(spanet_dict.keys())[i],
             total_efficiencies_fully_matched_spanet[i],
         )
@@ -333,18 +340,20 @@ if args.klambda:
     total_efficiencies_fully_matched_spanet_allklambda = (
         total_efficiencies_fully_matched_spanet[-len(kl_values_spanet) :]
     )
+    print("\n")
+    print
     plot_diff_eff_klambda(
         efficiencies_fully_matched_spanet_allklambda,
         kl_values_spanet,
         allkl_names_spanet,
-        "eff_fully_matched_spanet_allklambda",
+        "eff_fully_matched_allklambda",
         plot_dir,
     )
     plot_diff_eff_klambda(
         total_efficiencies_fully_matched_spanet_allklambda,
         kl_values_spanet,
         allkl_names_spanet,
-        "tot_eff_fully_matched_spanet_allklambda",
+        "tot_eff_fully_matched_allklambda",
         plot_dir,
     )
 
@@ -396,10 +405,10 @@ efficiencies_partially_matched_spanet = [
 frac_partially_matched_1h = [ak.sum(mask) / len(mask) for mask in mask_1h]
 print("\n")
 for label, frac in zip(list(true_dict.keys()), frac_partially_matched_1h):
-    print(f"Fraction of partially matched events for {label}: {frac:.4f}")
+    print(f"Fraction of partially matched events for {label}: {frac:.3f}")
 print("\n")
 for label, eff in zip(list(spanet_dict.keys()), efficiencies_partially_matched_spanet):
-    print("Efficiency partially matched for {}: {:.4f}".format(label, eff))
+    print("Efficiency partially matched for {}: {:.3f}".format(label, eff))
 print("\n")
 total_efficiencies_partially_matched_spanet = [
     efficiencies_partially_matched_spanet[i]
@@ -409,7 +418,7 @@ total_efficiencies_partially_matched_spanet = [
 
 for i in range(len(total_efficiencies_partially_matched_spanet)):
     print(
-        "Total efficiency partially matched for {}: {:.4f}".format(
+        "Total efficiency partially matched for {}: {:.3f}".format(
             list(spanet_dict.keys())[i],
             total_efficiencies_partially_matched_spanet[i],
         )
@@ -424,7 +433,7 @@ idx_true_unmatched = [idx[mask] for idx, mask in zip(idx_true, mask_0h)]
 frac_unmatched = [ak.sum(mask) / len(mask) for mask in mask_0h]
 print("\n")
 for label, frac in zip(list(true_dict.keys()), frac_unmatched):
-    print(f"Fraction of unmatched events for {label}: {frac:.4f}")
+    print(f"Fraction of unmatched events for {label}: {frac:.3f}")
 
 
 # create a LorentzVector for the jets
@@ -472,7 +481,7 @@ mask_30 = [m != -1 for m in min_idx]
 
 print("\n")
 for label, m in zip(list(true_dict.keys()), mask_30):
-    print(f"Fraction of events with DeltaR>30 for {label}: {ak.sum(m) / len(m):.4f}")
+    print(f"Fraction of events with DeltaR>30 for {label}: {ak.sum(m) / len(m):.3f}")
 
 
 comb_idx_mask30 = [
@@ -521,14 +530,14 @@ frac_fully_matched_mask30 = [
 ]
 print("\n")
 for label, frac in zip(list(true_dict.keys()), frac_fully_matched_mask30):
-    print(f"Fraction of fully matched events {label} (DeltaR>30): {frac:.4f}")
+    print(f"Fraction of fully matched events {label} (DeltaR>30): {frac:.3f}")
 efficiency_fully_matched_run2_mask30 = [
     ak.sum(corr) / len(corr) for corr in correctly_fully_matched_run2_mask30
 ]
 
 print("\n")
 for label, eff in zip(list(true_dict.keys()), efficiency_fully_matched_run2_mask30):
-    print(f"Efficiency fully matched  for Run 2 {label} (DeltaR>30): {eff:.4f}")
+    print(f"Efficiency fully matched  for Run 2 {label} (DeltaR>30): {eff:.3f}")
 
 
 total_efficiency_fully_matched_run2_mask30 = [
@@ -538,7 +547,7 @@ total_efficiency_fully_matched_run2_mask30 = [
 print("\n")
 for i in range(len(total_efficiency_fully_matched_run2_mask30)):
     print(
-        "Total efficiency fully matched for Run 2 {} (DeltaR>30): {:.4f}".format(
+        "Total efficiency fully matched for Run 2 {} (DeltaR>30): {:.3f}".format(
             list(true_dict.keys())[i],
             total_efficiency_fully_matched_run2_mask30[i],
         )
@@ -597,7 +606,7 @@ print("\n")
 for label, eff in zip(
     list(spanet_dict.keys()), efficiencies_fully_matched_spanet_mask30
 ):
-    print(f"Efficiency fully matched for {label} (DeltaR>30): {eff:.4f}")
+    print(f"Efficiency fully matched for {label} (DeltaR>30): {eff:.3f}")
 
 total_efficiencies_fully_matched_spanet_mask30 = [
     efficiencies_fully_matched_spanet_mask30[i]
@@ -606,7 +615,7 @@ total_efficiencies_fully_matched_spanet_mask30 = [
 ]
 for i in range(len(total_efficiencies_fully_matched_spanet_mask30)):
     print(
-        "Total efficiency fully matched for {} (DeltaR>30): {:.4f}".format(
+        "Total efficiency fully matched for {} (DeltaR>30): {:.3f}".format(
             list(spanet_dict.keys())[i],
             total_efficiencies_fully_matched_spanet_mask30[i],
         )
@@ -626,30 +635,32 @@ if args.klambda:
     total_efficiency_fully_matched_run2_mask30_allklambda = (
         total_efficiency_fully_matched_run2_mask30[-len(kl_values_true) :]
     )
+    first_run2_idx = len(kl_values_true) // kl_values_true.count(kl_values_true[0])
     efficiencies_fully_matched_mask30_allklambda = (
-        efficiency_fully_matched_run2_mask30_allklambda
-        + efficiencies_fully_matched_spanet_mask30_allklambda
+        efficiencies_fully_matched_spanet_mask30_allklambda
+        + efficiency_fully_matched_run2_mask30_allklambda[:first_run2_idx]
     )
     total_efficiencies_fully_matched_mask30_allklambda = (
-        total_efficiency_fully_matched_run2_mask30_allklambda
-        + total_efficiencies_fully_matched_spanet_mask30_allklambda
+        total_efficiencies_fully_matched_spanet_mask30_allklambda
+        + total_efficiency_fully_matched_run2_mask30_allklambda[:first_run2_idx]
     )
 
     plot_diff_eff_klambda(
         efficiencies_fully_matched_mask30_allklambda,
-        kl_values_true + kl_values_spanet,
-        allkl_names_true + allkl_names_spanet,
+        kl_values_spanet + kl_values_true[:first_run2_idx],
+        allkl_names_spanet + allkl_names_true[:first_run2_idx],
         "eff_fully_matched_mask30_allklambda",
         plot_dir,
     )
     plot_diff_eff_klambda(
         total_efficiencies_fully_matched_mask30_allklambda,
-        kl_values_true + kl_values_spanet,
-        allkl_names_true + allkl_names_spanet,
+        kl_values_spanet + kl_values_true[:first_run2_idx],
+        allkl_names_spanet + allkl_names_true[:first_run2_idx],
         "tot_eff_fully_matched_mask30_allklambda",
         plot_dir,
     )
 
+# raise SystemExit
 
 # Reconstruct the Higgs boson candidates with the four-vectors
 # of the jets considering the true pairings, the spanet pairings
@@ -756,22 +767,23 @@ for j in range(len(list(spanet_dict.keys()))):
 print("Plotting differential efficiencies")
 plot_diff_eff(
     mhh_bins,
-    diff_eff_run2_mask30,
-    unc_diff_eff_run2_mask30,
+    #HERE
+    diff_eff_run2_mask30 if not args.klambda else diff_eff_run2_mask30[:-len(kl_values_true)],
+    unc_diff_eff_run2_mask30    if not args.klambda else unc_diff_eff_run2_mask30[:-len(kl_values_true)],
     true_dict,
-    diff_eff_spanet_mask30,
-    unc_diff_eff_spanet_mask30,
+    diff_eff_spanet_mask30 if not args.klambda else diff_eff_spanet_mask30[:-len(kl_values_spanet)],
+    unc_diff_eff_spanet_mask30 if not args.klambda else unc_diff_eff_spanet_mask30[:-len(kl_values_spanet)],
     spanet_dict,
     plot_dir,
     "diff_eff_mask30",
 )
 plot_diff_eff(
     mhh_bins,
-    total_diff_eff_run2_mask30,
-    unc_total_diff_eff_run2_mask30,
+    total_diff_eff_run2_mask30 if not args.klambda else total_diff_eff_run2_mask30[:-len(kl_values_true)],
+    unc_total_diff_eff_run2_mask30 if not args.klambda else unc_total_diff_eff_run2_mask30[:-len(kl_values_true)],
     true_dict,
-    total_diff_eff_spanet_mask30,
-    unc_total_diff_eff_spanet_mask30,
+    total_diff_eff_spanet_mask30 if not args.klambda else total_diff_eff_spanet_mask30[:-len(kl_values_spanet)],
+    unc_total_diff_eff_spanet_mask30 if not args.klambda else unc_total_diff_eff_spanet_mask30[:-len(kl_values_spanet)],
     spanet_dict,
     plot_dir,
     "total_diff_eff_mask30",
@@ -846,8 +858,8 @@ plot_diff_eff(
     None,
     None,
     None,
-    diff_eff_spanet,
-    unc_diff_eff_spanet,
+    diff_eff_spanet if not args.klambda else diff_eff_spanet[:-len(kl_values_spanet)],
+    unc_diff_eff_spanet if not args.klambda else unc_diff_eff_spanet[:-len(kl_values_spanet)],
     spanet_dict,
     plot_dir,
     "diff_eff_spanet",
@@ -857,8 +869,8 @@ plot_diff_eff(
     None,
     None,
     None,
-    total_diff_eff_spanet,
-    unc_total_diff_eff_spanet,
+    total_diff_eff_spanet if not args.klambda else total_diff_eff_spanet[:-len(kl_values_spanet)],
+    unc_total_diff_eff_spanet if not args.klambda else unc_total_diff_eff_spanet[:-len(kl_values_spanet)],
     spanet_dict,
     plot_dir,
     "total_diff_eff_spanet",
