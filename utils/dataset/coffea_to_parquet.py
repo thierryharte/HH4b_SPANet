@@ -203,6 +203,8 @@ for sample in samples:
         )
         for dataset in datasets
     ]
+    if not kl_list:
+        kl_list = [0.0]
     print("dataset_lenght: ", dataset_lenght)
     kl_dataset = np.repeat(kl_list, dataset_lenght)
     print("kl_dataset: ", kl_dataset)
