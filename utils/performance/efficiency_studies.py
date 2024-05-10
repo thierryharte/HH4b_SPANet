@@ -81,9 +81,10 @@ else:
         # "5_jets_ATLAS_ptreg_allklambda_train": f"{spanet_dir}out_spanet_prediction_5jets_lr1e4_noevkl_300e.h5",  # "/work/mmalucch/out_hh4b/out_spanet/output_JetGood_test.h5",  # HERE
         # "5_jets_ATLAS_ptreg_allklambda_eval": f"{spanet_dir}out_spanet_prediction_SMtraining_lr1e4_evkl.h5",  # "/work/mmalucch/out_hh4b/out_spanet/output_JetGood_test.h5",  # HERE
         #
-        "5_jets_ATLAS_ptreg_allklambda_train_klinput_newkl_newCuts": f"{spanet_dir}spanet_prediction_nc_on_nc.h5",
-        # "5_jets_ATLAS_ptreg_allklambda_train_klinput_newkl_newCuts_oldCutsEval": f"{spanet_dir}.h5",
-        # "5_jets_ATLAS_ptreg_allklambda_train_klinput_newkl_oldCuts_oldCutsEval": f"{spanet_dir}.h5",
+        "5_jets_ATLAS_ptreg_allklambda_train_klinput_newkl_newCuts_newCutsEval": f"{spanet_dir}spanet_prediction_nc_on_nc_300e.h5",
+        "5_jets_ATLAS_ptreg_allklambda_train_klinput_newkl_newCuts_oldCutsEval": f"{spanet_dir}spanet_prediction_nc_on_oc_kl3p5.h5",
+        "5_jets_ATLAS_ptreg_allklambda_train_klinput_newkl_oldCuts_oldCutsEval": f"{spanet_dir}spanet_prediction_oc_on_oc_kl3p5.h5",
+        "5_jets_ATLAS_ptreg_allklambda_train_klinput_newkl_oldCuts_newCutsEval": f"{spanet_dir}spanet_prediction_oc_on_nc.h5",
         #
         # "4_jets":  f"{spanet_dir}out_0_spanet_prediction_4jets.h5",
         # "5_jets": f"{spanet_dir}out_1_spanet_prediction_5jets.h5",
@@ -133,25 +134,31 @@ else:
         "4_jets_allklambda": f"{true_dir}output_JetGood_test_allkl_new_kl_newcuts.h5", #output_JetGoodHiggs_allkl_test
         "5_jets_allklambda": f"{true_dir}output_JetGood_test_allkl_new_kl_newcuts.h5",  #output_JetGood_allkl_test
         "5_jets_allklambda_newkl_newCuts": f"{true_dir}output_JetGood_test_allkl_new_kl_newcuts.h5",  # "/work/mmalucch/out_hh4b/out_spanet/output_JetGood_test.h5",
-        # "5_jets_allklambda_newkl": f"{true_dir}.h5",  # "/work/mmalucch/out_hh4b/out_spanet/output_JetGood_test.h5",
+        "5_jets_allklambda_newkl_oldCuts": f"{true_dir}output_JetGood_test_allkl_new_kl_oldcuts.h5",  # "/work/mmalucch/out_hh4b/out_spanet/output_JetGood_test.h5",
     }
 
 
 # bin definitions
 mh_bins = [
     np.linspace(60, 190, n)
-    for n in [80, 80, 80, 40, 40, 40, 40, 40, 40, 80, 80, 80, 80]
+    for n in [80, 80, 80, 40, 40, 40, 40, 40, 40, 80, 80, 80, 80, 80, 80]
 ]
 mh_bins_peak = [
     np.linspace(100, 140, n)
-    for n in [20, 20, 20, 10, 10, 10, 10, 10, 10, 20, 20, 20, 20]
+    for n in [20, 20, 20, 10, 10, 10, 10, 10, 10, 20, 20, 20, 20, 20, 20]
 ]
 mh_bins_2d = (
     [np.linspace(50, 200, 80) for _ in range(3)]
     + [np.linspace(50, 200, 40) for _ in range(6)]
     + [np.linspace(0, 500, 50) for _ in range(2)]
-    + [np.linspace(50, 200, 80) for _ in range(2)]
+    + [np.linspace(50, 200, 80) for _ in range(4)]
 )
+
+for bins in [mh_bins, mh_bins_peak, mh_bins_2d]:
+    if len(bins) != len(list(true_dict.keys())):
+        bins += [bins[-1] for _ in range(len(list(true_dict.keys())) - len(bins))]
+
+        
 mhh_bins = np.linspace(250, 700, 10)
 
 
@@ -263,6 +270,10 @@ if args.klambda:
     mh_bins += [np.linspace(60, 190, 80) for _ in range(len(kl_values_true))]
     mh_bins_peak += [np.linspace(100, 140, 20) for _ in range(len(kl_values_true))]
     mh_bins_2d += [np.linspace(50, 200, 80) for _ in range(len(kl_values_true))]
+
+    print("mh_bins", len(mh_bins), len(mh_bins[0]))
+    print("mh_bins_peak", len(mh_bins_peak), len(mh_bins_peak[0]))
+    print("mh_bins_2d", len(mh_bins_2d), len(mh_bins_2d[0]))
 
     for i in range(len(jet_infos_separate_klambda)):
         jet_infos[i].extend(jet_infos_separate_klambda[i])
