@@ -44,6 +44,13 @@ parser.add_argument(
     action="store_true",
     help="evaluate on different klambda values",
 )
+parser.add_argument(
+    "-d",
+    "--data",
+    default=False,
+    action="store_true",
+    help="evaluate on data",
+)
 
 args = parser.parse_args()
 
@@ -54,8 +61,9 @@ if args.input_spanet_pred:
     ]
     spanet_dict = dict(zip(labels_spanet_pred, list_spanet_pred))
 else:
-    spanet_dir = "/eos/home-r/ramellar/out_prediction_files/"
-    spanet_dir = "/afs/cern.ch/user/m/mmalucch/public/out_prediction_files/"
+    # spanet_dir = "/eos/home-r/ramellar/out_prediction_files/"
+    # spanet_dir = "/afs/cern.ch/user/m/mmalucch/public/out_prediction_files/"
+    spanet_dir = "/eos/home-m/mmalucch/spanet_inputs/out_prediction_files/"
     spanet_dict = {
         # "5_jets_ATLAS_ptreg": f"{spanet_dir}out_spanet_prediction_5jets_ptreg_ATLAS.h5",  # THIS
         # "5_jets_ATLAS_ptreg_5train_klambda0": f"{spanet_dir}out_spanet_prediction_5jets_klambda0.h5",
@@ -82,9 +90,9 @@ else:
         # "5_jets_ATLAS_ptreg_allklambda_eval": f"{spanet_dir}out_spanet_prediction_SMtraining_lr1e4_evkl.h5",  # "/work/mmalucch/out_hh4b/out_spanet/output_JetGood_test.h5",  # HERE
         #
         "5_jets_ATLAS_ptreg_allklambda_train_klinput_newkl_newCuts_newCutsEval": f"{spanet_dir}spanet_prediction_nc_on_nc_300e.h5",
-        "5_jets_ATLAS_ptreg_allklambda_train_klinput_newkl_newCuts_oldCutsEval": f"{spanet_dir}spanet_prediction_nc_on_oc_kl3p5.h5",
-        "5_jets_ATLAS_ptreg_allklambda_train_klinput_newkl_oldCuts_oldCutsEval": f"{spanet_dir}spanet_prediction_oc_on_oc_kl3p5.h5",
-        "5_jets_ATLAS_ptreg_allklambda_train_klinput_newkl_oldCuts_newCutsEval": f"{spanet_dir}spanet_prediction_oc_on_nc.h5",
+        # "5_jets_ATLAS_ptreg_allklambda_train_klinput_newkl_newCuts_oldCutsEval": f"{spanet_dir}spanet_prediction_nc_on_oc_kl3p5.h5",
+        # "5_jets_ATLAS_ptreg_allklambda_train_klinput_newkl_oldCuts_oldCutsEval": f"{spanet_dir}spanet_prediction_oc_on_oc_kl3p5.h5",
+        "5_jets_ATLAS_ptreg_allklambda_train_klinput_newkl_oldCuts_newCutsEval": f"{spanet_dir}spanet_prediction_oc_kl3p5_on_nc.h5",
         #
         # "4_jets":  f"{spanet_dir}out_0_spanet_prediction_4jets.h5",
         # "5_jets": f"{spanet_dir}out_1_spanet_prediction_5jets.h5",
@@ -105,17 +113,31 @@ else:
         #
         # "4_jets_data_ATLAS_ptreg_5train": f"{spanet_dir}out_spanet_prediction_data_ev4jets_training5jet_ptreg_ATLAS.h5",
         # "4_jets_data_ATLAS_ptreg_5train": f"{spanet_dir}out_spanet_prediction_data_ev5jets_training5jet_ptreg_ATLAS.h5",
-        # "5_jets_data_ATLAS_ptreg_5train": f"{spanet_dir}out_spanet_prediction_data_ev5jets_training5jet_ptreg_ATLAS.h5",
         # "4_jets_data_ATLAS_5global_ptreg": f"{spanet_dir}out_spanet_prediction_data_4jets_5global_ptreg_ATLAS.h5",
+
+        # "5_jets_data_ATLAS_ptreg_5train": f"{spanet_dir}out_spanet_prediction_data_ev5jets_training5jet_ptreg_ATLAS.h5",
+        # "5_jets_data_ATLAS_ptreg_5train_newlr_SMtrain_oldCuts_oldCutsEval": f"{spanet_dir}spanet_prediction_sm_on_data_oc.h5",
+        # "5_jets_data_ATLAS_ptreg_5train_newlr_SMtrain_oldCuts_newCutsEval": f"{spanet_dir}spanet_prediction_sm_on_data_nc.h5",
+        # "5_jets_data_ATLAS_ptreg_5train_allklambda_klinput_oldCuts_newCutsEval": f"{spanet_dir}spanet_prediction_nc_on_data_oc.h5",
+
+        # "5_jets_data_ATLAS_ptreg_5train_allklambda_newCuts_newCutsEval": f"{spanet_dir}spanet_prediction_nc_noklinp_on_data.h5",
+        # "5_jets_data_ATLAS_ptreg_5train_allklambda_newCuts_newCutsEval_FullyMatched": f"{spanet_dir}spanet_prediction_nc_noklinp_fm_on_data.h5",
+        # "5_jets_data_ATLAS_ptreg_5train_allklambda_newCuts_oldCutsEval": f"{spanet_dir}spanet_prediction_nc_on_data_oc.h5",
     }
+    if args.data:
+        #remove non data samples
+        spanet_dict = {
+            k: v for k, v in spanet_dict.items() if "data" in k
+        }
 
 if args.input_true:
     input_true = args.input_true
     labels_true = [(f.split("_prediction_")[-1]).split(".h5")[-2] for f in input_true]
     true_dict = dict(zip(labels_true, input_true))
 else:
-    true_dir = "/eos/home-r/ramellar/out_prediction_files/true_files/"
-    true_dir = "/afs/cern.ch/user/m/mmalucch/public/out_prediction_files/true_files/"
+    # true_dir = "/eos/home-r/ramellar/out_prediction_files/true_files/"
+    # true_dir = "/afs/cern.ch/user/m/mmalucch/public/out_prediction_files/true_files/"
+    true_dir = "/eos/home-m/mmalucch/spanet_inputs/out_prediction_files/true_files/"
     true_dict = {
         "4 jets": f"{true_dir}output_JetGoodHiggs_test.h5",
         "5 jets": f"{true_dir}output_JetGood_test.h5",
@@ -131,6 +153,8 @@ else:
         "5_jets_klambda5": f"{true_dir}kl5_output_JetGood_test.h5",
         "4_jets_data": f"{spanet_dir}out_spanet_prediction_data_ev4jets_training5jet_ptreg_ATLAS.h5",
         "5_jets_data": f"{spanet_dir}out_spanet_prediction_data_ev5jets_training5jet_ptreg_ATLAS.h5",
+        "5_jets_data_oldCuts": f"{spanet_dir}spanet_prediction_sm_on_data_oc.h5",
+        "5_jets_data_newCuts": f"{spanet_dir}spanet_prediction_nc_noklinp_on_data.h5",
         "4_jets_allklambda": f"{true_dir}output_JetGood_test_allkl_new_kl_newcuts.h5", #output_JetGoodHiggs_allkl_test
         "5_jets_allklambda": f"{true_dir}output_JetGood_test_allkl_new_kl_newcuts.h5",  #output_JetGood_allkl_test
         "5_jets_allklambda_newkl_newCuts": f"{true_dir}output_JetGood_test_allkl_new_kl_newcuts.h5",  # "/work/mmalucch/out_hh4b/out_spanet/output_JetGood_test.h5",
@@ -141,24 +165,24 @@ else:
 # bin definitions
 mh_bins = [
     np.linspace(60, 190, n)
-    for n in [80, 80, 80, 40, 40, 40, 40, 40, 40, 80, 80, 80, 80, 80, 80]
+    for n in [80, 80, 80, 40, 40, 40, 40, 40, 40, 80, 80, 80, 80, 80, 80, 80]
 ]
 mh_bins_peak = [
     np.linspace(100, 140, n)
-    for n in [20, 20, 20, 10, 10, 10, 10, 10, 10, 20, 20, 20, 20, 20, 20]
+    for n in [20, 20, 20, 10, 10, 10, 10, 10, 10, 20, 20, 20, 20, 20, 20, 20]
 ]
 mh_bins_2d = (
     [np.linspace(50, 200, 80) for _ in range(3)]
     + [np.linspace(50, 200, 40) for _ in range(6)]
     + [np.linspace(0, 500, 50) for _ in range(2)]
-    + [np.linspace(50, 200, 80) for _ in range(4)]
+    + [np.linspace(50, 200, 80) for _ in range(5)]
 )
 
 for bins in [mh_bins, mh_bins_peak, mh_bins_2d]:
     if len(bins) != len(list(true_dict.keys())):
         bins += [bins[-1] for _ in range(len(list(true_dict.keys())) - len(bins))]
 
-        
+
 mhh_bins = np.linspace(250, 700, 10)
 
 
@@ -288,168 +312,168 @@ idx_spanet_pred_fully_matched = [
     idx_spanet_pred[i][mask_fully_matched[check_names(list(spanet_dict.keys())[i])]]
     for i in range(len(idx_spanet_pred))
 ]
-
-correctly_fully_matched_spanet = [
-    (
-        ak.all(
-            idx_true_fully_matched[check_names(list(spanet_dict.keys())[i])][:, 0]
-            == idx_spanet_pred_fully_matched[i][:, 0],
-            axis=1,
+if not args.data:
+    correctly_fully_matched_spanet = [
+        (
+            ak.all(
+                idx_true_fully_matched[check_names(list(spanet_dict.keys())[i])][:, 0]
+                == idx_spanet_pred_fully_matched[i][:, 0],
+                axis=1,
+            )
+            | ak.all(
+                idx_true_fully_matched[check_names(list(spanet_dict.keys())[i])][:, 0]
+                == idx_spanet_pred_fully_matched[i][:, 1],
+                axis=1,
+            )
         )
-        | ak.all(
-            idx_true_fully_matched[check_names(list(spanet_dict.keys())[i])][:, 0]
-            == idx_spanet_pred_fully_matched[i][:, 1],
-            axis=1,
+        & (
+            ak.all(
+                idx_true_fully_matched[check_names(list(spanet_dict.keys())[i])][:, 1]
+                == idx_spanet_pred_fully_matched[i][:, 0],
+                axis=1,
+            )
+            | ak.all(
+                idx_true_fully_matched[check_names(list(spanet_dict.keys())[i])][:, 1]
+                == idx_spanet_pred_fully_matched[i][:, 1],
+                axis=1,
+            )
         )
-    )
-    & (
-        ak.all(
-            idx_true_fully_matched[check_names(list(spanet_dict.keys())[i])][:, 1]
-            == idx_spanet_pred_fully_matched[i][:, 0],
-            axis=1,
-        )
-        | ak.all(
-            idx_true_fully_matched[check_names(list(spanet_dict.keys())[i])][:, 1]
-            == idx_spanet_pred_fully_matched[i][:, 1],
-            axis=1,
-        )
-    )
-    for i in range(len(idx_spanet_pred_fully_matched))
-]
-
-# compute efficiencies for fully matched events
-efficiencies_fully_matched_spanet = [
-    ak.sum(correctly_fully_matched) / len(correctly_fully_matched)
-    for correctly_fully_matched in correctly_fully_matched_spanet
-]
-print(
-    "correctly_fully_matched_spanet", [len(c) for c in correctly_fully_matched_spanet]
-)
-frac_fully_matched = [ak.sum(mask) / len(mask) for mask in mask_fully_matched]
-print("\n")
-for label, frac in zip(list(true_dict.keys()), frac_fully_matched):
-    print(f"Fraction of fully matched events for {label}: {frac:.3f}")
-
-print("\n")
-for label, eff in zip(list(spanet_dict.keys()), efficiencies_fully_matched_spanet):
-    print("Efficiency fully matched for {}: {:.3f}".format(label, eff))
-print("\n")
-
-total_efficiencies_fully_matched_spanet = [
-    efficiencies_fully_matched_spanet[i]
-    * frac_fully_matched[check_names(list(spanet_dict.keys())[i])]
-    for i in range(len(efficiencies_fully_matched_spanet))
-]
-for i in range(len(total_efficiencies_fully_matched_spanet)):
-    print(
-        "Total efficiency fully matched for {}: {:.3f}".format(
-            list(spanet_dict.keys())[i],
-            total_efficiencies_fully_matched_spanet[i],
-        )
-    )
-
-if args.klambda:
-    efficiencies_fully_matched_spanet_allklambda = efficiencies_fully_matched_spanet[
-        -len(kl_values_spanet) :
+        for i in range(len(idx_spanet_pred_fully_matched))
     ]
-    print(efficiencies_fully_matched_spanet_allklambda)
-    total_efficiencies_fully_matched_spanet_allklambda = (
-        total_efficiencies_fully_matched_spanet[-len(kl_values_spanet) :]
-    )
-    print("\n")
-    print
-    plot_diff_eff_klambda(
-        efficiencies_fully_matched_spanet_allklambda,
-        kl_values_spanet,
-        allkl_names_spanet,
-        "eff_fully_matched_allklambda",
-        plot_dir,
-    )
-    plot_diff_eff_klambda(
-        total_efficiencies_fully_matched_spanet_allklambda,
-        kl_values_spanet,
-        allkl_names_spanet,
-        "tot_eff_fully_matched_allklambda",
-        plot_dir,
-    )
 
-# do the same for partially matched events (only one higgs is matched)
-mask_1h = [ak.sum(ak.any(idx == -1, axis=-1) == 1, axis=-1) == 1 for idx in idx_true]
-idx_true_partially_matched_1h = [idx[mask] for idx, mask in zip(idx_true, mask_1h)]
-idx_spanet_pred_partially_matched_1h = [
-    idx_spanet_pred[i][mask_1h[check_names(list(spanet_dict.keys())[i])]]
-    for i in range(len(idx_spanet_pred))
-]
-
-correctly_partially_matched_spanet = [
-    (
-        ak.all(
-            idx_true_partially_matched_1h[check_names(list(spanet_dict.keys())[i])][
-                :, 0
-            ]
-            == idx_spanet_pred_partially_matched_1h[i][:, 0],
-            axis=1,
-        )
-        | ak.all(
-            idx_true_partially_matched_1h[check_names(list(spanet_dict.keys())[i])][
-                :, 0
-            ]
-            == idx_spanet_pred_partially_matched_1h[i][:, 1],
-            axis=1,
-        )
-        | ak.all(
-            idx_true_partially_matched_1h[check_names(list(spanet_dict.keys())[i])][
-                :, 1
-            ]
-            == idx_spanet_pred_partially_matched_1h[i][:, 0],
-            axis=1,
-        )
-        | ak.all(
-            idx_true_partially_matched_1h[check_names(list(spanet_dict.keys())[i])][
-                :, 1
-            ]
-            == idx_spanet_pred_partially_matched_1h[i][:, 1],
-            axis=1,
-        )
-    )
-    for i in range(len(idx_spanet_pred_partially_matched_1h))
-]
-efficiencies_partially_matched_spanet = [
-    ak.sum(correctly_partially_matched_1h) / len(correctly_partially_matched_1h)
-    for correctly_partially_matched_1h in correctly_partially_matched_spanet
-]
-frac_partially_matched_1h = [ak.sum(mask) / len(mask) for mask in mask_1h]
-print("\n")
-for label, frac in zip(list(true_dict.keys()), frac_partially_matched_1h):
-    print(f"Fraction of partially matched events for {label}: {frac:.3f}")
-print("\n")
-for label, eff in zip(list(spanet_dict.keys()), efficiencies_partially_matched_spanet):
-    print("Efficiency partially matched for {}: {:.3f}".format(label, eff))
-print("\n")
-total_efficiencies_partially_matched_spanet = [
-    efficiencies_partially_matched_spanet[i]
-    * frac_partially_matched_1h[check_names(list(spanet_dict.keys())[i])]
-    for i in range(len(efficiencies_partially_matched_spanet))
-]
-
-for i in range(len(total_efficiencies_partially_matched_spanet)):
+    # compute efficiencies for fully matched events
+    efficiencies_fully_matched_spanet = [
+        ak.sum(correctly_fully_matched) / len(correctly_fully_matched)
+        for correctly_fully_matched in correctly_fully_matched_spanet
+    ]
     print(
-        "Total efficiency partially matched for {}: {:.3f}".format(
-            list(spanet_dict.keys())[i],
-            total_efficiencies_partially_matched_spanet[i],
-        )
+        "correctly_fully_matched_spanet", [len(c) for c in correctly_fully_matched_spanet]
     )
+    frac_fully_matched = [ak.sum(mask) / len(mask) for mask in mask_fully_matched]
+    print("\n")
+    for label, frac in zip(list(true_dict.keys()), frac_fully_matched):
+        print(f"Fraction of fully matched events for {label}: {frac:.3f}")
+
+    print("\n")
+    for label, eff in zip(list(spanet_dict.keys()), efficiencies_fully_matched_spanet):
+        print("Efficiency fully matched for {}: {:.3f}".format(label, eff))
+    print("\n")
+
+    total_efficiencies_fully_matched_spanet = [
+        efficiencies_fully_matched_spanet[i]
+        * frac_fully_matched[check_names(list(spanet_dict.keys())[i])]
+        for i in range(len(efficiencies_fully_matched_spanet))
+    ]
+    for i in range(len(total_efficiencies_fully_matched_spanet)):
+        print(
+            "Total efficiency fully matched for {}: {:.3f}".format(
+                list(spanet_dict.keys())[i],
+                total_efficiencies_fully_matched_spanet[i],
+            )
+        )
+
+    if args.klambda:
+        efficiencies_fully_matched_spanet_allklambda = efficiencies_fully_matched_spanet[
+            -len(kl_values_spanet) :
+        ]
+        print(efficiencies_fully_matched_spanet_allklambda)
+        total_efficiencies_fully_matched_spanet_allklambda = (
+            total_efficiencies_fully_matched_spanet[-len(kl_values_spanet) :]
+        )
+        print("\n")
+        print
+        plot_diff_eff_klambda(
+            efficiencies_fully_matched_spanet_allklambda,
+            kl_values_spanet,
+            allkl_names_spanet,
+            "eff_fully_matched_allklambda",
+            plot_dir,
+        )
+        plot_diff_eff_klambda(
+            total_efficiencies_fully_matched_spanet_allklambda,
+            kl_values_spanet,
+            allkl_names_spanet,
+            "tot_eff_fully_matched_allklambda",
+            plot_dir,
+        )
+
+    # do the same for partially matched events (only one higgs is matched)
+    mask_1h = [ak.sum(ak.any(idx == -1, axis=-1) == 1, axis=-1) == 1 for idx in idx_true]
+    idx_true_partially_matched_1h = [idx[mask] for idx, mask in zip(idx_true, mask_1h)]
+    idx_spanet_pred_partially_matched_1h = [
+        idx_spanet_pred[i][mask_1h[check_names(list(spanet_dict.keys())[i])]]
+        for i in range(len(idx_spanet_pred))
+    ]
+
+    correctly_partially_matched_spanet = [
+        (
+            ak.all(
+                idx_true_partially_matched_1h[check_names(list(spanet_dict.keys())[i])][
+                    :, 0
+                ]
+                == idx_spanet_pred_partially_matched_1h[i][:, 0],
+                axis=1,
+            )
+            | ak.all(
+                idx_true_partially_matched_1h[check_names(list(spanet_dict.keys())[i])][
+                    :, 0
+                ]
+                == idx_spanet_pred_partially_matched_1h[i][:, 1],
+                axis=1,
+            )
+            | ak.all(
+                idx_true_partially_matched_1h[check_names(list(spanet_dict.keys())[i])][
+                    :, 1
+                ]
+                == idx_spanet_pred_partially_matched_1h[i][:, 0],
+                axis=1,
+            )
+            | ak.all(
+                idx_true_partially_matched_1h[check_names(list(spanet_dict.keys())[i])][
+                    :, 1
+                ]
+                == idx_spanet_pred_partially_matched_1h[i][:, 1],
+                axis=1,
+            )
+        )
+        for i in range(len(idx_spanet_pred_partially_matched_1h))
+    ]
+    efficiencies_partially_matched_spanet = [
+        ak.sum(correctly_partially_matched_1h) / len(correctly_partially_matched_1h)
+        for correctly_partially_matched_1h in correctly_partially_matched_spanet
+    ]
+    frac_partially_matched_1h = [ak.sum(mask) / len(mask) for mask in mask_1h]
+    print("\n")
+    for label, frac in zip(list(true_dict.keys()), frac_partially_matched_1h):
+        print(f"Fraction of partially matched events for {label}: {frac:.3f}")
+    print("\n")
+    for label, eff in zip(list(spanet_dict.keys()), efficiencies_partially_matched_spanet):
+        print("Efficiency partially matched for {}: {:.3f}".format(label, eff))
+    print("\n")
+    total_efficiencies_partially_matched_spanet = [
+        efficiencies_partially_matched_spanet[i]
+        * frac_partially_matched_1h[check_names(list(spanet_dict.keys())[i])]
+        for i in range(len(efficiencies_partially_matched_spanet))
+    ]
+
+    for i in range(len(total_efficiencies_partially_matched_spanet)):
+        print(
+            "Total efficiency partially matched for {}: {:.3f}".format(
+                list(spanet_dict.keys())[i],
+                total_efficiencies_partially_matched_spanet[i],
+            )
+        )
 
 
-# compute number of events with 0 higgs matched
-mask_0h = [ak.sum(ak.any(idx == -1, axis=-1), axis=-1) == 2 for idx in idx_true]
+    # compute number of events with 0 higgs matched
+    mask_0h = [ak.sum(ak.any(idx == -1, axis=-1), axis=-1) == 2 for idx in idx_true]
 
 
-idx_true_unmatched = [idx[mask] for idx, mask in zip(idx_true, mask_0h)]
-frac_unmatched = [ak.sum(mask) / len(mask) for mask in mask_0h]
-print("\n")
-for label, frac in zip(list(true_dict.keys()), frac_unmatched):
-    print(f"Fraction of unmatched events for {label}: {frac:.3f}")
+    idx_true_unmatched = [idx[mask] for idx, mask in zip(idx_true, mask_0h)]
+    frac_unmatched = [ak.sum(mask) / len(mask) for mask in mask_0h]
+    print("\n")
+    for label, frac in zip(list(true_dict.keys()), frac_unmatched):
+        print(f"Fraction of unmatched events for {label}: {frac:.3f}")
 
 
 # create a LorentzVector for the jets
@@ -513,64 +537,9 @@ idx_run2_pred_fully_matched_mask30 = [
     for comb, m, m_30 in zip(comb_idx_min_mask30, mask_fully_matched, mask_30)
 ]
 
-# compute efficiencies for fully matched events for Run 2 pairing
 idx_true_fully_matched_mask30 = [
     idx[m_30][m[m_30]] for idx, m, m_30 in zip(idx_true, mask_fully_matched, mask_30)
 ]
-correctly_fully_matched_run2_mask30 = [
-    (
-        ak.all(
-            i[:, 0] == i2[:, 0],
-            axis=1,
-        )
-        | ak.all(
-            i[:, 0] == i2[:, 1],
-            axis=1,
-        )
-    )
-    & (
-        ak.all(
-            i[:, 1] == i2[:, 0],
-            axis=1,
-        )
-        | ak.all(
-            i[:, 1] == i2[:, 1],
-            axis=1,
-        )
-    )
-    for i, i2 in zip(idx_true_fully_matched_mask30, idx_run2_pred_fully_matched_mask30)
-]
-
-frac_fully_matched_mask30 = [
-    ak.sum(m[m_30]) / len(m[m_30]) for m, m_30 in zip(mask_fully_matched, mask_30)
-]
-print("\n")
-for label, frac in zip(list(true_dict.keys()), frac_fully_matched_mask30):
-    print(f"Fraction of fully matched events {label} (DeltaR>30): {frac:.3f}")
-efficiency_fully_matched_run2_mask30 = [
-    ak.sum(corr) / len(corr) for corr in correctly_fully_matched_run2_mask30
-]
-
-print("\n")
-for label, eff in zip(list(true_dict.keys()), efficiency_fully_matched_run2_mask30):
-    print(f"Efficiency fully matched  for Run 2 {label} (DeltaR>30): {eff:.3f}")
-
-
-total_efficiency_fully_matched_run2_mask30 = [
-    efficiency_fully_matched_run2_mask30[i] * frac_fully_matched_mask30[i]
-    for i in range(len(efficiency_fully_matched_run2_mask30))
-]
-print("\n")
-for i in range(len(total_efficiency_fully_matched_run2_mask30)):
-    print(
-        "Total efficiency fully matched for Run 2 {} (DeltaR>30): {:.3f}".format(
-            list(true_dict.keys())[i],
-            total_efficiency_fully_matched_run2_mask30[i],
-        )
-    )
-
-
-# compute efficiencies for fully matched events for spanet
 idx_spanet_pred_fully_matched_mask30 = [
     idx_spanet_pred[i][mask_30[check_names(list(spanet_dict.keys())[i])]][
         mask_fully_matched[check_names(list(spanet_dict.keys())[i])][
@@ -579,104 +548,159 @@ idx_spanet_pred_fully_matched_mask30 = [
     ]
     for i in range(len(idx_spanet_pred))
 ]
-correctly_fully_matched_spanet_mask30 = [
-    (
-        ak.all(
-            idx_true_fully_matched_mask30[check_names(list(spanet_dict.keys())[i])][
-                :, 0
-            ]
-            == idx_spanet_pred_fully_matched_mask30[i][:, 0],
-            axis=1,
+if not args.data:
+    # compute efficiencies for fully matched events for Run 2 pairing
+    correctly_fully_matched_run2_mask30 = [
+        (
+            ak.all(
+                i[:, 0] == i2[:, 0],
+                axis=1,
+            )
+            | ak.all(
+                i[:, 0] == i2[:, 1],
+                axis=1,
+            )
         )
-        | ak.all(
-            idx_true_fully_matched_mask30[check_names(list(spanet_dict.keys())[i])][
-                :, 0
-            ]
-            == idx_spanet_pred_fully_matched_mask30[i][:, 1],
-            axis=1,
+        & (
+            ak.all(
+                i[:, 1] == i2[:, 0],
+                axis=1,
+            )
+            | ak.all(
+                i[:, 1] == i2[:, 1],
+                axis=1,
+            )
         )
-    )
-    & (
-        ak.all(
-            idx_true_fully_matched_mask30[check_names(list(spanet_dict.keys())[i])][
-                :, 1
-            ]
-            == idx_spanet_pred_fully_matched_mask30[i][:, 0],
-            axis=1,
-        )
-        | ak.all(
-            idx_true_fully_matched_mask30[check_names(list(spanet_dict.keys())[i])][
-                :, 1
-            ]
-            == idx_spanet_pred_fully_matched_mask30[i][:, 1],
-            axis=1,
-        )
-    )
-    for i in range(len(idx_spanet_pred_fully_matched_mask30))
-]
-efficiencies_fully_matched_spanet_mask30 = [
-    ak.sum(correctly_fully_matched) / len(correctly_fully_matched)
-    for correctly_fully_matched in correctly_fully_matched_spanet_mask30
-]
-print("\n")
-for label, eff in zip(
-    list(spanet_dict.keys()), efficiencies_fully_matched_spanet_mask30
-):
-    print(f"Efficiency fully matched for {label} (DeltaR>30): {eff:.3f}")
+        for i, i2 in zip(idx_true_fully_matched_mask30, idx_run2_pred_fully_matched_mask30)
+    ]
 
-total_efficiencies_fully_matched_spanet_mask30 = [
-    efficiencies_fully_matched_spanet_mask30[i]
-    * frac_fully_matched_mask30[check_names(list(spanet_dict.keys())[i])]
-    for i in range(len(efficiencies_fully_matched_spanet_mask30))
-]
-for i in range(len(total_efficiencies_fully_matched_spanet_mask30)):
-    print(
-        "Total efficiency fully matched for {} (DeltaR>30): {:.3f}".format(
-            list(spanet_dict.keys())[i],
-            total_efficiencies_fully_matched_spanet_mask30[i],
-        )
-    )
+    frac_fully_matched_mask30 = [
+        ak.sum(m[m_30]) / len(m[m_30]) for m, m_30 in zip(mask_fully_matched, mask_30)
+    ]
+    print("\n")
+    for label, frac in zip(list(true_dict.keys()), frac_fully_matched_mask30):
+        print(f"Fraction of fully matched events {label} (DeltaR>30): {frac:.3f}")
+    efficiency_fully_matched_run2_mask30 = [
+        ak.sum(corr) / len(corr) for corr in correctly_fully_matched_run2_mask30
+    ]
+
+    print("\n")
+    for label, eff in zip(list(true_dict.keys()), efficiency_fully_matched_run2_mask30):
+        print(f"Efficiency fully matched  for Run 2 {label} (DeltaR>30): {eff:.3f}")
 
 
-if args.klambda:
-    efficiencies_fully_matched_spanet_mask30_allklambda = (
-        efficiencies_fully_matched_spanet_mask30[-len(kl_values_spanet) :]
-    )
-    total_efficiencies_fully_matched_spanet_mask30_allklambda = (
-        total_efficiencies_fully_matched_spanet_mask30[-len(kl_values_spanet) :]
-    )
-    efficiency_fully_matched_run2_mask30_allklambda = (
-        efficiency_fully_matched_run2_mask30[-len(kl_values_true) :]
-    )
-    total_efficiency_fully_matched_run2_mask30_allklambda = (
-        total_efficiency_fully_matched_run2_mask30[-len(kl_values_true) :]
-    )
-    first_run2_idx = len(kl_values_true) // kl_values_true.count(kl_values_true[0])
-    efficiencies_fully_matched_mask30_allklambda = (
-        efficiencies_fully_matched_spanet_mask30_allklambda
-        + efficiency_fully_matched_run2_mask30_allklambda[:first_run2_idx]
-    )
-    total_efficiencies_fully_matched_mask30_allklambda = (
-        total_efficiencies_fully_matched_spanet_mask30_allklambda
-        + total_efficiency_fully_matched_run2_mask30_allklambda[:first_run2_idx]
-    )
+    total_efficiency_fully_matched_run2_mask30 = [
+        efficiency_fully_matched_run2_mask30[i] * frac_fully_matched_mask30[i]
+        for i in range(len(efficiency_fully_matched_run2_mask30))
+    ]
+    print("\n")
+    for i in range(len(total_efficiency_fully_matched_run2_mask30)):
+        print(
+            "Total efficiency fully matched for Run 2 {} (DeltaR>30): {:.3f}".format(
+                list(true_dict.keys())[i],
+                total_efficiency_fully_matched_run2_mask30[i],
+            )
+        )
 
-    plot_diff_eff_klambda(
-        efficiencies_fully_matched_mask30_allklambda,
-        kl_values_spanet + kl_values_true[:first_run2_idx],
-        allkl_names_spanet + allkl_names_true[:first_run2_idx],
-        "eff_fully_matched_mask30_allklambda",
-        plot_dir,
-    )
-    plot_diff_eff_klambda(
-        total_efficiencies_fully_matched_mask30_allklambda,
-        kl_values_spanet + kl_values_true[:first_run2_idx],
-        allkl_names_spanet + allkl_names_true[:first_run2_idx],
-        "tot_eff_fully_matched_mask30_allklambda",
-        plot_dir,
-    )
 
-# raise SystemExit
+    # compute efficiencies for fully matched events for spanet
+    correctly_fully_matched_spanet_mask30 = [
+        (
+            ak.all(
+                idx_true_fully_matched_mask30[check_names(list(spanet_dict.keys())[i])][
+                    :, 0
+                ]
+                == idx_spanet_pred_fully_matched_mask30[i][:, 0],
+                axis=1,
+            )
+            | ak.all(
+                idx_true_fully_matched_mask30[check_names(list(spanet_dict.keys())[i])][
+                    :, 0
+                ]
+                == idx_spanet_pred_fully_matched_mask30[i][:, 1],
+                axis=1,
+            )
+        )
+        & (
+            ak.all(
+                idx_true_fully_matched_mask30[check_names(list(spanet_dict.keys())[i])][
+                    :, 1
+                ]
+                == idx_spanet_pred_fully_matched_mask30[i][:, 0],
+                axis=1,
+            )
+            | ak.all(
+                idx_true_fully_matched_mask30[check_names(list(spanet_dict.keys())[i])][
+                    :, 1
+                ]
+                == idx_spanet_pred_fully_matched_mask30[i][:, 1],
+                axis=1,
+            )
+        )
+        for i in range(len(idx_spanet_pred_fully_matched_mask30))
+    ]
+    efficiencies_fully_matched_spanet_mask30 = [
+        ak.sum(correctly_fully_matched) / len(correctly_fully_matched)
+        for correctly_fully_matched in correctly_fully_matched_spanet_mask30
+    ]
+    print("\n")
+    for label, eff in zip(
+        list(spanet_dict.keys()), efficiencies_fully_matched_spanet_mask30
+    ):
+        print(f"Efficiency fully matched for {label} (DeltaR>30): {eff:.3f}")
+
+    total_efficiencies_fully_matched_spanet_mask30 = [
+        efficiencies_fully_matched_spanet_mask30[i]
+        * frac_fully_matched_mask30[check_names(list(spanet_dict.keys())[i])]
+        for i in range(len(efficiencies_fully_matched_spanet_mask30))
+    ]
+    for i in range(len(total_efficiencies_fully_matched_spanet_mask30)):
+        print(
+            "Total efficiency fully matched for {} (DeltaR>30): {:.3f}".format(
+                list(spanet_dict.keys())[i],
+                total_efficiencies_fully_matched_spanet_mask30[i],
+            )
+        )
+
+
+    if args.klambda:
+        efficiencies_fully_matched_spanet_mask30_allklambda = (
+            efficiencies_fully_matched_spanet_mask30[-len(kl_values_spanet) :]
+        )
+        total_efficiencies_fully_matched_spanet_mask30_allklambda = (
+            total_efficiencies_fully_matched_spanet_mask30[-len(kl_values_spanet) :]
+        )
+        efficiency_fully_matched_run2_mask30_allklambda = (
+            efficiency_fully_matched_run2_mask30[-len(kl_values_true) :]
+        )
+        total_efficiency_fully_matched_run2_mask30_allklambda = (
+            total_efficiency_fully_matched_run2_mask30[-len(kl_values_true) :]
+        )
+        first_run2_idx = len(kl_values_true) // kl_values_true.count(kl_values_true[0]) * (-2) # HERE
+        efficiencies_fully_matched_mask30_allklambda = (
+            efficiencies_fully_matched_spanet_mask30_allklambda
+            + efficiency_fully_matched_run2_mask30_allklambda[first_run2_idx:]
+        )
+        total_efficiencies_fully_matched_mask30_allklambda = (
+            total_efficiencies_fully_matched_spanet_mask30_allklambda
+            + total_efficiency_fully_matched_run2_mask30_allklambda[first_run2_idx:]
+        )
+
+        plot_diff_eff_klambda(
+            efficiencies_fully_matched_mask30_allklambda,
+            kl_values_spanet + kl_values_true[first_run2_idx:],
+            allkl_names_spanet + allkl_names_true[first_run2_idx:],
+            "eff_fully_matched_mask30_allklambda",
+            plot_dir,
+        )
+        plot_diff_eff_klambda(
+            total_efficiencies_fully_matched_mask30_allklambda,
+            kl_values_spanet + kl_values_true[first_run2_idx:],
+            allkl_names_spanet + allkl_names_true[first_run2_idx:],
+            "tot_eff_fully_matched_mask30_allklambda",
+            plot_dir,
+        )
+
 
 # Reconstruct the Higgs boson candidates with the four-vectors
 # of the jets considering the true pairings, the spanet pairings
@@ -693,117 +717,116 @@ true_hh_fully_matched_mask30 = [
     for i in range(len(true_higgs_fully_matched_mask30))
 ]
 
+if not args.data:
+    # Differential efficiency
+    # Mask 30
+    diff_eff_run2_mask30 = []
+    unc_diff_eff_run2_mask30 = []
+    total_diff_eff_run2_mask30 = []
+    unc_total_diff_eff_run2_mask30 = []
+    diff_eff_spanet_mask30 = []
+    unc_diff_eff_spanet_mask30 = []
+    total_diff_eff_spanet_mask30 = []
+    unc_total_diff_eff_spanet_mask30 = []
 
-# Differential efficiency
+    for j in range(len(list(true_dict.keys()))):
+        diff_eff_run2_mask30.append([])
+        unc_diff_eff_run2_mask30.append([])
+        total_diff_eff_run2_mask30.append([])
+        unc_total_diff_eff_run2_mask30.append([])
+        for i in range(1, len(mhh_bins)):
+            mask = (true_hh_fully_matched_mask30[j].mass > mhh_bins[i - 1]) & (
+                true_hh_fully_matched_mask30[j].mass < mhh_bins[i]
+            )
+            eff_run2 = ak.sum(correctly_fully_matched_run2_mask30[j][mask]) / ak.count(
+                correctly_fully_matched_run2_mask30[j][mask]
+            )
+            unc_eff_run2 = sqrt(
+                eff_run2
+                * (1 - eff_run2)
+                / ak.count(correctly_fully_matched_run2_mask30[j][mask])
+            )
+            frac_fully_matched = ak.sum(mask_fully_matched[j][mask_30[j]][mask]) / len(
+                mask_fully_matched[j][mask_30[j]][mask]
+            )
+            total_eff_run2 = eff_run2 * frac_fully_matched
+            unc_total_eff_run2 = sqrt(
+                (total_eff_run2 * (1 - total_eff_run2))
+                / len(mask_fully_matched[j][mask_30[j]][mask])
+            )
+            diff_eff_run2_mask30[j].append(eff_run2)
+            unc_diff_eff_run2_mask30[j].append(unc_eff_run2)
+            total_diff_eff_run2_mask30[j].append(total_eff_run2)
+            unc_total_diff_eff_run2_mask30[j].append(unc_total_eff_run2)
 
-# Mask 30
-diff_eff_run2_mask30 = []
-unc_diff_eff_run2_mask30 = []
-total_diff_eff_run2_mask30 = []
-unc_total_diff_eff_run2_mask30 = []
-diff_eff_spanet_mask30 = []
-unc_diff_eff_spanet_mask30 = []
-total_diff_eff_spanet_mask30 = []
-unc_total_diff_eff_spanet_mask30 = []
-
-for j in range(len(list(true_dict.keys()))):
-    diff_eff_run2_mask30.append([])
-    unc_diff_eff_run2_mask30.append([])
-    total_diff_eff_run2_mask30.append([])
-    unc_total_diff_eff_run2_mask30.append([])
-    for i in range(1, len(mhh_bins)):
-        mask = (true_hh_fully_matched_mask30[j].mass > mhh_bins[i - 1]) & (
-            true_hh_fully_matched_mask30[j].mass < mhh_bins[i]
-        )
-        eff_run2 = ak.sum(correctly_fully_matched_run2_mask30[j][mask]) / ak.count(
-            correctly_fully_matched_run2_mask30[j][mask]
-        )
-        unc_eff_run2 = sqrt(
-            eff_run2
-            * (1 - eff_run2)
-            / ak.count(correctly_fully_matched_run2_mask30[j][mask])
-        )
-        frac_fully_matched = ak.sum(mask_fully_matched[j][mask_30[j]][mask]) / len(
-            mask_fully_matched[j][mask_30[j]][mask]
-        )
-        total_eff_run2 = eff_run2 * frac_fully_matched
-        unc_total_eff_run2 = sqrt(
-            (total_eff_run2 * (1 - total_eff_run2))
-            / len(mask_fully_matched[j][mask_30[j]][mask])
-        )
-        diff_eff_run2_mask30[j].append(eff_run2)
-        unc_diff_eff_run2_mask30[j].append(unc_eff_run2)
-        total_diff_eff_run2_mask30[j].append(total_eff_run2)
-        unc_total_diff_eff_run2_mask30[j].append(unc_total_eff_run2)
-
-for j in range(len(list(spanet_dict.keys()))):
-    diff_eff_spanet_mask30.append([])
-    unc_diff_eff_spanet_mask30.append([])
-    total_diff_eff_spanet_mask30.append([])
-    unc_total_diff_eff_spanet_mask30.append([])
-    for i in range(1, len(mhh_bins)):
-        mask = (
-            true_hh_fully_matched_mask30[check_names(list(spanet_dict.keys())[j])].mass
-            > mhh_bins[i - 1]
-        ) & (
-            true_hh_fully_matched_mask30[check_names(list(spanet_dict.keys())[j])].mass
-            < mhh_bins[i]
-        )
-        eff_spanet = ak.sum(correctly_fully_matched_spanet_mask30[j][mask]) / ak.count(
-            correctly_fully_matched_spanet_mask30[j][mask]
-        )
-        unc_eff_spanet = sqrt(
-            eff_spanet
-            * (1 - eff_spanet)
-            / ak.count(correctly_fully_matched_spanet_mask30[j][mask])
-        )
-        frac_fully_matched = ak.sum(
-            mask_fully_matched[check_names(list(spanet_dict.keys())[j])][
-                mask_30[check_names(list(spanet_dict.keys())[j])]
-            ][mask]
-        ) / len(
-            mask_fully_matched[check_names(list(spanet_dict.keys())[j])][
-                mask_30[check_names(list(spanet_dict.keys())[j])]
-            ][mask]
-        )
-        total_eff_spanet = eff_spanet * frac_fully_matched
-        unc_total_eff_spanet = sqrt(
-            (total_eff_spanet * (1 - total_eff_spanet))
-            / len(
+    for j in range(len(list(spanet_dict.keys()))):
+        diff_eff_spanet_mask30.append([])
+        unc_diff_eff_spanet_mask30.append([])
+        total_diff_eff_spanet_mask30.append([])
+        unc_total_diff_eff_spanet_mask30.append([])
+        for i in range(1, len(mhh_bins)):
+            mask = (
+                true_hh_fully_matched_mask30[check_names(list(spanet_dict.keys())[j])].mass
+                > mhh_bins[i - 1]
+            ) & (
+                true_hh_fully_matched_mask30[check_names(list(spanet_dict.keys())[j])].mass
+                < mhh_bins[i]
+            )
+            eff_spanet = ak.sum(correctly_fully_matched_spanet_mask30[j][mask]) / ak.count(
+                correctly_fully_matched_spanet_mask30[j][mask]
+            )
+            unc_eff_spanet = sqrt(
+                eff_spanet
+                * (1 - eff_spanet)
+                / ak.count(correctly_fully_matched_spanet_mask30[j][mask])
+            )
+            frac_fully_matched = ak.sum(
+                mask_fully_matched[check_names(list(spanet_dict.keys())[j])][
+                    mask_30[check_names(list(spanet_dict.keys())[j])]
+                ][mask]
+            ) / len(
                 mask_fully_matched[check_names(list(spanet_dict.keys())[j])][
                     mask_30[check_names(list(spanet_dict.keys())[j])]
                 ][mask]
             )
-        )
-        diff_eff_spanet_mask30[j].append(eff_spanet)
-        unc_diff_eff_spanet_mask30[j].append(unc_eff_spanet)
-        total_diff_eff_spanet_mask30[j].append(total_eff_spanet)
-        unc_total_diff_eff_spanet_mask30[j].append(unc_total_eff_spanet)
+            total_eff_spanet = eff_spanet * frac_fully_matched
+            unc_total_eff_spanet = sqrt(
+                (total_eff_spanet * (1 - total_eff_spanet))
+                / len(
+                    mask_fully_matched[check_names(list(spanet_dict.keys())[j])][
+                        mask_30[check_names(list(spanet_dict.keys())[j])]
+                    ][mask]
+                )
+            )
+            diff_eff_spanet_mask30[j].append(eff_spanet)
+            unc_diff_eff_spanet_mask30[j].append(unc_eff_spanet)
+            total_diff_eff_spanet_mask30[j].append(total_eff_spanet)
+            unc_total_diff_eff_spanet_mask30[j].append(unc_total_eff_spanet)
 
-print("Plotting differential efficiencies")
-plot_diff_eff(
-    mhh_bins,
-    #HERE
-    diff_eff_run2_mask30 if not args.klambda else diff_eff_run2_mask30[:-len(kl_values_true)],
-    unc_diff_eff_run2_mask30    if not args.klambda else unc_diff_eff_run2_mask30[:-len(kl_values_true)],
-    true_dict,
-    diff_eff_spanet_mask30 if not args.klambda else diff_eff_spanet_mask30[:-len(kl_values_spanet)],
-    unc_diff_eff_spanet_mask30 if not args.klambda else unc_diff_eff_spanet_mask30[:-len(kl_values_spanet)],
-    spanet_dict,
-    plot_dir,
-    "diff_eff_mask30",
-)
-plot_diff_eff(
-    mhh_bins,
-    total_diff_eff_run2_mask30 if not args.klambda else total_diff_eff_run2_mask30[:-len(kl_values_true)],
-    unc_total_diff_eff_run2_mask30 if not args.klambda else unc_total_diff_eff_run2_mask30[:-len(kl_values_true)],
-    true_dict,
-    total_diff_eff_spanet_mask30 if not args.klambda else total_diff_eff_spanet_mask30[:-len(kl_values_spanet)],
-    unc_total_diff_eff_spanet_mask30 if not args.klambda else unc_total_diff_eff_spanet_mask30[:-len(kl_values_spanet)],
-    spanet_dict,
-    plot_dir,
-    "total_diff_eff_mask30",
-)
+    print("Plotting differential efficiencies")
+    plot_diff_eff(
+        mhh_bins,
+        #HERE
+        diff_eff_run2_mask30 if not args.klambda else diff_eff_run2_mask30[:-len(kl_values_true)],
+        unc_diff_eff_run2_mask30    if not args.klambda else unc_diff_eff_run2_mask30[:-len(kl_values_true)],
+        true_dict,
+        diff_eff_spanet_mask30 if not args.klambda else diff_eff_spanet_mask30[:-len(kl_values_spanet)],
+        unc_diff_eff_spanet_mask30 if not args.klambda else unc_diff_eff_spanet_mask30[:-len(kl_values_spanet)],
+        spanet_dict,
+        plot_dir,
+        "diff_eff_mask30",
+    )
+    plot_diff_eff(
+        mhh_bins,
+        total_diff_eff_run2_mask30 if not args.klambda else total_diff_eff_run2_mask30[:-len(kl_values_true)],
+        unc_total_diff_eff_run2_mask30 if not args.klambda else unc_total_diff_eff_run2_mask30[:-len(kl_values_true)],
+        true_dict,
+        total_diff_eff_spanet_mask30 if not args.klambda else total_diff_eff_spanet_mask30[:-len(kl_values_spanet)],
+        unc_total_diff_eff_spanet_mask30 if not args.klambda else unc_total_diff_eff_spanet_mask30[:-len(kl_values_spanet)],
+        spanet_dict,
+        plot_dir,
+        "total_diff_eff_mask30",
+    )
 
 
 # All events
@@ -815,91 +838,90 @@ true_higgs_fully_matched = [
     )
     for i in range(len(jet))
 ]
-
-print("Plotting true higgs")
-plot_true_higgs(true_higgs_fully_matched, mh_bins, 1, plot_dir)
-plot_true_higgs(true_higgs_fully_matched, mh_bins, 2, plot_dir)
-
-
 true_hh_fully_matched = [
     true_higgs_fully_matched[i][:, 0] + true_higgs_fully_matched[i][:, 1]
     for i in range(len(true_higgs_fully_matched))
 ]
+if not args.data:
+
+    print("Plotting true higgs")
+    plot_true_higgs(true_higgs_fully_matched, mh_bins, 1, plot_dir)
+    plot_true_higgs(true_higgs_fully_matched, mh_bins, 2, plot_dir)
+
+    diff_eff_spanet = []
+    unc_diff_eff_spanet = []
+    total_diff_eff_spanet = []
+    unc_total_diff_eff_spanet = []
 
 
-diff_eff_spanet = []
-unc_diff_eff_spanet = []
-total_diff_eff_spanet = []
-unc_total_diff_eff_spanet = []
+    for j in range(len(list(spanet_dict.keys()))):
+        diff_eff_spanet.append([])
+        unc_diff_eff_spanet.append([])
+        total_diff_eff_spanet.append([])
+        unc_total_diff_eff_spanet.append([])
+        for i in range(1, len(mhh_bins)):
+            mask = (
+                true_hh_fully_matched[check_names(list(spanet_dict.keys())[j])].mass
+                > mhh_bins[i - 1]
+            ) & (
+                true_hh_fully_matched[check_names(list(spanet_dict.keys())[j])].mass
+                < mhh_bins[i]
+            )
+            eff_spanet = ak.sum(correctly_fully_matched_spanet[j][mask]) / ak.count(
+                correctly_fully_matched_spanet[j][mask]
+            )
+            unc_eff_spanet = sqrt(
+                eff_spanet
+                * (1 - eff_spanet)
+                / ak.count(correctly_fully_matched_spanet[j][mask])
+            )
+            frac_fully_matched = ak.sum(
+                mask_fully_matched[check_names(list(spanet_dict.keys())[j])][mask]
+            ) / len(mask_fully_matched[check_names(list(spanet_dict.keys())[j])][mask])
+
+            total_eff_spanet = eff_spanet * frac_fully_matched
+            unc_total_eff_spanet = sqrt(
+                (total_eff_spanet * (1 - total_eff_spanet))
+                / len(mask_fully_matched[check_names(list(spanet_dict.keys())[j])][mask])
+            )
+            diff_eff_spanet[j].append(eff_spanet)
+            unc_diff_eff_spanet[j].append(unc_eff_spanet)
+            total_diff_eff_spanet[j].append(total_eff_spanet)
+            unc_total_diff_eff_spanet[j].append(unc_total_eff_spanet)
+
+    print("Plotting differential efficiencies")
+    plot_diff_eff(
+        mhh_bins,
+        None,
+        None,
+        None,
+        diff_eff_spanet if not args.klambda else diff_eff_spanet[:-len(kl_values_spanet)],
+        unc_diff_eff_spanet if not args.klambda else unc_diff_eff_spanet[:-len(kl_values_spanet)],
+        spanet_dict,
+        plot_dir,
+        "diff_eff_spanet",
+    )
+    plot_diff_eff(
+        mhh_bins,
+        None,
+        None,
+        None,
+        total_diff_eff_spanet if not args.klambda else total_diff_eff_spanet[:-len(kl_values_spanet)],
+        unc_total_diff_eff_spanet if not args.klambda else unc_total_diff_eff_spanet[:-len(kl_values_spanet)],
+        spanet_dict,
+        plot_dir,
+        "total_diff_eff_spanet",
+    )
 
 
-for j in range(len(list(spanet_dict.keys()))):
-    diff_eff_spanet.append([])
-    unc_diff_eff_spanet.append([])
-    total_diff_eff_spanet.append([])
-    unc_total_diff_eff_spanet.append([])
-    for i in range(1, len(mhh_bins)):
-        mask = (
-            true_hh_fully_matched[check_names(list(spanet_dict.keys())[j])].mass
-            > mhh_bins[i - 1]
-        ) & (
-            true_hh_fully_matched[check_names(list(spanet_dict.keys())[j])].mass
-            < mhh_bins[i]
-        )
-        eff_spanet = ak.sum(correctly_fully_matched_spanet[j][mask]) / ak.count(
-            correctly_fully_matched_spanet[j][mask]
-        )
-        unc_eff_spanet = sqrt(
-            eff_spanet
-            * (1 - eff_spanet)
-            / ak.count(correctly_fully_matched_spanet[j][mask])
-        )
-        frac_fully_matched = ak.sum(
-            mask_fully_matched[check_names(list(spanet_dict.keys())[j])][mask]
-        ) / len(mask_fully_matched[check_names(list(spanet_dict.keys())[j])][mask])
+    print("Plotting mhh")
+    plot_mhh(
+        mhh_bins,
+        true_hh_fully_matched[0].mass,
+        plot_dir,
+        "mhh_fully_matched",
+    )
 
-        total_eff_spanet = eff_spanet * frac_fully_matched
-        unc_total_eff_spanet = sqrt(
-            (total_eff_spanet * (1 - total_eff_spanet))
-            / len(mask_fully_matched[check_names(list(spanet_dict.keys())[j])][mask])
-        )
-        diff_eff_spanet[j].append(eff_spanet)
-        unc_diff_eff_spanet[j].append(unc_eff_spanet)
-        total_diff_eff_spanet[j].append(total_eff_spanet)
-        unc_total_diff_eff_spanet[j].append(unc_total_eff_spanet)
-
-print("Plotting differential efficiencies")
-plot_diff_eff(
-    mhh_bins,
-    None,
-    None,
-    None,
-    diff_eff_spanet if not args.klambda else diff_eff_spanet[:-len(kl_values_spanet)],
-    unc_diff_eff_spanet if not args.klambda else unc_diff_eff_spanet[:-len(kl_values_spanet)],
-    spanet_dict,
-    plot_dir,
-    "diff_eff_spanet",
-)
-plot_diff_eff(
-    mhh_bins,
-    None,
-    None,
-    None,
-    total_diff_eff_spanet if not args.klambda else total_diff_eff_spanet[:-len(kl_values_spanet)],
-    unc_total_diff_eff_spanet if not args.klambda else unc_total_diff_eff_spanet[:-len(kl_values_spanet)],
-    spanet_dict,
-    plot_dir,
-    "total_diff_eff_spanet",
-)
-
-
-print("Plotting mhh")
-plot_mhh(
-    mhh_bins,
-    true_hh_fully_matched[0].mass,
-    plot_dir,
-    "mhh_fully_matched",
-)
 # Reconstruction of the Higgs boson candidates with the predicted pairings
 
 spanet_higgs_fully_matched_mask30 = [

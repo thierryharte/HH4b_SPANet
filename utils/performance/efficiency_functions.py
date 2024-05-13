@@ -27,7 +27,7 @@ names_dict = {
     "5_jets_ATLAS_ptreg_allklambda_train_klinput_newkl_newCuts": r"SPANet Lite 5 jets new $k_{\lambda}$ ($k_{\lambda}$ inputs)",
     "5_jets_ATLAS_ptreg_allklambda_train": r"SPANet Lite 5 jets all $k_{\lambda}$",
     "5_jets_ATLAS_ptreg_allklambda_eval": "SPANet Lite 5 jets SM",
-    "4_jets_allklambda": "Run 2",
+    # "4_jets_allklambda": "Run 2",
     "eff_fully_matched_allklambda": "Pairing Efficiency",
     "tot_eff_fully_matched_allklambda": "Total Pairing Efficiency",
     "eff_fully_matched_mask30_allklambda": r"Pairing Efficiency ($\Delta D_{HH} > 30$ GeV)",
@@ -48,32 +48,36 @@ def check_names(name):
         return 7
     elif "klambda5" in name and "5_jets" in name:
         return 8
-    elif "allklambda" in name and "5_jets" in name and "newCutsEval" in name and "newkl" in name:
-        for kl in k_lambda:
-            if f"{kl}" in name:
-                return 15 + k_lambda.index(kl)+ len(k_lambda)*2
-        return 13
-    elif "allklambda" in name and "5_jets" in name and "oldCutsEval" in name and "newkl" in name:
-        for kl in k_lambda:
-            if f"{kl}" in name:
-                return 15 + k_lambda.index(kl)+ len(k_lambda)*3
-        return 14
-    elif "allklambda" in name and "4_jets" in name:
-        for kl in k_lambda:
-            if f"{kl}" in name:
-                return 15 + k_lambda.index(kl)
+    elif "5_jets_data" in name and "oldCutsEval" in name:
         return 11
-    elif "allklambda" in name and "5_jets" in name:
-        for kl in k_lambda:
-            if f"{kl}" in name:
-                return 15 + k_lambda.index(kl) + len(k_lambda)
+    elif "5_jets_data" in name and "newCutsEval" in name:
         return 12
-    elif "5_jets_btag_presel" in name:
-        return 2
     elif "4_jets_data" in name:
         return 9
     elif "5_jets_data" in name:
         return 10
+    elif "allklambda" in name and "5_jets" in name and "newCutsEval" in name and "newkl" in name:
+        for kl in k_lambda:
+            if f"{kl}" in name:
+                return 17 + k_lambda.index(kl)+ len(k_lambda)*2
+        return 15
+    elif "allklambda" in name and "5_jets" in name and "oldCutsEval" in name and "newkl" in name:
+        for kl in k_lambda:
+            if f"{kl}" in name:
+                return 17 + k_lambda.index(kl)+ len(k_lambda)*3
+        return 16
+    elif "allklambda" in name and "4_jets" in name:
+        for kl in k_lambda:
+            if f"{kl}" in name:
+                return 17 + k_lambda.index(kl)
+        return 13
+    elif "allklambda" in name and "5_jets" in name:
+        for kl in k_lambda:
+            if f"{kl}" in name:
+                return 17 + k_lambda.index(kl) + len(k_lambda)
+        return 14
+    elif "5_jets_btag_presel" in name:
+        return 2
     elif "4_jets" in name:
         return 0
     elif "5_jets" in name:
@@ -216,7 +220,7 @@ def plot_histos_1d(
             ax.hist(
                 run2[which_run2],
                 bins[which_run2],
-                label=f"Run 2",
+                label=f"Run 2 ({true_labels[which_run2]})",
                 histtype="step",
                 linewidth=1,
                 density=True,
@@ -286,7 +290,7 @@ def plot_histos_1d(
                     yerr=residual_run2_err[which_run2],
                     marker=".",
                     # markersize=1,
-                    label=f"Run 2 {true_labels[check_names(label)]}",
+                    label=f"Run 2 ({true_labels[which_run2]})",
                     color="red",
                     linestyle="None",
                 )
