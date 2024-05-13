@@ -24,6 +24,7 @@ names_dict = {
     "4_jets_data_ATLAS_ptreg_5train": "SPANet Lite 5 jets (4 jets eval)",
     "4_jets_data_ATLAS_5global_ptreg": "SPANet Lite 4 jets",
     "5_jets_ATLAS_ptreg_allklambda_train_klinput": r"SPANet Lite 5 jets all $k_{\lambda}$ ($k_{\lambda}$ inputs)",
+    "5_jets_ATLAS_ptreg_allklambda_train_klinput_newkl_newCuts": r"SPANet Lite 5 jets new $k_{\lambda}$ ($k_{\lambda}$ inputs)",
     "5_jets_ATLAS_ptreg_allklambda_train": r"SPANet Lite 5 jets all $k_{\lambda}$",
     "5_jets_ATLAS_ptreg_allklambda_eval": "SPANet Lite 5 jets SM",
     "4_jets_allklambda": "Run 2",
@@ -47,20 +48,25 @@ def check_names(name):
         return 7
     elif "klambda5" in name and "5_jets" in name:
         return 8
-    elif "allklambda" in name and "5_jets" in name and "newCuts" in name:
+    elif "allklambda" in name and "5_jets" in name and "newCutsEval" in name and "newkl" in name:
         for kl in k_lambda:
             if f"{kl}" in name:
-                return 14 + k_lambda.index(kl)+ len(k_lambda)*2
+                return 15 + k_lambda.index(kl)+ len(k_lambda)*2
         return 13
+    elif "allklambda" in name and "5_jets" in name and "oldCutsEval" in name and "newkl" in name:
+        for kl in k_lambda:
+            if f"{kl}" in name:
+                return 15 + k_lambda.index(kl)+ len(k_lambda)*3
+        return 14
     elif "allklambda" in name and "4_jets" in name:
         for kl in k_lambda:
             if f"{kl}" in name:
-                return 14 + k_lambda.index(kl)
+                return 15 + k_lambda.index(kl)
         return 11
     elif "allklambda" in name and "5_jets" in name:
         for kl in k_lambda:
             if f"{kl}" in name:
-                return 14 + k_lambda.index(kl) + len(k_lambda)
+                return 15 + k_lambda.index(kl) + len(k_lambda)
         return 12
     elif "5_jets_btag_presel" in name:
         return 2
@@ -539,7 +545,7 @@ def separate_klambda(
     kl_values_true = []
     for i, kl_array in enumerate(kl_arrays_true):
         kl_unique = np.unique(kl_array)
-        kl_unique=np.array(k_lambda)
+        # kl_unique=np.array(k_lambda)
         kl_values_true += kl_unique.tolist()
 
         for kl in kl_unique:
@@ -570,7 +576,8 @@ def separate_klambda(
     kl_values_spanet = np.round(kl_values_spanet, 2).tolist()
 
 
-    kl_values_true = k_lambda * 3
+    # kl_values_true = k_lambda * 3
+    # kl_values_spanet = k_lambda * 3
 
 
     # remove the allklambda from the list
