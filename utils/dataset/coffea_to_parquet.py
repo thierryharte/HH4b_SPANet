@@ -180,10 +180,10 @@ for sample in samples:
     ## Normalize the genweights
     # Since the array `weight` is filled on the fly with the weight associated with the event, it does not take into account the overall scaling by the sum of genweights (`sum_genweights`).
     # In order to correct for this, we have to scale by hand the `weight` array dividing by the sum of genweights.
-    # for dataset in datasets:
-    #     weight = df["columns"][sample][dataset][args.cat]["weight"].value
-    #     weight_new = column_accumulator(weight / df["sum_genweights"][dataset])
-    #     df["columns"][sample][dataset][args.cat]["weight"] = weight_new
+    for dataset in datasets:
+        weight = df["columns"][sample][dataset][args.cat]["weight"].value
+        weight_new = column_accumulator(weight / df["sum_genweights"][dataset])
+        df["columns"][sample][dataset][args.cat]["weight"] = weight_new
 
     ## Accumulate ntuples from different data-taking eras
     # In order to enlarge our training sample, we merge ntuples coming from different data-taking eras.
@@ -272,7 +272,7 @@ for sample in samples:
                 )
     ## Add the kl coefficient to the dataset
     # The kl coefficient is added to the dataset as a new feature.
-    zipped_dict["kl"] = ak.zip({"kl": kl_dataset}, with_name="Momentum4D")
+    zipped_dict["event"] = ak.zip({"kl": kl_dataset, "weight" : cs["weight"].value}, with_name="Momentum4D")
 
     # The Momentum4D arrays are zipped together to form the final dictionary of arrays.
     print("Zipping the collections into a single dictionary...")
