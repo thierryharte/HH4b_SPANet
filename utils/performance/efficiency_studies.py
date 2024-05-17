@@ -89,10 +89,9 @@ else:
         # "5_jets_ATLAS_ptreg_allklambda_train": f"{spanet_dir}out_spanet_prediction_5jets_lr1e4_noevkl_300e.h5",  # "/work/mmalucch/out_hh4b/out_spanet/output_JetGood_test.h5",  # HERE
         # "5_jets_ATLAS_ptreg_allklambda_eval": f"{spanet_dir}out_spanet_prediction_SMtraining_lr1e4_evkl.h5",  # "/work/mmalucch/out_hh4b/out_spanet/output_JetGood_test.h5",  # HERE
         #
-        "5_jets_ATLAS_ptreg_allklambda_train_klinput_newkl_newCuts_newCutsEval": f"{spanet_dir}spanet_prediction_nc_on_nc_300e.h5",
+        # "5_jets_ATLAS_ptreg_allklambda_train_klinput_newkl_newCuts_newCutsEval": f"{spanet_dir}spanet_prediction_nc_on_nc_300e.h5",
         # "5_jets_ATLAS_ptreg_allklambda_train_klinput_newkl_newCuts_oldCutsEval": f"{spanet_dir}spanet_prediction_nc_on_oc_kl3p5.h5",
         # "5_jets_ATLAS_ptreg_allklambda_train_klinput_newkl_oldCuts_oldCutsEval": f"{spanet_dir}spanet_prediction_oc_on_oc_kl3p5.h5",
-        "5_jets_ATLAS_ptreg_allklambda_train_klinput_newkl_oldCuts_newCutsEval": f"{spanet_dir}spanet_prediction_oc_kl3p5_on_nc.h5",
         #
         # "4_jets":  f"{spanet_dir}out_0_spanet_prediction_4jets.h5",
         # "5_jets": f"{spanet_dir}out_1_spanet_prediction_5jets.h5",
@@ -109,6 +108,11 @@ else:
         # "4_jets_5global_ATLAS_ptreg_cos_sin_phi": f"{spanet_dir}out_01_spanet_prediction_ATLAS_4jets_5global_ptreg_cos_sin_phi.h5",
         # "4_jets_5global_ptreg_cos_sin_phi": f"{spanet_dir}out_01_spanet_prediction_4jets_5global_ptreg_cos_sin_phi.h5",
         #
+        "5_jets_ATLAS_ptreg_allklambda_train_klinput_newkl_oldCuts_newCutsEval": f"{spanet_dir}spanet_prediction_oc_kl3p5_on_nc.h5",
+        "5_jets_ATLAS_ptreg_allklambda_train_noklinput_newkl_oldCuts_newCutsEval": f"{spanet_dir}spanet_prediction_oc_kl3p5_noklinp_nc.h5",
+        "5_jets_ATLAS_ptreg_allklambda_train_noklinput_newkl_newCuts_newCutsEval": f"{spanet_dir}spanet_prediction_nc_noklinput_on_nc.h5", #doesnt exist
+        "5_jets_ATLAS_ptreg_sm_train_allklambda_eval_noklinput_newkl_oldCuts_newCutsEval": f"{spanet_dir}spanet_prediction_sm_on_nc.h5",
+        #
         # 2b data samples
         #
         # "4_jets_data_ATLAS_ptreg_5train": f"{spanet_dir}out_spanet_prediction_data_ev4jets_training5jet_ptreg_ATLAS.h5",
@@ -117,17 +121,24 @@ else:
 
         # "5_jets_data_ATLAS_ptreg_5train": f"{spanet_dir}out_spanet_prediction_data_ev5jets_training5jet_ptreg_ATLAS.h5",
         # "5_jets_data_ATLAS_ptreg_5train_newlr_SMtrain_oldCuts_oldCutsEval": f"{spanet_dir}spanet_prediction_sm_on_data_oc.h5",
-        # "5_jets_data_ATLAS_ptreg_5train_newlr_SMtrain_oldCuts_newCutsEval": f"{spanet_dir}spanet_prediction_sm_on_data_nc.h5",
         # "5_jets_data_ATLAS_ptreg_5train_allklambda_klinput_oldCuts_newCutsEval": f"{spanet_dir}spanet_prediction_nc_on_data_oc.h5",
 
-        # "5_jets_data_ATLAS_ptreg_5train_allklambda_newCuts_newCutsEval": f"{spanet_dir}spanet_prediction_nc_noklinp_on_data.h5",
         # "5_jets_data_ATLAS_ptreg_5train_allklambda_newCuts_newCutsEval_FullyMatched": f"{spanet_dir}spanet_prediction_nc_noklinp_fm_on_data.h5",
         # "5_jets_data_ATLAS_ptreg_5train_allklambda_newCuts_oldCutsEval": f"{spanet_dir}spanet_prediction_nc_on_data_oc.h5",
+        #
+        "5_jets_data_ATLAS_ptreg_5train_newlr_SMtrain_oldCuts_newCutsEval": f"{spanet_dir}spanet_prediction_sm_oc_on_data_nc.h5",
+        "5_jets_data_ATLAS_ptreg_5train_newlr_SMtrain_newCuts_newCutsEval": f"{spanet_dir}spanet_prediction_sm_nc_on_data_nc.h5",
+        "5_jets_data_ATLAS_ptreg_5train_allklambda_noklinput_oldCuts_newCutsEval": f"{spanet_dir}spanet_prediction_oc_kl3p5_noklinp_data_nc.h5",
+        "5_jets_data_ATLAS_ptreg_5train_allklambda_noklinput_newCuts_newCutsEval": f"{spanet_dir}spanet_prediction_nc_noklinp_on_data.h5",
     }
     if args.data:
         #remove non data samples
         spanet_dict = {
             k: v for k, v in spanet_dict.items() if "data" in k
+        }
+    else:
+        spanet_dict = {
+            k: v for k, v in spanet_dict.items() if "data" not in k
         }
 
 if args.input_true:
@@ -157,8 +168,8 @@ else:
         "5_jets_data_newCuts": f"{spanet_dir}spanet_prediction_nc_noklinp_on_data.h5",
         "4_jets_allklambda": f"{true_dir}output_JetGood_test_allkl_new_kl_newcuts.h5", #output_JetGoodHiggs_allkl_test
         "5_jets_allklambda": f"{true_dir}output_JetGood_test_allkl_new_kl_newcuts.h5",  #output_JetGood_allkl_test
-        "5_jets_allklambda_newkl_newCuts": f"{true_dir}output_JetGood_test_allkl_new_kl_newcuts.h5",  # "/work/mmalucch/out_hh4b/out_spanet/output_JetGood_test.h5",
         "5_jets_allklambda_newkl_oldCuts": f"{true_dir}output_JetGood_test_allkl_new_kl_oldcuts.h5",  # "/work/mmalucch/out_hh4b/out_spanet/output_JetGood_test.h5",
+        "5_jets_allklambda_newkl_newCuts": f"{true_dir}output_JetGood_test_allkl_new_kl_newcuts.h5",  # "/work/mmalucch/out_hh4b/out_spanet/output_JetGood_test.h5",
     }
 
 
@@ -381,7 +392,7 @@ if not args.data:
             total_efficiencies_fully_matched_spanet[-len(kl_values_spanet) :]
         )
         print("\n")
-        print
+        print("Plotting fficiencies fully matched for all klambda values")
         plot_diff_eff_klambda(
             efficiencies_fully_matched_spanet_allklambda,
             kl_values_spanet,
@@ -519,9 +530,6 @@ min_idx = [
 ]
 mask_30 = [m != -1 for m in min_idx]
 
-print("\n")
-for label, m in zip(list(true_dict.keys()), mask_30):
-    print(f"Fraction of events with DeltaR>30 for {label}: {ak.sum(m) / len(m):.3f}")
 
 
 comb_idx_mask30 = [
@@ -549,6 +557,9 @@ idx_spanet_pred_fully_matched_mask30 = [
     for i in range(len(idx_spanet_pred))
 ]
 if not args.data:
+    print("\n")
+    for label, m in zip(list(true_dict.keys()), mask_30):
+        print(f"Fraction of events with DeltaR>30 for {label}: {ak.sum(m) / len(m):.3f}")
     # compute efficiencies for fully matched events for Run 2 pairing
     correctly_fully_matched_run2_mask30 = [
         (
@@ -676,7 +687,10 @@ if not args.data:
         total_efficiency_fully_matched_run2_mask30_allklambda = (
             total_efficiency_fully_matched_run2_mask30[-len(kl_values_true) :]
         )
-        first_run2_idx = len(kl_values_true) // kl_values_true.count(kl_values_true[0]) * (-2) # HERE
+        first_run2_idx = len(kl_values_true) // kl_values_true.count(kl_values_true[0]) * (-1) # HERE
+        print("first_run2_idx", first_run2_idx)
+        print("kl_values_true", kl_values_true[first_run2_idx:])
+        print("allkl_names_true", allkl_names_true[first_run2_idx:])
         efficiencies_fully_matched_mask30_allklambda = (
             efficiencies_fully_matched_spanet_mask30_allklambda
             + efficiency_fully_matched_run2_mask30_allklambda[first_run2_idx:]
@@ -685,18 +699,19 @@ if not args.data:
             total_efficiencies_fully_matched_spanet_mask30_allklambda
             + total_efficiency_fully_matched_run2_mask30_allklambda[first_run2_idx:]
         )
-
+        print("\n")
+        print("Plotting efficiencies fully matched for all klambda values")
         plot_diff_eff_klambda(
             efficiencies_fully_matched_mask30_allklambda,
             kl_values_spanet + kl_values_true[first_run2_idx:],
-            allkl_names_spanet + allkl_names_true[first_run2_idx:],
+            allkl_names_spanet + allkl_names_true[-1:],
             "eff_fully_matched_mask30_allklambda",
             plot_dir,
         )
         plot_diff_eff_klambda(
             total_efficiencies_fully_matched_mask30_allklambda,
             kl_values_spanet + kl_values_true[first_run2_idx:],
-            allkl_names_spanet + allkl_names_true[first_run2_idx:],
+            allkl_names_spanet + allkl_names_true[-1:],
             "tot_eff_fully_matched_mask30_allklambda",
             plot_dir,
         )

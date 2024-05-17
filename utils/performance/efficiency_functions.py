@@ -56,15 +56,25 @@ def check_names(name):
         return 9
     elif "5_jets_data" in name:
         return 10
-    elif "allklambda" in name and "5_jets" in name and "newCutsEval" in name and "newkl" in name:
+    elif (
+        "allklambda" in name
+        and "5_jets" in name
+        and "oldCutsEval" in name
+        and "newkl" in name
+    ):
         for kl in k_lambda:
             if f"{kl}" in name:
-                return 17 + k_lambda.index(kl)+ len(k_lambda)*2
+                return 17 + k_lambda.index(kl) + len(k_lambda) * 2
         return 15
-    elif "allklambda" in name and "5_jets" in name and "oldCutsEval" in name and "newkl" in name:
+    elif (
+        "allklambda" in name
+        and "5_jets" in name
+        and "newCutsEval" in name
+        and "newkl" in name
+    ):
         for kl in k_lambda:
             if f"{kl}" in name:
-                return 17 + k_lambda.index(kl)+ len(k_lambda)*3
+                return 17 + k_lambda.index(kl) + len(k_lambda) * 3
         return 16
     elif "allklambda" in name and "4_jets" in name:
         for kl in k_lambda:
@@ -87,7 +97,7 @@ def check_names(name):
 
 
 def distance_func(higgs_pair, k):
-    if len(higgs_pair[0,0]) == 0:
+    if len(higgs_pair[0, 0]) == 0:
         return np.array([])
     higgs1 = higgs_pair[:, :, 0]
     higgs2 = higgs_pair[:, :, 1]
@@ -249,21 +259,51 @@ def plot_histos_1d(
     )
 
     # plot the residuals respect to true
-    residuals_run2 = [r[0] / t[0] for r, t in zip(run2_hist, true_hist)]
+    residuals_run2 = [
+        (r[0] / np.sum(r[0])) / (t[0] / np.sum(t[0]))
+        for r, t in zip(run2_hist, true_hist)
+    ]
     residuals_spanet = [
-        spanet_hists[i][0] / true_hist[check_names(spanet_labels[i])][0]
+        (spanet_hists[i][0] / np.sum(spanet_hists[i][0]))
+        / (
+            true_hist[check_names(spanet_labels[i])][0]
+            / np.sum(true_hist[check_names(spanet_labels[i])][0])
+        )
         for i in range(len(spanet_labels))
     ]
 
-    #TODO: compute the error correctly
+    # TODO: compute the error correctly
+    # residual_run2_err = (
+    #     [np.sqrt(r[0]) / t[0] for r, t in zip(run2_hist, true_hist)] if run2 else []
+    # )
     residual_run2_err = (
-        [np.sqrt(r[0]) / t[0] for r, t in zip(run2_hist, true_hist)] if run2 else []
+        [
+            np.sqrt(
+                (np.sqrt(r[0]) / t[0]) ** 2 + ((np.sqrt(t[0]) * r[0]) / t[0] ** 2) ** 2
+            )
+            * (np.sum(t[0]) / np.sum(r[0]))
+            for r, t in zip(run2_hist, true_hist)
+        ]
+        if run2
+        else []
     )
+
+    # residual_spanet_err = [
+    #     np.sqrt(sn[0]) / true_hist[check_names(label)][0]
+    #     for sn, label in zip(spanet_hists, spanet_labels)
+    # ]
     residual_spanet_err = [
-        np.sqrt(sn[0]) / true_hist[check_names(label)][0]
+        np.sqrt(
+            (np.sqrt(sn[0]) / true_hist[check_names(label)][0]) ** 2
+            + (
+                (np.sqrt(true_hist[check_names(label)][0]) * sn[0])
+                / true_hist[check_names(label)][0] ** 2
+            )
+            ** 2
+        )
+        * (np.sum(true_hist[check_names(label)][0]) / np.sum(sn[0]))
         for sn, label in zip(spanet_hists, spanet_labels)
     ]
-
     labels_list = []
     if not any(["data" in label for label in spanet_labels]):
         for sn, label, sn_err in zip(
@@ -579,10 +619,8 @@ def separate_klambda(
     kl_values_true = np.round(kl_values_true, 2).tolist()
     kl_values_spanet = np.round(kl_values_spanet, 2).tolist()
 
-
     # kl_values_true = k_lambda * 3
     # kl_values_spanet = k_lambda * 3
-
 
     # remove the allklambda from the list
     # idx_true = [idx for i, idx in enumerate(idx_true) if i not in all_kl_idx]
