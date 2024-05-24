@@ -48,16 +48,7 @@ args = parser.parse_args()
 
 btag_wp = [0.0499, 0.2605, 0.6915]
 
-xsec_qcd_tot = (
-    1.968e06
-    + 1.000e05
-    + 1.337e04
-    + 3.191e03
-    + 8.997e02
-    + 3.695e02
-    + 1.272e02
-    + 2.514e01
-)
+
 
 
 def create_groups(file):
@@ -196,13 +187,23 @@ def create_inputs(file, jets, max_num_jets, global_fifth_jet, events):
     )
 
     weight_array = ak.to_numpy(
-        events.weight / (xsec_qcd_tot if "QCD" in args.input else 1)
+        events.weight
     )
     weight_ds = file.create_dataset(
         "INPUTS/Event/weight",
         np.shape(weight_array),
         dtype="float32",
         data=weight_array,
+    )
+
+    sb_array = ak.to_numpy(
+        events.sb
+    )
+    sb_ds = file.create_dataset(
+        "INPUTS/Event/sb",
+        np.shape(sb_array),
+        dtype="float32",
+        data=sb_array,
     )
 
     # create new global variables for the fifth jet (if it exists) otherwise fill with PAD_VALUE

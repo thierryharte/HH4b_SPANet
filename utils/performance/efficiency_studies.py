@@ -5,6 +5,7 @@ import vector
 from math import sqrt
 import matplotlib.pyplot as plt
 import os
+import sys
 import mplhep as hep
 
 vector.register_numba()
@@ -53,6 +54,9 @@ parser.add_argument(
 )
 
 args = parser.parse_args()
+
+# redirect stout
+sys.stdout = open(f"{args.plot_dir}/efficiency.txt", "w")
 
 if args.input_spanet_pred:
     list_spanet_pred = args.input_spanet_pred

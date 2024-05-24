@@ -23,11 +23,10 @@ parser.add_argument(
     help="Fraction of events to use for training",
 )
 parser.add_argument(
-    "-d",
-    "--dataset",
+    "--sample",
     type=str,
     default="GluGlutoHHto4B_spanet",
-    help="Dataset name",
+    help="Sample name",
 )
 parser.add_argument(
     "-s",
@@ -44,7 +43,7 @@ out_dir = args.output if args.output else os.path.dirname(args.input)
 coffea_to_parquet = f"python coffea_to_parquet.py -i {args.input} -o {os.path.dirname(args.input)} -c {args.cat}"
 #subprocess.run(coffea_to_parquet, shell=True)
 
-parquet_to_h5 = f"python parquet_to_h5.py -i {os.path.dirname(args.input)}/{args.dataset}.parquet -o {out_dir} -f {args.frac_train} {'--no-shuffle' if args.no_shuffle else ''}"
+parquet_to_h5 = f"python parquet_to_h5.py -i {os.path.dirname(args.input)}/{args.sample}.parquet -o {out_dir} -f {args.frac_train} {'--no-shuffle' if args.no_shuffle else ''}"
 #subprocess.run(parquet_to_h5, shell=True)
 
 total_command=f"{coffea_to_parquet} && {parquet_to_h5}"
