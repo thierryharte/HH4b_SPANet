@@ -32,6 +32,25 @@ names_dict = {
     "tot_eff_fully_matched_allklambda": "Total Pairing Efficiency",
     "eff_fully_matched_mask30_allklambda": r"Pairing Efficiency ($\Delta D_{HH} > 30$ GeV)",
     "tot_eff_fully_matched_mask30_allklambda": r"Total Pairing Efficiency ($\Delta D_{HH} > 30$ GeV)",
+    "5_jets_ATLAS_ptreg_allklambda_train_klinput_newkl_oldCuts_newCutsEval": r"SPANet - $k_{\lambda}$ ($k_{\lambda}$ inputs) - Tight Selection",
+    "5_jets_ATLAS_ptreg_allklambda_train_noklinput_newkl_oldCuts_newCutsEval": r"SPANet - $k_{\lambda}$ - Tight Selection",
+    "5_jets_ATLAS_ptreg_sm_train_allklambda_eval_noklinput_newkl_oldCuts_newCutsEval": "SPANet - SM - Tight Selection",
+    "5_jets_ATLAS_ptreg_allklambda_train_noklinput_newkl_newCuts_newCutsEval": r"SPANet - $k_{\lambda}$ - Loose Selection",
+    "5_jets_data_ATLAS_ptreg_5train_allklambda_noklinput_oldCuts_newCutsEval": r"SPANet - $k_{\lambda}$ - Tight Selection",
+    "5_jets_data_ATLAS_ptreg_5train_allklambda_noklinput_newCuts_newCutsEval": r"SPANet - $k_{\lambda}$ - Loose Selection",
+    "5_jets_allklambda_newkl_newCuts": "Run 2",
+    "4_jets_allklambda_newkl_newCuts": "Run 2",
+}
+
+color_dict = {
+    "5_jets_ATLAS_ptreg_allklambda_train_klinput_newkl_oldCuts_newCutsEval": "tab:blue",
+    "5_jets_ATLAS_ptreg_allklambda_train_noklinput_newkl_oldCuts_newCutsEval": "tab:orange",
+    "5_jets_ATLAS_ptreg_sm_train_allklambda_eval_noklinput_newkl_oldCuts_newCutsEval": "tab:green",
+    "5_jets_ATLAS_ptreg_allklambda_train_noklinput_newkl_newCuts_newCutsEval": "purple",
+    "5_jets_data_ATLAS_ptreg_5train_allklambda_noklinput_oldCuts_newCutsEval": "tab:orange",
+    "5_jets_data_ATLAS_ptreg_5train_allklambda_noklinput_newCuts_newCutsEval": "purple",
+    "5_jets_allklambda_newkl_newCuts": "red",
+    "4_jets_allklambda_newkl_newCuts": "red",
 }
 
 
@@ -64,7 +83,7 @@ def check_names(name):
     ):
         for kl in k_lambda:
             if f"{kl}" in name:
-                return 17 + k_lambda.index(kl) + len(k_lambda) * 2
+                return 18 + k_lambda.index(kl) + len(k_lambda) * 2
         return 15
     elif (
         "allklambda" in name
@@ -74,17 +93,27 @@ def check_names(name):
     ):
         for kl in k_lambda:
             if f"{kl}" in name:
-                return 17 + k_lambda.index(kl) + len(k_lambda) * 3
+                return 18 + k_lambda.index(kl) + len(k_lambda) * 3
         return 16
+    elif (
+        "allklambda" in name
+        and "4_jets" in name
+        and "newCutsEval" in name
+        and "newkl" in name
+    ):
+        for kl in k_lambda:
+            if f"{kl}" in name:
+                return 18 + k_lambda.index(kl) + len(k_lambda) * 3
+        return 17
     elif "allklambda" in name and "4_jets" in name:
         for kl in k_lambda:
             if f"{kl}" in name:
-                return 17 + k_lambda.index(kl)
+                return 18 + k_lambda.index(kl)
         return 13
     elif "allklambda" in name and "5_jets" in name:
         for kl in k_lambda:
             if f"{kl}" in name:
-                return 17 + k_lambda.index(kl) + len(k_lambda)
+                return 18 + k_lambda.index(kl) + len(k_lambda)
         return 14
     elif "5_jets_btag_presel" in name:
         return 2
@@ -210,6 +239,7 @@ def plot_histos_1d(
             histtype="step",
             linewidth=1,
             density=True,
+            color=color_dict[label] if label in color_dict else None,
         )
         if check_names(label) in labels_list:
             continue
@@ -230,7 +260,7 @@ def plot_histos_1d(
             ax.hist(
                 run2[which_run2],
                 bins[which_run2],
-                label=f"Run 2 ({true_labels[which_run2]})",
+                label=names_dict[true_labels[which_run2]] if true_labels[which_run2] in names_dict else f"Run 2 ({true_labels[which_run2]})",
                 histtype="step",
                 linewidth=1,
                 density=True,
@@ -449,7 +479,8 @@ def plot_diff_eff(
         if check_names(label) in labels_list or not run2 or len(labels_list) > 0:
             continue
         which_run2 = (
-            check_names(label) if ("data" in label or "klambda" in label) else 0
+            # check_names(label) if ("data" in label or "klambda" in label) else 0 # TODO: correct this
+            -1
         )
         ax.errorbar(
             0.5 * (mhh_bins[1:] + mhh_bins[:-1]),
@@ -679,6 +710,7 @@ def plot_diff_eff_klambda(eff, kl_values, allkl_names, name, plot_dir="plots"):
             label=names_dict[net_name] if net_name in names_dict else net_name,
             linestyle="-",
             marker="o",
+            color=color_dict[net_name] if net_name in color_dict else None,
         )
 
     ax.legend(frameon=False, loc="lower left")
