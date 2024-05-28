@@ -116,6 +116,20 @@ features = {
     "by_sample": {},
 }
 
+norm_xsec = {
+    "QCD-4Jets": (
+        1.968e06
+        + 1.000e05
+        + 1.337e04
+        + 3.191e03
+        + 8.997e02
+        + 3.695e02
+        + 1.272e02
+        + 2.514e01
+    ),
+    "GluGlutoHHto4B_kl-1p00": 0.02964,
+}
+
 kl_dict = {
     "kl-1p00": 1.00,
     "kl-0p00": 0.00,
@@ -129,6 +143,11 @@ kl_dict = {
     "kl-3p00": 3.00,
     "kl-4p00": 4.00,
     "kl-3p50": 3.50,
+}
+
+sig_bkg_dict = {
+    "QCD-4Jets": 0,
+    "GluGlutoHHto4B_kl-1p00": 1,
 }
 
 # Dictionary of features to pad with a default value
@@ -180,21 +199,25 @@ for sample in samples:
     ## Normalize the genweights
     # Since the array `weight` is filled on the fly with the weight associated with the event, it does not take into account the overall scaling by the sum of genweights (`sum_genweights`).
     # In order to correct for this, we have to scale by hand the `weight` array dividing by the sum of genweights.
-    # for dataset in datasets:
-    #     weight = df["columns"][sample][dataset][args.cat]["weight"].value
-    #     weight_new = column_accumulator(weight / df["sum_genweights"][dataset])
-    #     df["columns"][sample][dataset][args.cat]["weight"] = weight_new
+    for dataset in datasets:
+        weight = df["columns"][sample][dataset][args.cat]["weight"].value
+        for x in norm_xsec.keys():
+            if x in dataset:
+                norm_factor = norm_xsec[x]
+                print("norm_factor: ", norm_factor)
+                break
+            else:
+                norm_factor = 1.0
+
+        weight_new = (
+            column_accumulator(weight / df["sum_genweights"][dataset] / norm_factor)
+        )
+        df["columns"][sample][dataset][args.cat]["weight"] = weight_new
 
     ## Accumulate ntuples from different data-taking eras
     # In order to enlarge our training sample, we merge ntuples coming from different data-taking eras.
     cs = accumulate([df["columns"][sample][dataset][args.cat] for dataset in datasets])
 
-    kl_list = []
-    for dataset in datasets:
-        for kl in kl_dict.keys():
-            if kl in dataset:
-                kl_list.append(kl_dict[kl])
-    print("kl_list: ", kl_list)
     dataset_lenght = [
         len(
             df["columns"][sample][dataset][args.cat][
@@ -203,12 +226,30 @@ for sample in samples:
         )
         for dataset in datasets
     ]
-    if not kl_list:
-        kl_list = [0.0]
+
+    kl_list = [-999.]*len(datasets)
+    for i, dataset in   enumerate(datasets):
+        for kl in kl_dict.keys():
+            if kl in dataset:
+                kl_list[i]=(kl_dict[kl])
+                break
+    print("kl_list: ", kl_list)
+
+    sb_list = [-999.]*len(datasets)
+    for i, dataset in enumerate(datasets):
+        for sb in sig_bkg_dict.keys():
+            if sb in dataset:
+                sb_list[i]=(sig_bkg_dict[sb])
+                break
+    print("sb_list: ", sb_list)
+
     print("dataset_lenght: ", dataset_lenght)
     kl_dataset = np.repeat(kl_list, dataset_lenght)
     print("kl_dataset: ", kl_dataset)
     print("kl_dataset shape: ", kl_dataset.shape)
+    sb_dataset = np.repeat(sb_list, dataset_lenght)
+    print("sb_dataset: ", sb_dataset)
+    print("sb_dataset shape: ", sb_dataset.shape)
 
     ## Build the Momentum4D arrays for the jets, partons, leptons, met and higgs
     # In order to get the numpy array from the column_accumulator, we have to access the `value` attribute.
@@ -272,7 +313,10 @@ for sample in samples:
                 )
     ## Add the kl coefficient to the dataset
     # The kl coefficient is added to the dataset as a new feature.
-    zipped_dict["kl"] = ak.zip({"kl": kl_dataset}, with_name="Momentum4D")
+    zipped_dict["event"] = ak.zip(
+        {"kl": kl_dataset, "sb": sb_dataset, "weight": cs["weight"].value},
+        with_name="Momentum4D",
+    )
 
     # The Momentum4D arrays are zipped together to form the final dictionary of arrays.
     print("Zipping the collections into a single dictionary...")

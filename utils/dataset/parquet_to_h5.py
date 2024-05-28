@@ -49,6 +49,8 @@ args = parser.parse_args()
 btag_wp = [0.0499, 0.2605, 0.6915]
 
 
+
+
 def create_groups(file):
     file.create_group("TARGETS/h1")  # higgs 1 -> b1 b2
     file.create_group("TARGETS/h2")  # higgs 2 -> b3 b4
@@ -92,7 +94,7 @@ def create_targets(file, particle, jets, filename, max_num_jets):
             )
 
 
-def create_inputs(file, jets, max_num_jets, global_fifth_jet, kl=None):
+def create_inputs(file, jets, max_num_jets, global_fifth_jet, events):
     pt_array = ak.to_numpy(
         ak.fill_none(ak.pad_none(jets.pt, max_num_jets, clip=True), PAD_VALUE)
     )
@@ -166,7 +168,10 @@ def create_inputs(file, jets, max_num_jets, global_fifth_jet, kl=None):
         )
     )
     btag_wp_ds = file.create_dataset(
-        "INPUTS/Jet/btag_wp_bit", np.shape(btag_wp_array), dtype="int32", data=btag_wp_array
+        "INPUTS/Jet/btag_wp_bit",
+        np.shape(btag_wp_array),
+        dtype="int32",
+        data=btag_wp_array,
     )
 
     mass_array = ak.to_numpy(
@@ -176,17 +181,37 @@ def create_inputs(file, jets, max_num_jets, global_fifth_jet, kl=None):
         "INPUTS/Jet/mass", np.shape(mass_array), dtype="float32", data=mass_array
     )
 
-    kl_array = ak.to_numpy(kl.kl)
+    kl_array = ak.to_numpy(events.kl)
     kl_ds = file.create_dataset(
         "INPUTS/Event/kl", np.shape(kl_array), dtype="float32", data=kl_array
+    )
+
+    weight_array = ak.to_numpy(
+        events.weight
+    )
+    weight_ds = file.create_dataset(
+        "INPUTS/Event/weight",
+        np.shape(weight_array),
+        dtype="float32",
+        data=weight_array,
+    )
+
+    sb_array = ak.to_numpy(
+        events.sb
+    )
+    sb_ds = file.create_dataset(
+        "INPUTS/Event/sb",
+        np.shape(sb_array),
+        dtype="float32",
+        data=sb_array,
     )
 
     # create new global variables for the fifth jet (if it exists) otherwise fill with PAD_VALUE
     if global_fifth_jet is not None:
         pt_array_5 = ak.to_numpy(
-            ak.fill_none(
-                ak.pad_none(global_fifth_jet.pt, 5, clip=True), PAD_VALUE
-            )[:, 4]
+            ak.fill_none(ak.pad_none(global_fifth_jet.pt, 5, clip=True), PAD_VALUE)[
+                :, 4
+            ]
         )
         pt_ds_5 = file.create_dataset(
             "INPUTS/FifthJet/pt", np.shape(pt_array_5), dtype="float32", data=pt_array_5
@@ -206,9 +231,9 @@ def create_inputs(file, jets, max_num_jets, global_fifth_jet, kl=None):
         )
 
         phi_array_5 = ak.to_numpy(
-            ak.fill_none(
-                ak.pad_none(global_fifth_jet.phi, 5, clip=True), PAD_VALUE
-            )[:, 4]
+            ak.fill_none(ak.pad_none(global_fifth_jet.phi, 5, clip=True), PAD_VALUE)[
+                :, 4
+            ]
         )
         phi_ds_5 = file.create_dataset(
             "INPUTS/FifthJet/phi",
@@ -244,9 +269,9 @@ def create_inputs(file, jets, max_num_jets, global_fifth_jet, kl=None):
         )
 
         eta_array_5 = ak.to_numpy(
-            ak.fill_none(
-                ak.pad_none(global_fifth_jet.eta, 5, clip=True), PAD_VALUE
-            )[:, 4]
+            ak.fill_none(ak.pad_none(global_fifth_jet.eta, 5, clip=True), PAD_VALUE)[
+                :, 4
+            ]
         )
         eta_ds_5 = file.create_dataset(
             "INPUTS/FifthJet/eta",
@@ -256,9 +281,9 @@ def create_inputs(file, jets, max_num_jets, global_fifth_jet, kl=None):
         )
 
         btag_5 = ak.to_numpy(
-            ak.fill_none(
-                ak.pad_none(global_fifth_jet.btag, 5, clip=True), PAD_VALUE
-            )[:, 4]
+            ak.fill_none(ak.pad_none(global_fifth_jet.btag, 5, clip=True), PAD_VALUE)[
+                :, 4
+            ]
         )
         btag_ds_5 = file.create_dataset(
             "INPUTS/FifthJet/btag", np.shape(btag_5), dtype="float32", data=btag_5
@@ -284,9 +309,9 @@ def create_inputs(file, jets, max_num_jets, global_fifth_jet, kl=None):
         )
 
         mass_array_5 = ak.to_numpy(
-            ak.fill_none(
-                ak.pad_none(global_fifth_jet.mass, 5, clip=True), PAD_VALUE
-            )[:, 4]
+            ak.fill_none(ak.pad_none(global_fifth_jet.mass, 5, clip=True), PAD_VALUE)[
+                :, 4
+            ]
         )
         mass_ds_5 = file.create_dataset(
             "INPUTS/FifthJet/mass",
@@ -307,7 +332,9 @@ def add_info_to_file(input_to_file):
         global_fifth_jet = jets_list[0]
     elif file_dict[k] == "output_JetGoodHiggs_test.h5":
         global_fifth_jet = jets_list[1]
-    create_inputs(file_out, jets, max_num_jets_list[k], global_fifth_jet, kl_list[k])
+    create_inputs(
+        file_out, jets, max_num_jets_list[k], global_fifth_jet, events_list[k]
+    )
     create_targets(file_out, "h1", jets, file_dict[k], max_num_jets_list[k])
     create_targets(file_out, "h2", jets, file_dict[k], max_num_jets_list[k])
     print("Completed file ", file_dict[k])
@@ -336,12 +363,12 @@ jets_good_higgs = df.JetGoodHiggs
 
 
 jets_list = []
-kl_list = []
+events_list = []
 max_num_jets_list = []
 n_events = len(jets_good)
 idx = np.random.RandomState(seed=42).permutation(n_events)
 for i, jets_all in enumerate([jets_good, jets_good_higgs]):
-    kl_tot = df.kl
+    events_all = df.event
     print(f"Creating dataset for {'JetGood' if i == 0 else 'JetGoodHiggs'}")
     print(f"Number of events: {n_events}")
     idx_train_max = int(np.ceil(n_events * args.frac_train))
@@ -350,16 +377,16 @@ for i, jets_all in enumerate([jets_good, jets_good_higgs]):
 
     if not args.no_shuffle:
         jets_all = jets_all[idx]
-        kl_tot = kl_tot[idx]
+        events_all = events_all[idx]
 
     jets_train = jets_all[:idx_train_max]
     jets_test = jets_all[idx_train_max:]
-    kl_train = kl_tot[:idx_train_max]
-    kl_test = kl_tot[idx_train_max:]
+    events_train = events_all[:idx_train_max]
+    events_test = events_all[idx_train_max:]
 
-    for jets, kl in zip([jets_train, jets_test], [kl_train, kl_test]):
+    for jets, ev in zip([jets_train, jets_test], [events_train, events_test]):
         jets_list.append(jets)
-        kl_list.append(kl)
+        events_list.append(ev)
         max_num_jets_list.append(args.num_jets if i == 0 else 4)
 
 
