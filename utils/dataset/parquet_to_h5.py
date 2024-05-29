@@ -42,6 +42,13 @@ parser.add_argument(
     default=False,
     help="Do not shuffle the dataset",
 )
+parser.add_argument(
+    "-c",
+    "--classification",
+    action="store_true",
+    default=False,
+    help="Dataset is for classification",
+)
 
 args = parser.parse_args()
 
@@ -66,8 +73,12 @@ def create_targets(file, particle, jets, filename, max_num_jets):
     for j in [1, 2]:
         if particle == f"h{j}":
             if ak.all(jets.prov == -1):
-                index_b1 = ak.full_like(jets.pt[:, 0], 0)
-                index_b2 = ak.full_like(jets.pt[:, 0], 0)
+                if args.classification:
+                    index_b1 = ak.full_like(jets.pt[:, 0], 0+(j-1)*2)
+                    index_b2 = ak.full_like(jets.pt[:, 0], 1+(j-1)*2)
+                else:
+                    index_b1 = ak.full_like(jets.pt[:, 0], 0)
+                    index_b2 = ak.full_like(jets.pt[:, 0], 0)
                 print(filename, particle, index_b1, index_b2)
             else:
                 mask = jets.prov == j  # H->b1b2
@@ -170,7 +181,7 @@ def create_inputs(file, jets, max_num_jets, global_fifth_jet, events):
     btag_wp_ds = file.create_dataset(
         "INPUTS/Jet/btag_wp_bit",
         np.shape(btag_wp_array),
-        dtype="int32",
+        dtype="int64",
         data=btag_wp_array,
     )
 
@@ -190,7 +201,7 @@ def create_inputs(file, jets, max_num_jets, global_fifth_jet, events):
         events.weight
     )
     weight_ds = file.create_dataset(
-        "INPUTS/Event/weight",
+        "WEIGHTS/weight",
         np.shape(weight_array),
         dtype="float32",
         data=weight_array,
@@ -200,9 +211,9 @@ def create_inputs(file, jets, max_num_jets, global_fifth_jet, events):
         events.sb
     )
     sb_ds = file.create_dataset(
-        "INPUTS/Event/sb",
+        "CLASSIFICATIONS/EVENT/signal",
         np.shape(sb_array),
-        dtype="float32",
+        dtype="int64",
         data=sb_array,
     )
 
@@ -304,7 +315,7 @@ def create_inputs(file, jets, max_num_jets, global_fifth_jet, events):
         btag_wp_ds_5 = file.create_dataset(
             "INPUTS/FifthJet/btag_wp_bit",
             np.shape(btag_wp_array_5),
-            dtype="int32",
+            dtype="int64",
             data=btag_wp_array_5,
         )
 
