@@ -106,17 +106,14 @@ def create_targets(file, particle, jets, filename, max_num_jets):
 
 
 def create_inputs(file, jets, max_num_jets, global_fifth_jet, events):
-    pt_array = ak.to_numpy(
-        ak.fill_none(ak.pad_none(jets.pt, max_num_jets, clip=True), PAD_VALUE)
-    )
-    pt_ds = file.create_dataset(
-        "INPUTS/Jet/pt", np.shape(pt_array), dtype="float32", data=pt_array
-    )
 
-    mask = ~(pt_array == PAD_VALUE)
-    mask_ds = file.create_dataset(
-        "INPUTS/Jet/MASK", np.shape(mask), dtype="bool", data=mask
-    )
+    # pt_array = ak.to_numpy(
+    #     ak.fill_none(ak.pad_none(jets.pt, max_num_jets, clip=True), PAD_VALUE)
+    # )
+    # pt_ds = file.create_dataset(
+    #     "INPUTS/Jet/pt", np.shape(pt_array), dtype="float32", data=pt_array
+    # )
+
 
     ptPnetRegNeutrino_array = ak.to_numpy(
         ak.fill_none(
@@ -128,6 +125,11 @@ def create_inputs(file, jets, max_num_jets, global_fifth_jet, events):
         np.shape(ptPnetRegNeutrino_array),
         dtype="float32",
         data=ptPnetRegNeutrino_array,
+    )
+
+    mask = ~(ptPnetRegNeutrino_array == PAD_VALUE)
+    mask_ds = file.create_dataset(
+        "INPUTS/Jet/MASK", np.shape(mask), dtype="bool", data=mask
     )
 
     phi_array = ak.to_numpy(
@@ -197,25 +199,38 @@ def create_inputs(file, jets, max_num_jets, global_fifth_jet, events):
         "INPUTS/Event/kl", np.shape(kl_array), dtype="float32", data=kl_array
     )
 
-    weight_array = ak.to_numpy(
-        events.weight
-    )
-    weight_ds = file.create_dataset(
-        "WEIGHTS/weight",
-        np.shape(weight_array),
-        dtype="float32",
-        data=weight_array,
-    )
+    if args.classification:
+        weight_array = ak.to_numpy(
+            events.weight
+        )
+        weight_ds = file.create_dataset(
+            "WEIGHTS/weight",
+            np.shape(weight_array),
+            dtype="float32",
+            data=weight_array,
+        )
 
-    sb_array = ak.to_numpy(
-        events.sb
-    )
-    sb_ds = file.create_dataset(
-        "CLASSIFICATIONS/EVENT/signal",
-        np.shape(sb_array),
-        dtype="int64",
-        data=sb_array,
-    )
+        sb_array = ak.to_numpy(
+            events.sb
+        )
+        sb_ds = file.create_dataset(
+            "CLASSIFICATIONS/EVENT/signal",
+            np.shape(sb_array),
+            dtype="int64",
+            data=sb_array,
+        )
+
+        #TODO define and add HT, dR_min, dR_max to the variables
+        # events.HT -> INPUTS/Event/HT
+
+
+        #TODO: add classification new variables as in workflow.py
+        # create function to  get spanet model
+        # get pairing information
+        # reconstruct higgs with pairing predictions
+
+        # HiggsLeading.pt -> INPUTS/HiggsLeading/pt
+
 
     # create new global variables for the fifth jet (if it exists) otherwise fill with PAD_VALUE
     if global_fifth_jet is not None:
