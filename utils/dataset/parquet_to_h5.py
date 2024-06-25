@@ -56,8 +56,6 @@ args = parser.parse_args()
 btag_wp = [0.0499, 0.2605, 0.6915]
 
 
-
-
 def create_groups(file):
     file.create_group("TARGETS/h1")  # higgs 1 -> b1 b2
     file.create_group("TARGETS/h2")  # higgs 2 -> b3 b4
@@ -74,8 +72,8 @@ def create_targets(file, particle, jets, filename, max_num_jets):
         if particle == f"h{j}":
             if ak.all(jets.prov == -1):
                 if args.classification:
-                    index_b1 = ak.full_like(jets.pt[:, 0], 0+(j-1)*2)
-                    index_b2 = ak.full_like(jets.pt[:, 0], 1+(j-1)*2)
+                    index_b1 = ak.full_like(jets.pt[:, 0], 0 + (j - 1) * 2)
+                    index_b2 = ak.full_like(jets.pt[:, 0], 1 + (j - 1) * 2)
                 else:
                     index_b1 = ak.full_like(jets.pt[:, 0], 0)
                     index_b2 = ak.full_like(jets.pt[:, 0], 0)
@@ -114,10 +112,9 @@ def create_inputs(file, jets, max_num_jets, global_fifth_jet, events):
     #     "INPUTS/Jet/pt", np.shape(pt_array), dtype="float32", data=pt_array
     # )
 
-
     ptPnetRegNeutrino_array = ak.to_numpy(
         ak.fill_none(
-            ak.pad_none(jets.ptPnetRegNeutrino, max_num_jets, clip=True), PAD_VALUE
+            ak.pad_none(jets.pt, max_num_jets, clip=True), PAD_VALUE
         )
     )
     ptPnetRegNeutrino_ds = file.create_dataset(
@@ -200,9 +197,7 @@ def create_inputs(file, jets, max_num_jets, global_fifth_jet, events):
     )
 
     if args.classification:
-        weight_array = ak.to_numpy(
-            events.weight
-        )
+        weight_array = ak.to_numpy(events.weight)
         weight_ds = file.create_dataset(
             "WEIGHTS/weight",
             np.shape(weight_array),
@@ -210,9 +205,7 @@ def create_inputs(file, jets, max_num_jets, global_fifth_jet, events):
             data=weight_array,
         )
 
-        sb_array = ak.to_numpy(
-            events.sb
-        )
+        sb_array = ak.to_numpy(events.sb)
         sb_ds = file.create_dataset(
             "CLASSIFICATIONS/EVENT/signal",
             np.shape(sb_array),
@@ -220,17 +213,15 @@ def create_inputs(file, jets, max_num_jets, global_fifth_jet, events):
             data=sb_array,
         )
 
-        #TODO define and add HT, dR_min, dR_max to the variables
+        # TODO define and add HT, dR_min, dR_max to the variables
         # events.HT -> INPUTS/Event/HT
 
-
-        #TODO: add classification new variables as in workflow.py
+        # TODO: add classification new variables as in workflow.py
         # create function to  get spanet model
         # get pairing information
         # reconstruct higgs with pairing predictions
 
         # HiggsLeading.pt -> INPUTS/HiggsLeading/pt
-
 
     # create new global variables for the fifth jet (if it exists) otherwise fill with PAD_VALUE
     if global_fifth_jet is not None:
@@ -245,7 +236,7 @@ def create_inputs(file, jets, max_num_jets, global_fifth_jet, events):
 
         ptPnetRegNeutrino_array_5 = ak.to_numpy(
             ak.fill_none(
-                ak.pad_none(global_fifth_jet.ptPnetRegNeutrino, 5, clip=True),
+                ak.pad_none(global_fifth_jet.pt, 5, clip=True),
                 PAD_VALUE,
             )[:, 4]
         )
@@ -367,7 +358,7 @@ def add_info_to_file(input_to_file):
     file_out.close()
 
 
-filename = f"{args.input}"
+filename = args.input
 main_dir = args.output if args.output else os.path.dirname(filename)
 os.makedirs(main_dir, exist_ok=True)
 df = ak.from_parquet(filename)

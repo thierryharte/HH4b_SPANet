@@ -29,13 +29,32 @@ parser.add_argument(
     help="Event category",
 )
 parser.add_argument(
-    "-kl",
+    "-s",
+    "--sample",
+    type=str,
+    default="",
+    required=False,
+    help="Sample to consider. If not specified, all the samples are considered.",
+)
+parser.add_argument(
+    "-k",
+    "--kl",
     type=str,
     default="",
     required=False,
     help="kl coefficient to consider. If not specified, all the kl coefficients are considered.",
 )
+parser.add_argument(
+    "-r",
+    "--reduce",
+    default=False,
+    action="store_true",
+    help="Reduce the number of events in the dataset.",
+)
 args = parser.parse_args()
+
+#TODO: add the real number of events
+NUMBER_QCD_4B=10
 
 ## Loading the exported dataset
 # We open the .coffea file and read the output accumulator. The ntuples for the training are saved under the key `columns`.
@@ -75,7 +94,7 @@ features = {
         #     "prov": "provenance",
         # },
         "JetGood": {
-            "ptPnetRegNeutrino": "pt",
+            "pt": "pt",
             "eta": "eta",
             "phi": "phi",
             "mass": "mass",
@@ -83,7 +102,7 @@ features = {
             # "ptPnetRegNeutrino": "ptPnetRegNeutrino",
         },
         "JetGoodHiggs": {
-            "ptPnetRegNeutrino": "pt",
+            "pt": "pt",
             "eta": "eta",
             "phi": "phi",
             "mass": "mass",
@@ -91,7 +110,7 @@ features = {
             # "ptPnetRegNeutrino": "ptPnetRegNeutrino",
         },
         "JetGoodHiggsMatched": {
-            "ptPnetRegNeutrino": "pt",
+            "pt": "pt",
             "eta": "eta",
             "phi": "phi",
             "mass": "mass",
@@ -102,7 +121,7 @@ features = {
             # "hadronFlavour" : "hadronFlavour"
         },
         "JetGoodMatched": {
-            "ptPnetRegNeutrino": "pt",
+            "pt": "pt",
             "eta": "eta",
             "phi": "phi",
             "mass": "mass",
@@ -112,7 +131,7 @@ features = {
             # "pdgId" : "pdgId",
             # "hadronFlavour" : "hadronFlavour"
         },
-        #TODO add the new variables
+        # TODO add the new variables
     },
     "by_sample": {},
 }
@@ -148,6 +167,7 @@ kl_dict = {
 
 sig_bkg_dict = {
     "QCD-4Jets": 0,
+    "2022_postEE_EraE": 0,
     "GluGlutoHHto4B_kl-1p00": 1,
 }
 
@@ -174,11 +194,13 @@ matched_collections_dict = {
     "JetGood": "JetGoodMatched",
 }
 
-samples = df["columns"].keys()
+samples = df["columns"].keys() if not args.sample else [args.sample]
 print("Samples: ", samples)
 
-for sample in samples:
 
+#TODO: random idx
+
+for sample in samples:
     # Compose the features dictionary with common features and sample-specific features
     features_dict = features["common"].copy()
     if sample in features["by_sample"].keys():
@@ -197,28 +219,6 @@ for sample in samples:
         datasets = [dataset for dataset in datasets if args.kl in dataset]
     print("Datasets: ", datasets)
 
-    ## Normalize the genweights
-    # Since the array `weight` is filled on the fly with the weight associated with the event, it does not take into account the overall scaling by the sum of genweights (`sum_genweights`).
-    # In order to correct for this, we have to scale by hand the `weight` array dividing by the sum of genweights.
-    for dataset in datasets:
-        weight = df["columns"][sample][dataset][args.cat]["weight"].value
-        for x in norm_xsec.keys():
-            if x in dataset:
-                norm_factor = norm_xsec[x]
-                print("norm_factor: ", norm_factor)
-                break
-            else:
-                norm_factor = 1.0
-
-        weight_new = (
-            column_accumulator(weight / df["sum_genweights"][dataset] / norm_factor)
-        )
-        df["columns"][sample][dataset][args.cat]["weight"] = weight_new
-
-    ## Accumulate ntuples from different data-taking eras
-    # In order to enlarge our training sample, we merge ntuples coming from different data-taking eras.
-    cs = accumulate([df["columns"][sample][dataset][args.cat] for dataset in datasets])
-
     dataset_lenght = [
         len(
             df["columns"][sample][dataset][args.cat][
@@ -228,19 +228,48 @@ for sample in samples:
         for dataset in datasets
     ]
 
-    kl_list = [-999.]*len(datasets)
-    for i, dataset in   enumerate(datasets):
+    ## Normalize the genweights
+    # Since the array `weight` is filled on the fly with the weight associated with the event, it does not take into account the overall scaling by the sum of genweights (`sum_genweights`).
+    # In order to correct for this, we have to scale by hand the `weight` array dividing by the sum of genweights.
+    for dataset in datasets:
+        if "weight" in df["columns"][sample][dataset][args.cat].keys():
+            weight = df["columns"][sample][dataset][args.cat]["weight"].value
+            for x in norm_xsec.keys():
+                if x in dataset:
+                    norm_factor = norm_xsec[x]
+                    print("norm_factor: ", norm_factor)
+                    break
+                else:
+                    norm_factor = 1.0
+
+            weight_new = column_accumulator(
+                weight / df["sum_genweights"][dataset] / norm_factor
+            )
+            df["columns"][sample][dataset][args.cat]["weight"] = weight_new
+        else:
+            df["columns"][sample][dataset][args.cat]["weight"] = column_accumulator(
+                np.ones(dataset_lenght[list(datasets).index(dataset)])
+                / dataset_lenght[list(datasets).index(dataset)]
+            )
+
+
+    ## Accumulate ntuples from different data-taking eras
+    # In order to enlarge our training sample, we merge ntuples coming from different data-taking eras.
+    cs = accumulate([df["columns"][sample][dataset][args.cat] for dataset in datasets])
+
+    kl_list = [-999.0] * len(datasets)
+    for i, dataset in enumerate(datasets):
         for kl in kl_dict.keys():
             if kl in dataset:
-                kl_list[i]=(kl_dict[kl])
+                kl_list[i] = kl_dict[kl]
                 break
     print("kl_list: ", kl_list)
 
-    sb_list = [-999.]*len(datasets)
+    sb_list = [-999.0] * len(datasets)
     for i, dataset in enumerate(datasets):
         for sb in sig_bkg_dict.keys():
             if sb in dataset:
-                sb_list[i]=(sig_bkg_dict[sb])
+                sb_list[i] = sig_bkg_dict[sb]
                 break
     print("sb_list: ", sb_list)
 
@@ -319,9 +348,18 @@ for sample in samples:
         with_name="Momentum4D",
     )
 
+    #TODO: remove events here
+    if args.reduce and "GluGlutoHHto4B_kl-1p00" not in sample:
+        for collection, _ in zipped_dict.items():
+            for key_feature, value in zipped_dict[collection].items():
+                # TODO: remove events here with random idx
+                pass
+
+
+
     # The Momentum4D arrays are zipped together to form the final dictionary of arrays.
     print("Zipping the collections into a single dictionary...")
     df_out = ak.zip(zipped_dict, depth_limit=1)
-    filename = os.path.join(main_dir, f"{sample}{args.kl}.parquet")
+    filename = os.path.join(main_dir, f"{sample}_{args.cat}{args.kl}.parquet")
     print(f"Saving the output dataset to file: {os.path.abspath(filename)}")
     ak.to_parquet(df_out, filename)
