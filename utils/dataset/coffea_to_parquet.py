@@ -54,7 +54,10 @@ parser.add_argument(
 args = parser.parse_args()
 
 #TODO: add the real number of events
-NUMBER_QCD_4B=10
+NUMBER_QCD_4B= 120923
+idx = np.random.RandomState(seed=42).permutation(NUMBER_QCD_4B)
+
+# NUMBER_QCD_4B= 10
 
 ## Loading the exported dataset
 # We open the .coffea file and read the output accumulator. The ntuples for the training are saved under the key `columns`.
@@ -196,6 +199,7 @@ matched_collections_dict = {
 
 samples = df["columns"].keys() if not args.sample else [args.sample]
 print("Samples: ", samples)
+print("Full samples", df["columns"].keys())
 
 
 #TODO: random idx
@@ -217,6 +221,7 @@ for sample in samples:
 
     if args.kl:
         datasets = [dataset for dataset in datasets if args.kl in dataset]
+        
     print("Datasets: ", datasets)
 
     dataset_lenght = [
@@ -252,7 +257,9 @@ for sample in samples:
                 / dataset_lenght[list(datasets).index(dataset)]
             )
 
-
+    print("\nSamples colums:" , df["columns"].keys())
+    print("Dataset columns: ", df["columns"][sample].keys())
+    print("Category columns: ", df["columns"][sample][dataset].keys())
     ## Accumulate ntuples from different data-taking eras
     # In order to enlarge our training sample, we merge ntuples coming from different data-taking eras.
     cs = accumulate([df["columns"][sample][dataset][args.cat] for dataset in datasets])
@@ -268,6 +275,8 @@ for sample in samples:
     sb_list = [-999.0] * len(datasets)
     for i, dataset in enumerate(datasets):
         for sb in sig_bkg_dict.keys():
+            print("keys sb", sig_bkg_dict.keys())
+            print("\n dataset sb", dataset)
             if sb in dataset:
                 sb_list[i] = sig_bkg_dict[sb]
                 break
@@ -349,11 +358,16 @@ for sample in samples:
     )
 
     #TODO: remove events here
-    if args.reduce and "GluGlutoHHto4B_kl-1p00" not in sample:
+    if "GluGlutoHHto4B" not in samples and args.reduce :
+        print("sample loop", samples)
         for collection, _ in zipped_dict.items():
-            for key_feature, value in zipped_dict[collection].items():
-                # TODO: remove events here with random idx
-                pass
+            print("collection", collection)
+            print("zip", zipped_dict[collection])
+            print("len zip", len(zipped_dict[collection]))
+            # zipped_dict[collection]= zipped_dict[collection][idx]
+            zipped_dict[collection]= zipped_dict[collection][idx]
+            print("new_zipped",zipped_dict[collection])
+            print("len new_zipped", len(zipped_dict[collection]))
 
 
 

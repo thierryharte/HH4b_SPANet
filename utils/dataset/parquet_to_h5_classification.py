@@ -46,7 +46,7 @@ parser.add_argument(
 )
 parser.add_argument("-o", "--output", type=str, default="", help="Output directory")
 parser.add_argument(
-    "-t", "--spanet-training", type=str, default="", help="Spanet training"
+    "-t", "--spanet-training", type=str, default="/work/mmalucch/out_hh4b_5jets_ATLAS_ptreg_c0_lr1e4_wp0_noklininp_oc_300e_kl3p5.onnx", help="Spanet training"
 )
 
 
@@ -970,8 +970,12 @@ os.makedirs(main_dir, exist_ok=True)
 dfs = []
 for filename in list(args.input):
     dfs.append(ak.from_parquet(filename))
+    print(dfs[-1].event.sb)
+    
 
 df = ak.concatenate(dfs)
+print("df", df)
+print("df shape", df.event.sb)
 # df= ['JetGood', 'JetGoodHiggs', 'JetGoodHiggsMatched', 'JetGoodMatched', 'event']
 
 
@@ -1035,8 +1039,12 @@ for i, jets_all in enumerate([jets_good, jets_good_higgs]):
 # with Pool(4) as p:
 #     p.map(add_info_to_file, [(3, jets_list[3])])
 
-
-for number, jet in enumerate(jets_list):
+jet_list=[]
+for i in range (2):
+    jet_list.append(jets_list[i])
+    
+    
+for number, jet in enumerate(jet_list):
     add_info_to_file((number, jet))
 
 # enumerate jet lists tienen 4 , dos pare traiin/test de jet good higgs y otros dos test/train de jet good
