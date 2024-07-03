@@ -12,10 +12,17 @@ import functools
 import sys
 vector.register_numba()
 vector.register_awkward()
+import psutil
+
+
+#TODO: print the onnx version used, beecause it might bee the problem
 
 num_threads = 1
 os.environ["OMP_NUM_THREADS"] = f"{num_threads}"
-print("THREADS", os.environ.get("OMP_NUM_THREADS"))
+print("THREADS", os.environ.get("OMP_NUM_THREADS"), flush=True)
+os.environ["MKL_NUM_THREADS"] = str(num_threads)
+os.environ["OPENBLAS_NUM_THREADS"] = str(num_threads)
+
 import onnxruntime
 sess_opts = onnxruntime.SessionOptions()
 sess_opts.execution_mode  = onnxruntime.ExecutionMode.ORT_PARALLEL
