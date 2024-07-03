@@ -14,9 +14,6 @@ vector.register_numba()
 vector.register_awkward()
 import psutil
 
-
-#TODO: print the onnx version used, beecause it might bee the problem
-
 num_threads = 1
 os.environ["OMP_NUM_THREADS"] = f"{num_threads}"
 print("THREADS", os.environ.get("OMP_NUM_THREADS"), flush=True)
