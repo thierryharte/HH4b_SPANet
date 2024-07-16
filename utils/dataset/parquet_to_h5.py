@@ -644,14 +644,6 @@ def create_inputs(file, jets, jet_4vector, max_num_jets, global_fifth_jet, event
             data=dR_max,
         )
 
-        difference = ak.to_numpy(difference)
-
-        difference_ds = file.create_dataset(
-            "INPUTS/Event/Probability_difference",
-            np.shape(difference),
-            dtype="float32",
-            data=difference,
-        )
 
 
         # print("higgs_1", higgs_1)
@@ -843,7 +835,7 @@ def create_inputs(file, jets, jet_4vector, max_num_jets, global_fifth_jet, event
             data=HH_cos,
         )
 
-        HH_dEta = HiggsLeading.eta - HiggsSubLeading.eta
+        HH_dEta = abs(HiggsLeading.eta - HiggsSubLeading.eta)
         HH_dEta_ds = file.create_dataset(
             "INPUTS/HH/dEta",
             np.shape(HH_dEta),
@@ -865,13 +857,6 @@ def create_inputs(file, jets, jet_4vector, max_num_jets, global_fifth_jet, event
             second_best_pairing_probabilities_sum
         )
 
-        # predictions_ds= file.create_dataset(
-        #     "INPUTS/Event/Predictions_best",
-        #     np.shape(predictions_best),
-        #     dtype="float32",
-        #     data=predictions_best,
-        # )
-
         best_pairing_probabilities_sum_ds = file.create_dataset(
             "INPUTS/Event/Best_pairing_probabilities_sum",
             np.shape(best_pairing_probabilities_sum),
@@ -886,6 +871,14 @@ def create_inputs(file, jets, jet_4vector, max_num_jets, global_fifth_jet, event
             data=second_best_pairing_probabilities_sum,
         )
 
+        difference = ak.to_numpy(difference)
+
+        difference_ds = file.create_dataset(
+            "INPUTS/Event/Probability_difference",
+            np.shape(difference),
+            dtype="float32",
+            data=difference,
+        )
 
     # create new global variables for the fifth jet (if it exists) otherwise fill with PAD_VALUE
     if global_fifth_jet is not None:
