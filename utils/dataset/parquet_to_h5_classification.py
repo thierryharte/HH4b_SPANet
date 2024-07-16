@@ -13,21 +13,21 @@ import sys
 vector.register_numba()
 vector.register_awkward()
 import psutil
+from rich.progress import track
 
 num_threads = 1
-os.environ["OMP_NUM_THREADS"] = f"{num_threads}"
-print("THREADS", os.environ.get("OMP_NUM_THREADS"), flush=True)
-os.environ["MKL_NUM_THREADS"] = str(num_threads)
-os.environ["OPENBLAS_NUM_THREADS"] = str(num_threads)
+# os.environ["OMP_NUM_THREADS"] = f"{num_threads}"
+# print("THREADS", os.environ.get("OMP_NUM_THREADS"), flush=True)
+# os.environ["MKL_NUM_THREADS"] = str(num_threads)
+# os.environ["OPENBLAS_NUM_THREADS"] = str(num_threads)
 
 import onnxruntime
 sess_opts = onnxruntime.SessionOptions()
 sess_opts.execution_mode  = onnxruntime.ExecutionMode.ORT_PARALLEL
-sess_opts.inter_op_num_threads = num_threads
-sess_opts.intra_op_num_threads = num_threads
+sess_opts.inter_op_num_threads = num_threads #parallelize the call
+sess_opts.intra_op_num_threads = num_threads 
 
-print("THREADS", sess_opts.inter_op_num_threads, sess_opts.intra_op_num_threads)
-
+print("THREADS", sess_opts.inter_op_num_threads, sess_opts.intra_op_num_threads, flush=True)
 
 from prediction_selection import *
 
@@ -272,7 +272,7 @@ def jet_four_vector(jets_list):
         },
         with_name="Momentum4D",
     )
-    print("jet_4vector 1", jet)
+    print("jet_4vector 1", jet, flush=True)
     # jet_4vector.append(jet)
     # print("jet_4vector 2",jet_4vector)
     return jet
@@ -310,18 +310,65 @@ def get_pairing_information(jets, file):
     mask = ~(phi_array == PAD_VALUE)
     # we have the inputs in which we will evaluate our model
     inputs = np.stack((ptPnetRegNeutrino, eta, phi, btag), axis=-1)
-    inputs_complete = {input_name[0]: inputs, input_name[1]: mask}
+    # inputs_complete = {input_name[0]: inputs, input_name[1]: mask}
     # print(inputs.shape)
     # print(mask.shape)
 
-    # evalutaion of the model on these inputs
-    outputs = session.run(output_name, inputs_complete)
-
+    # # evalutaion of the model on these inputs
+    batch_size=6000
+    nbatches=int(len(jets)/batch_size)
+    print("nbatches", nbatches)
+    total_outputs=[]
+    total_prob_h1=[]
+    total_prob_h2=[]
+    # for i in track(range(nbatches), "Inference"):
+    for i in range(nbatches):
+        #for i in range(nbatches):
+        # if i> 10: break
+        #print(f"EVAL {i}")
+        start = i*batch_size
+        if i < (nbatches-1):
+            stop = start+batch_size
+            # print("stop 1", stop)
+        else:
+            stop = len(jets)
+            # print("stop 2", stop)
+        # print("inputs[: , start:stop]", inputs[start:stop])
+        # print("shape inputs[: , start:stop]", inputs[start:stop].shape)
+        # print("mask[start:stop]", mask[start:stop])
+        # print("shape mask[start:stop]", mask[start:stop].shape)
+        inputs_complete = {input_name[0]: inputs[start:stop], input_name[1]: mask[start:stop]}
+        outputs = (session.run( output_name, inputs_complete))
+        prob_h1= outputs[0]
+        # print("prob_h1 type", type(prob_h1))
+        prob_h2= outputs[1]
+        # print("outputs", (outputs))
+        # for j in outputs[0]:
+        #     if j.shape != (5,5):
+        #         print("outputs",j.shape)
+        # print("len outputs",len(outputs))
+        total_prob_h1.append(prob_h1)
+        total_prob_h2.append(prob_h2)
+        #print(outputs)
+    
+        
+    # print(total_prob_h1)
+    # print("total outputs", total_outputs)
+    print("len total proba h1", len(total_prob_h1), flush= True)
+    print("len total proba h2", len(total_prob_h2), flush= True)
+    
+    
+    proba_h1=np.concatenate(total_prob_h1, axis=0)
+    proba_h2=np.concatenate(total_prob_h2, axis=0)
+    
+    print("prob h1",proba_h1.shape)
+    print("prob h2",proba_h2.shape)
+    # outputs = session.run(output_name, inputs_complete)
     print("file", file)
 
     # extract the best jet assignment from
     # the predicted probabilities
-    assignment_probability = np.stack((outputs[0], outputs[1]), axis=0)
+    assignment_probability = np.stack((proba_h1, proba_h2), axis=0)
     # print("\nassignment_probability", assignment_probability)
     # swap axis
 
@@ -330,6 +377,7 @@ def get_pairing_information(jets, file):
 
     # get the probabilities of the best jet assignment
     num_events = assignment_probability.shape[1]
+    print("num_events", num_events)
     range_num_events = np.arange(num_events)
     best_pairing_probabilities = np.ndarray((2, num_events))
     for i in range(2):
@@ -340,7 +388,8 @@ def get_pairing_information(jets, file):
             predictions_best[:, i, 1],
         ]
     best_pairing_probabilities_sum = np.sum(best_pairing_probabilities, axis=0)
-    # print("\nbest_pairing_probabilities_sum", best_pairing_probabilities_sum)
+    print("\nbest_pairing_probabilities_sum", best_pairing_probabilities_sum)
+    print("\nbest_pairing_probabilities_sum", len(best_pairing_probabilities_sum))
 
     # set to zero the probabilities of the best jet assignment, the symmetrization and the same jet assignment on the other target
     for j in range(2):
@@ -512,10 +561,12 @@ def create_inputs(file, jets, jet_4vector, max_num_jets, global_fifth_jet, event
         print("ht_array", ht_array)
         ht_ds = file.create_dataset(
             "INPUTS/Event/HT",
-            np.shape(sb_array),
+            np.shape(ht_array),
             dtype="int64",
             data=ht_array,
         )
+        
+        #TODO: check  the shape
 
         o, JetGood2 = ak.unzip(
             ak.cartesian(
@@ -532,10 +583,10 @@ def create_inputs(file, jets, jet_4vector, max_num_jets, global_fifth_jet, event
         print("dr post mask", dR)
         # flatten the last 2 dimension of the dR array  to get an array for each event
         dR = ak.flatten(dR, axis=2)
-        print("dr post flat", dR)
+        print("dr post flat", dR, flush= True)
         dR_min = ak.min(dR, axis=1)
 
-        print("dR_min", dR_min)
+        print("dR_min", dR_min, flush=True)
 
         dR_max = ak.max(dR, axis=1)
 
@@ -811,6 +862,9 @@ def create_inputs(file, jets, jet_4vector, max_num_jets, global_fifth_jet, event
             dtype="float32",
             data=second_best_pairing_probabilities_sum,
         )
+        
+        r_HH= np.sqrt((HiggsLeading_mass -125)**2 +(HiggsSubLeading_mass -120)**2)
+        mask_sr= r_HH < 30
 
     # create new global variables for the fifth jet (if it exists) otherwise fill with PAD_VALUE
     if global_fifth_jet is not None:
@@ -942,10 +996,6 @@ def add_info_to_file(input_to_file):
         # jets_list[1] is the list of jets for jet good ( so contains a fifth jet) for the test dataset
         global_fifth_jet = jets_list[1]
 
-    print("jets what is it", jets.type)
-    # jet_4vector=jet_four_vector(jets)
-
-    print("jet what it is pt", jets.pt)
     jet_4vector = jet_four_vector(jets)
 
     # evaluate the model for the events
@@ -1011,6 +1061,8 @@ n_events = len(jets_good)
 idx = np.random.RandomState(seed=42).permutation(n_events)
 for i, jets_all in enumerate([jets_good, jets_good_higgs]):
     events_all = df.event
+    print("events_all",events_all)
+    print("jets_all",jets_all)
     print(f"Creating dataset for {'JetGood' if i == 0 else 'JetGoodHiggs'}")
     print(f"Number of events: {n_events}")
     # The ceil of the scalar x is the smallest integer i, such that i >= x
@@ -1043,13 +1095,18 @@ for i, jets_all in enumerate([jets_good, jets_good_higgs]):
 # with Pool(4) as p:
 #     p.map(add_info_to_file, [(3, jets_list[3])])
 
-jet_list=[]
-for i in range (2):
-    jet_list.append(jets_list[i])
+# jet_list=[]
+# for i in range (1):
+#     jet_list.append(jets_list[i])
+
+# # jet_list.append(jets_list[1])
+
+# print("jet_list", jet_list, flush=True)
     
+# for number, jet in enumerate(jet_list):
+#     add_info_to_file((number, jet))
     
-for number, jet in enumerate(jet_list):
-    add_info_to_file((number, jet))
+add_info_to_file((1, jets_list[1]))
 
 # enumerate jet lists tienen 4 , dos pare traiin/test de jet good higgs y otros dos test/train de jet good
 
@@ -1060,3 +1117,4 @@ for number, jet in enumerate(jet_list):
 # print(jets_list[0].type)
 # print(jets_list[1].type)
 # print(len(jets_list))
+
