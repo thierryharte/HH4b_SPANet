@@ -54,12 +54,10 @@ parser.add_argument(
 )
 args = parser.parse_args()
 
-#TODO: add the real number of events
 NUMBER_QCD_4B= 120923
 NUMBER_QCD_2B= 4424846
 idx = np.random.RandomState(seed=42).permutation(NUMBER_QCD_2B)
 
-# NUMBER_QCD_4B= 10
 
 ## Loading the exported dataset
 # We open the .coffea file and read the output accumulator. The ntuples for the training are saved under the key `columns`.
@@ -205,8 +203,6 @@ print("Samples: ", samples)
 
 
 
-#TODO: random idx
-
 for sample in samples:
     # Compose the features dictionary with common features and sample-specific features
     features_dict = features["common"].copy()
@@ -221,12 +217,12 @@ for sample in samples:
     # Create a default dictionary of dictionaries to store the arrays
     array_dict = {k: defaultdict(dict) for k in features_dict.keys()}
     datasets = df["columns"][sample].keys()
-    
+
     # print("datasets", datasets)
 
     if args.kl:
         datasets = [dataset for dataset in datasets if args.kl in dataset]
-        
+
     print("Datasets: ", datasets)
 
     dataset_lenght = [
@@ -237,7 +233,7 @@ for sample in samples:
         )
         for dataset in datasets
     ]
-    
+
     print("dataset_lenght",  dataset_lenght)
 
     ## Normalize the genweights
@@ -272,7 +268,7 @@ for sample in samples:
                 np.ones(dataset_lenght[list(datasets).index(dataset)])
                 / dataset_lenght[list(datasets).index(dataset)]
             )
-    
+
         print("\n dataset", dataset)
         print("weights", df["columns"][sample][dataset][args.cat]["weight"])
 
@@ -376,7 +372,6 @@ for sample in samples:
         with_name="Momentum4D",
     )
 
-    #TODO: remove events here
     if "GluGlutoHHto4B" not in samples and args.reduce :
         print("sample loop", samples)
         for collection, _ in zipped_dict.items():
@@ -384,7 +379,10 @@ for sample in samples:
             print("zip", zipped_dict[collection])
             print("dataset", dataset)
             print("len zip", len(zipped_dict[collection]))
-            # zipped_dict[collection]= zipped_dict[collection][idx]
+
+            # NOTE: for 2b data we are just shuffling the dataset up to the
+            # index given by the length of the 2b QCD dataset
+            # but this is still fine!
             zipped_dict[collection]= zipped_dict[collection][idx]
             print("new_zipped_1", len(zipped_dict[collection]))
             zipped_dict[collection]= zipped_dict[collection][: NUMBER_QCD_4B]
@@ -392,11 +390,6 @@ for sample in samples:
             print(len(zipped_dict["event"]["weight"]))
             print("len new_zipped", len(zipped_dict[collection]))
 
-    fig, ax= plt.subplots()
-    ax.hist(zipped_dict["event"]["weight"][()], np.logspace(-9,-3,60))
-    ax.set_yscale("log")
-    ax.set_xscale("log")
-    fig.savefig(f"/t3home/ramella/HH4b_SPANet/weights_plots/shuffled.png")
     # The Momentum4D arrays are zipped together to form the final dictionary of arrays.
     print("Zipping the collections into a single dictionary...")
     df_out = ak.zip(zipped_dict, depth_limit=1)

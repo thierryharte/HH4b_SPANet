@@ -1,3 +1,11 @@
+#safe resources for signal region:
+    # for 2b total dataset test--> 3.5h, 15Gb
+    # for 2b total dataset train-->
+    # for reduced test --> 1h, 3Gb
+    # for reduced train --> 3h, 3Gb
+
+
+
 import awkward as ak
 import numba
 import numpy as np
@@ -10,29 +18,16 @@ import argparse
 from multiprocessing import Pool
 import functools
 import sys
+
 vector.register_numba()
 vector.register_awkward()
 import psutil
 from rich.progress import track
 
-num_threads = 1
-# os.environ["OMP_NUM_THREADS"] = f"{num_threads}"
-# print("THREADS", os.environ.get("OMP_NUM_THREADS"), flush=True)
-# os.environ["MKL_NUM_THREADS"] = str(num_threads)
-# os.environ["OPENBLAS_NUM_THREADS"] = str(num_threads)
-
-import onnxruntime
-sess_opts = onnxruntime.SessionOptions()
-sess_opts.execution_mode  = onnxruntime.ExecutionMode.ORT_PARALLEL
-sess_opts.inter_op_num_threads = num_threads #parallelize the call
-sess_opts.intra_op_num_threads = num_threads
-
-print("THREADS", sess_opts.inter_op_num_threads, sess_opts.intra_op_num_threads, flush=True)
-
 from prediction_selection import *
 
 
-# pass arguments to rum the code
+# pass arguments to run the code
 # to use them do: args.name of the arg
 # the input file will be a parquet file that we access by doing filename = f"{args.input}"
 # df = ak.from_parquet(filename) : this is an awkard lisr
@@ -50,7 +45,11 @@ parser.add_argument(
 )
 parser.add_argument("-o", "--output", type=str, default="", help="Output directory")
 parser.add_argument(
-    "-t", "--spanet-training", type=str, default="/work/mmalucch/out_hh4b_5jets_ATLAS_ptreg_c0_lr1e4_wp0_noklininp_oc_300e_kl3p5.onnx", help="Spanet training"
+    "-t",
+    "--spanet-training",
+    type=str,
+    default="/work/mmalucch/out_hh4b_5jets_ATLAS_ptreg_c0_lr1e4_wp0_noklininp_oc_300e_kl3p5.onnx",
+    help="Spanet training",
 )
 parser.add_argument(
     "-f",
@@ -60,7 +59,6 @@ parser.add_argument(
     help="Fraction of events to use for training",
 )
 parser.add_argument(
-    "-n",
     "--num-jets",
     type=int,
     default=5,
@@ -74,7 +72,26 @@ parser.add_argument(
     help="Maximum number of events to process",
 )
 parser.add_argument(
-    "-s",
+    "-b",
+    "--batch-size",
+    type=int,
+    default=6000,
+    help="Batch size for the model",
+)
+parser.add_argument(
+    "-n",
+    "--num-threads",
+    type=int,
+    default=1,
+    help="Number of threads to use",
+)
+parser.add_argument(
+    "--type",
+    default=-1,
+    type=int,
+    help="Type of the dataset (0=JetGood_train, 1=JetGood_test, 2=JetGoodHiggs_train, 3=JetGoodHiggs_test)",
+)
+parser.add_argument(
     "--no-shuffle",
     action="store_true",
     default=False,
@@ -88,14 +105,27 @@ parser.add_argument(
     help="Dataset is for classification",
 )
 parser.add_argument(
+    "-s",
     "--signal",
     action="store_true",
     default=False,
     help="Mask for signal region",
 )
-#TODO add argument to cut on the number of evetns for testing
 
 args = parser.parse_args()
+
+if args.classification or args.signal:
+    import onnxruntime
+    sess_opts = onnxruntime.SessionOptions()
+    sess_opts.execution_mode = onnxruntime.ExecutionMode.ORT_PARALLEL
+    sess_opts.inter_op_num_threads = args.num_threads  # parallelize the call
+    sess_opts.intra_op_num_threads = args.num_threads
+    print(
+        "THREADS",
+        sess_opts.inter_op_num_threads,
+        sess_opts.intra_op_num_threads,
+        flush=True,
+    )
 
 # low, medium and tight WP
 btag_wp = [0.0499, 0.2605, 0.6915]
@@ -164,28 +194,6 @@ def get_awkward_array_shape(arr):
 
 
 def reconstruct_higgs(jet_collection, idx_collection):
-    # print("jet coll", jet_collection)
-    # print("indx coll", idx_collection)
-
-    # print("len(idx_collection)", len(idx_collection))
-    # print("len jet coll indx", len(jet_collection[np.arange(len(idx_collection)), idx_collection[:, 0, 0]]))
-    # print("len jet coll indx", np.arange(len(idx_collection)))
-
-    # sum_j=jet_collection[:,0]+ jet_collection[:,1]
-
-    # print(sum_j.pt)
-
-    # jet_collection[np.arange(len(idx_collection)), idx_collection[:, 0, 0]]
-    #  the first part is the event, and the second theindeex of the jeet in the event
-
-    # print("event 8", jet_collection[7,4].pt)
-    # print("event 8", len(jet_collection[7,:].pt))
-
-    idx_1 = idx_collection[:, 0, 0]
-    idx_2 = idx_collection[:, 0, 1]
-    idx_3 = idx_collection[:, 1, 0]
-    idx_4 = idx_collection[:, 1, 1]
-    lenght = np.arange(len(idx_collection))
 
     higgs_1 = (
         jet_collection[np.arange(len(idx_collection)), idx_collection[:, 0, 0]]
@@ -220,25 +228,24 @@ def reconstruct_higgs(jet_collection, idx_collection):
     print("idx_ordered", idx_ordered)
 
     return higgs_lead, higgs_sub, idx_ordered
-    # return sum_j, higgs_1, idx_ordered
 
 
-def create_targets(file, particle, jets, filename, max_num_jets):
-    indices = ak.local_index(jets)
+def create_targets(file, particle, jets_prov, filename, max_num_jets):
+    indices = ak.local_index(jets_prov)
     higgs_targets = {1: ["b1", "b2"], 2: ["b3", "b4"]}
 
     for j in [1, 2]:
         if particle == f"h{j}":
-            if ak.all(jets.prov == -1):
+            if ak.all(jets_prov == -1):
                 if args.classification:
-                    index_b1 = ak.full_like(jets.pt[:, 0], 0 + (j - 1) * 2)
-                    index_b2 = ak.full_like(jets.pt[:, 0], 1 + (j - 1) * 2)
+                    index_b1 = ak.full_like(jets_prov[:, 0], 0 + (j - 1) * 2)
+                    index_b2 = ak.full_like(jets_prov[:, 0], 1 + (j - 1) * 2)
                 else:
-                    index_b1 = ak.full_like(jets.pt[:, 0], 0)
-                    index_b2 = ak.full_like(jets.pt[:, 0], 0)
+                    index_b1 = ak.full_like(jets_prov[:, 0], 0)
+                    index_b2 = ak.full_like(jets_prov[:, 0], 0)
                 # print(filename, particle, index_b1, index_b2)
             else:
-                mask = jets.prov == j  # H->b1b2
+                mask = jets_prov == j  # H->b1b2
                 indices_prov = ak.fill_none(ak.pad_none(indices[mask], 2), -1)
                 # print(filename, particle, indices_prov)
 
@@ -327,64 +334,52 @@ def get_pairing_information(jets, file):
     # print(mask.shape)
 
     # # evalutaion of the model on these inputs
-    batch_size=6000
-    nbatches=int(len(jets)/batch_size)
+    batch_size = args.batch_size
+    nbatches = int(len(jets) / batch_size) if int(len(jets) / batch_size) > 0 else 1
     print("nbatches", nbatches)
-    total_outputs=[]
-    total_prob_h1=[]
-    total_prob_h2=[]
+    total_prob_h1 = []
+    total_prob_h2 = []
     # for i in track(range(nbatches), "Inference"):
     for i in range(nbatches):
-        #for i in range(nbatches):
-        # if i> 10: break
-        #print(f"EVAL {i}")
-        start = i*batch_size
-        if i < (nbatches-1):
-            stop = start+batch_size
+        if i % 1 == 0:
+            print(f"Batch {i}/{nbatches}  //  percentage {i/nbatches*100} %", flush=True)
+
+        start = i * batch_size
+        if i < (nbatches - 1):
+            stop = start + batch_size
             # print("stop 1", stop)
         else:
             stop = len(jets)
-            # print("stop 2", stop)
-        # print("inputs[: , start:stop]", inputs[start:stop])
-        # print("shape inputs[: , start:stop]", inputs[start:stop].shape)
-        # print("mask[start:stop]", mask[start:stop])
-        # print("shape mask[start:stop]", mask[start:stop].shape)
-        inputs_complete = {input_name[0]: inputs[start:stop], input_name[1]: mask[start:stop]}
-        outputs = (session.run( output_name, inputs_complete))
-        prob_h1= outputs[0]
-        # print("prob_h1 type", type(prob_h1))
-        prob_h2= outputs[1]
-        # print("outputs", (outputs))
-        # for j in outputs[0]:
-        #     if j.shape != (5,5):
-        #         print("outputs",j.shape)
-        # print("len outputs",len(outputs))
+        inputs_complete = {
+            input_name[0]: inputs[start:stop],
+            input_name[1]: mask[start:stop],
+        }
+        outputs = session.run(output_name, inputs_complete)
+        prob_h1 = outputs[0]
+        prob_h2 = outputs[1]
         total_prob_h1.append(prob_h1)
         total_prob_h2.append(prob_h2)
-        #print(outputs)
-
 
     # print(total_prob_h1)
     # print("total outputs", total_outputs)
-    print("len total proba h1", len(total_prob_h1), flush= True)
-    print("len total proba h2", len(total_prob_h2), flush= True)
+    print("len total proba h1", len(total_prob_h1), flush=True)
+    print("len total proba h2", len(total_prob_h2), flush=True)
 
+    prob_h1 = np.concatenate(total_prob_h1, axis=0)
+    prob_h2 = np.concatenate(total_prob_h2, axis=0)
 
-    proba_h1=np.concatenate(total_prob_h1, axis=0)
-    proba_h2=np.concatenate(total_prob_h2, axis=0)
-
-    print("prob h1",proba_h1.shape)
-    print("prob h2",proba_h2.shape)
+    print("prob h1", prob_h1.shape)
+    print("prob h2", prob_h2.shape)
     # outputs = session.run(output_name, inputs_complete)
     print("file", file)
 
     # extract the best jet assignment from
     # the predicted probabilities
-    assignment_probability = np.stack((proba_h1, proba_h2), axis=0)
+    assignment_probability = np.stack((prob_h1, prob_h2), axis=0)
     # print("\nassignment_probability", assignment_probability)
-    # swap axis
 
     # print("matrix proba",outputs[0])
+    # swap axis
     predictions_best = np.swapaxes(extract_predictions(assignment_probability), 0, 1)
 
     # get the probabilities of the best jet assignment
@@ -468,31 +463,37 @@ def create_inputs(file, jets, jet_4vector, max_num_jets, global_fifth_jet, event
             jet_4vector, predictions_best
         )
         if args.signal:
-            r_HH= np.sqrt((HiggsLeading.mass -125)**2 +(HiggsSubLeading.mass -120)**2)
-            mask_sr= r_HH < 30
+            r_HH = np.sqrt(
+                (HiggsLeading.mass - 125) ** 2 + (HiggsSubLeading.mass - 120) ** 2
+            )
+            mask_sr = ak.to_numpy(r_HH < 30)
         else:
-            mask_sr= np.full(len(jets), True)
+            mask_sr = np.full(len(jets), True)
+        print("r_hh", r_HH)
+        print("len jets", len(jets))
+        print("mask_sr", mask_sr.shape, np.sum(mask_sr))
 
-        jet_4vector=jet_4vector[mask_sr]
-        difference=difference[mask_sr]
-        predictions_best=predictions_best[mask_sr]
-        best_pairing_probabilities_sum=best_pairing_probabilities_sum[mask_sr]
-        second_best_pairing_probabilities_sum=second_best_pairing_probabilities_sum[mask_sr]
-        HiggsLeading=HiggsLeading[mask_sr]
-        HiggsSubLeading=HiggsSubLeading[mask_sr]
-        pairing_predictions_ordered=pairing_predictions_ordered[mask_sr]
+        jet_4vector = jet_4vector[mask_sr]
+        difference = difference[mask_sr]
+        predictions_best = predictions_best[mask_sr]
+        best_pairing_probabilities_sum = best_pairing_probabilities_sum[mask_sr]
+        second_best_pairing_probabilities_sum = second_best_pairing_probabilities_sum[
+            mask_sr
+        ]
+        HiggsLeading = HiggsLeading[mask_sr]
+        HiggsSubLeading = HiggsSubLeading[mask_sr]
+        pairing_predictions_ordered = pairing_predictions_ordered[mask_sr]
 
     else:
-        mask_sr= np.full(len(jets), True)
+        mask_sr = np.full(len(jets), True)
 
-    jets=jets[mask_sr]
-    events=events[mask_sr]
+    jets = jets[mask_sr]
+    events = events[mask_sr]
+    print("len jets", len(jets))
 
     # first you create the variable and then the dataset
     ptPnetRegNeutrino_array = ak.to_numpy(
-        ak.fill_none(
-            ak.pad_none(jets.pt, max_num_jets, clip=True), PAD_VALUE
-        )
+        ak.fill_none(ak.pad_none(jets.pt, max_num_jets, clip=True), PAD_VALUE)
     )
     ptPnetRegNeutrino_ds = file.create_dataset(
         "INPUTS/Jet/ptPnetRegNeutrino",
@@ -573,7 +574,6 @@ def create_inputs(file, jets, jet_4vector, max_num_jets, global_fifth_jet, event
         "INPUTS/Event/kl", np.shape(kl_array), dtype="float32", data=kl_array
     )
 
-
     if args.classification:
         weight_array = ak.to_numpy(events.weight)
         weight_ds = file.create_dataset(
@@ -604,8 +604,6 @@ def create_inputs(file, jets, jet_4vector, max_num_jets, global_fifth_jet, event
             data=ht_array,
         )
 
-        #TODO: check  the shape
-
         o, JetGood2 = ak.unzip(
             ak.cartesian(
                 [jet_4vector, jet_4vector],
@@ -621,7 +619,7 @@ def create_inputs(file, jets, jet_4vector, max_num_jets, global_fifth_jet, event
         print("dr post mask", dR)
         # flatten the last 2 dimension of the dR array  to get an array for each event
         dR = ak.flatten(dR, axis=2)
-        print("dr post flat", dR, flush= True)
+        print("dr post flat", dR, flush=True)
         dR_min = ak.min(dR, axis=1)
 
         print("dR_min", dR_min, flush=True)
@@ -643,8 +641,6 @@ def create_inputs(file, jets, jet_4vector, max_num_jets, global_fifth_jet, event
             dtype="float32",
             data=dR_max,
         )
-
-
 
         # print("higgs_1", higgs_1)
         # print("higgs_2", higgs_2)
@@ -994,12 +990,12 @@ def create_inputs(file, jets, jet_4vector, max_num_jets, global_fifth_jet, event
             dtype="float32",
             data=mass_array_5,
         )
-
+    return mask_sr
 
 def add_info_to_file(input_to_file):
     # since the input an enumerate object, k corresponds to the index and jets to the actual list
     k, jets = input_to_file
-    print(f"Adding info to file {file_dict[k]}")
+    print(f"\n\nAdding info to file {main_dir}/{file_dict[k]}")
     file_out = h5py.File(f"{main_dir}/{file_dict[k]}", "w")
     file_out = create_groups(file_out)
     print("max_num_jets", max_num_jets_list[k])
@@ -1020,7 +1016,7 @@ def add_info_to_file(input_to_file):
     # print("bes sum", best_pairing_probabilities_sum)
     # print("second best", second_best_pairing_probabilities_sum)
 
-    create_inputs(
+    mask_sr=create_inputs(
         file_out,
         jets,
         jet_4vector,
@@ -1028,8 +1024,8 @@ def add_info_to_file(input_to_file):
         global_fifth_jet,
         events_list[k],
     )
-    create_targets(file_out, "h1", jets, file_dict[k], max_num_jets_list[k])
-    create_targets(file_out, "h2", jets, file_dict[k], max_num_jets_list[k])
+    create_targets(file_out, "h1", jets.prov[mask_sr], file_dict[k], max_num_jets_list[k])
+    create_targets(file_out, "h2", jets.prov[mask_sr], file_dict[k], max_num_jets_list[k])
     print("Completed file ", file_dict[k])
     file_out.close()
 
@@ -1059,8 +1055,10 @@ file_dict = {
 # create the test and train datasets
 # and create differnt datasetse with jetGood and jetGoodHiggs
 
-jets_good = df.JetGood[:args.max_events] if args.max_events !=-1 else df.JetGood
-jets_good_higgs = df.JetGoodHiggs[:args.max_events] if args.max_events!=-1 else df.JetGoodHiggs
+jets_good = df.JetGood[: args.max_events] if args.max_events != -1 else df.JetGood
+jets_good_higgs = (
+    df.JetGoodHiggs[: args.max_events] if args.max_events != -1 else df.JetGoodHiggs
+)
 
 # print("df=", df.fields)
 # print("jetgood",jets_good.fields)
@@ -1075,9 +1073,9 @@ n_events = len(jets_good)
 # I think we fix the seed so that the permutation is the same in jet_good and jet_good_higgs but not sure
 idx = np.random.RandomState(seed=42).permutation(n_events)
 for i, jets_all in enumerate([jets_good, jets_good_higgs]):
-    events_all = df.event[:args.max_events] if args.max_events !=-1 else df.event
-    print("events_all",events_all)
-    print("jets_all",jets_all)
+    events_all = df.event[: args.max_events] if args.max_events != -1 else df.event
+    print("events_all", events_all)
+    print("jets_all", jets_all)
     print(f"Creating dataset for {'JetGood' if i == 0 else 'JetGoodHiggs'}")
     print(f"Number of events: {n_events}")
     # The ceil of the scalar x is the smallest integer i, such that i >= x
@@ -1102,33 +1100,8 @@ for i, jets_all in enumerate([jets_good, jets_good_higgs]):
         events_list.append(ev)
         max_num_jets_list.append(args.num_jets if i == 0 else 4)
 
-# no estoy segura porque hay un 4 pero este pool y map permite de ejectutar en paralelo la funcion add info a las distintas jet_lists
-# with Pool(4) as p:
-#     p.map(add_info_to_file, enumerate(jets_list))
-
-
-# with Pool(4) as p:
-#     p.map(add_info_to_file, [(3, jets_list[3])])
-
-# jet_list=[]
-# for i in range (1):
-#     jet_list.append(jets_list[i])
-
-# # jet_list.append(jets_list[1])
-
-# print("jet_list", jet_list, flush=True)
-
-# for number, jet in enumerate(jet_list):
-#     add_info_to_file((number, jet))
-
-add_info_to_file((1, jets_list[1]))
-
-# enumerate jet lists tienen 4 , dos pare traiin/test de jet good higgs y otros dos test/train de jet good
-
-# results=enumerate(jets_list)
-# print("results",list(results))
-
-
-# print(jets_list[0].type)
-# print(jets_list[1].type)
-# print(len(jets_list))
+if args.type != -1:
+    add_info_to_file((args.type, jets_list[args.type]))
+else:
+    for number, jet in enumerate(jets_list):
+        add_info_to_file((number, jet))
