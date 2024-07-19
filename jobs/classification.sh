@@ -20,12 +20,12 @@ pip install mdmm
 cd $HH4b_SPANET_DIR
 # pip install -e .
 
-# export SEED=$3
+export SEED=$3
 
-echo "${@:3}"
+# echo "${@:3}"
 
 # Launch training
-if [ $# -eq 2 ]; then
+if [ $# -eq 3 ]; then
     python -m spanet.train \
            --options_file $1 \
            -n $2 \
@@ -39,7 +39,7 @@ else
            --log_dir $2\
            --time_limit 07:00:00:00\
            --gpus $NUM_GPU\
-           "${@:3}"
+           "${@:4}"
 fi
 
 # elif [ $# -eq 5 ]; then

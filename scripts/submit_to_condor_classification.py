@@ -52,7 +52,7 @@ if interactive:
 
 if model in ["jet_assignment", "classification","jet_assignment_tune"]:
     sub['Executable'] = f"{basedir}/jobs/{model}.sh"
-    sub['arguments'] = f"{basedir}/{args.options_file} {basedir}/{args.log_dir} {args.args}"
+    sub['arguments'] = f"{basedir}/{args.options_file} {basedir}/{args.log_dir} {args.seed} {args.args}"
     sub['Output'] = f"{basedir}/{args.log_dir}/{model}-$(ClusterId).$(ProcId).out"
     sub['Error'] = f"{basedir}/{args.log_dir}/{model}-$(ClusterId).$(ProcId).err"
     sub['Log'] = f"{basedir}/{args.log_dir}/{model}-$(ClusterId).log"

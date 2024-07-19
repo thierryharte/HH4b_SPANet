@@ -1,0 +1,5 @@
+path: /afs/cern.ch/user/r/ramellar/HH4b_SPANet
+model: classification
+job_flavour: workday
+ngpu: 1
+ncpu: 3

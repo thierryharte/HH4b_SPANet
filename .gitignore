@@ -2,9 +2,11 @@ logs_condor
 
 *out*
 *log*
+*plots/
 *.png
 *.pyc
 inputs_files/
 */log/
 */error/
 */output/
+ramellar.cc
