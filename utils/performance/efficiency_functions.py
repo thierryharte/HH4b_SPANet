@@ -23,21 +23,21 @@ names_dict = {
     "5_jets_data_ATLAS_ptreg_5train": "SPANet Lite 5 jets",
     "4_jets_data_ATLAS_ptreg_5train": "SPANet Lite 5 jets (4 jets eval)",
     "4_jets_data_ATLAS_5global_ptreg": "SPANet Lite 4 jets",
-    "5_jets_ATLAS_ptreg_allklambda_train_klinput": r"SPANet Lite 5 jets all $k_{\lambda}$ ($k_{\lambda}$ inputs)",
-    "5_jets_ATLAS_ptreg_allklambda_train_klinput_newkl_newCuts": r"SPANet Lite 5 jets new $k_{\lambda}$ ($k_{\lambda}$ inputs)",
-    "5_jets_ATLAS_ptreg_allklambda_train": r"SPANet Lite 5 jets all $k_{\lambda}$",
+    "5_jets_ATLAS_ptreg_allklambda_train_klinput": r"SPANet Lite 5 jets all $\kappa_{\lambda}$ ($\kappa_{\lambda}$ inputs)",
+    "5_jets_ATLAS_ptreg_allklambda_train_klinput_newkl_newCuts": r"SPANet Lite 5 jets new $\kappa_{\lambda}$ ($\kappa_{\lambda}$ inputs)",
+    "5_jets_ATLAS_ptreg_allklambda_train": r"SPANet Lite 5 jets all $\kappa_{\lambda}$",
     "5_jets_ATLAS_ptreg_allklambda_eval": "SPANet Lite 5 jets SM",
     # "4_jets_allklambda": "Run 2",
     "eff_fully_matched_allklambda": "Pairing Efficiency",
     "tot_eff_fully_matched_allklambda": "Total Pairing Efficiency",
     "eff_fully_matched_mask30_allklambda": r"Pairing Efficiency ($\Delta D_{HH} > 30$ GeV)",
     "tot_eff_fully_matched_mask30_allklambda": r"Total Pairing Efficiency ($\Delta D_{HH} > 30$ GeV)",
-    "5_jets_ATLAS_ptreg_allklambda_train_klinput_newkl_oldCuts_newCutsEval": r"SPANet - $k_{\lambda}$ ($k_{\lambda}$ inputs) - Tight Selection",
-    "5_jets_ATLAS_ptreg_allklambda_train_noklinput_newkl_oldCuts_newCutsEval": r"SPANet - $k_{\lambda}$ - Tight Selection",
+    "5_jets_ATLAS_ptreg_allklambda_train_klinput_newkl_oldCuts_newCutsEval": r"SPANet - $\kappa_{\lambda}$ ($\kappa_{\lambda}$ inputs) - Tight Selection",
+    "5_jets_ATLAS_ptreg_allklambda_train_noklinput_newkl_oldCuts_newCutsEval": r"SPANet - $\kappa_{\lambda}$ - Tight Selection",
     "5_jets_ATLAS_ptreg_sm_train_allklambda_eval_noklinput_newkl_oldCuts_newCutsEval": "SPANet - SM - Tight Selection",
-    "5_jets_ATLAS_ptreg_allklambda_train_noklinput_newkl_newCuts_newCutsEval": r"SPANet - $k_{\lambda}$ - Loose Selection",
-    "5_jets_data_ATLAS_ptreg_5train_allklambda_noklinput_oldCuts_newCutsEval": r"SPANet - $k_{\lambda}$ - Tight Selection",
-    "5_jets_data_ATLAS_ptreg_5train_allklambda_noklinput_newCuts_newCutsEval": r"SPANet - $k_{\lambda}$ - Loose Selection",
+    "5_jets_ATLAS_ptreg_allklambda_train_noklinput_newkl_newCuts_newCutsEval": r"SPANet - $\kappa_{\lambda}$ - Loose Selection",
+    "5_jets_data_ATLAS_ptreg_5train_allklambda_noklinput_oldCuts_newCutsEval": r"SPANet - $\kappa_{\lambda}$ - Tight Selection",
+    "5_jets_data_ATLAS_ptreg_5train_allklambda_noklinput_newCuts_newCutsEval": r"SPANet - $\kappa_{\lambda}$ - Loose Selection",
     "5_jets_allklambda_newkl_newCuts": "Run 2",
     "4_jets_allklambda_newkl_newCuts": "Run 2",
 }
@@ -714,7 +714,7 @@ def plot_diff_eff_klambda(eff, kl_values, allkl_names, name, plot_dir="plots"):
         )
 
     ax.legend(frameon=False, loc="lower left")
-    ax.set_xlabel(r"$k_{\lambda}$")
+    ax.set_xlabel(r"$\kappa_{\lambda}$")
     ax.set_ylabel(names_dict[name] if name in names_dict else name)
     ax.grid()
     hep.cms.label(

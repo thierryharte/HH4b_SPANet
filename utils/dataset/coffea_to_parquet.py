@@ -6,6 +6,7 @@ import numpy as np
 import awkward as ak
 
 import vector
+import matplotlib.pyplot as plt
 
 vector.register_numba()
 vector.register_awkward()
@@ -29,13 +30,34 @@ parser.add_argument(
     help="Event category",
 )
 parser.add_argument(
-    "-kl",
+    "-s",
+    "--sample",
+    type=str,
+    default="",
+    required=False,
+    help="Sample to consider. If not specified, all the samples are considered.",
+)
+parser.add_argument(
+    "-k",
+    "--kl",
     type=str,
     default="",
     required=False,
     help="kl coefficient to consider. If not specified, all the kl coefficients are considered.",
 )
+parser.add_argument(
+    "-r",
+    "--reduce",
+    default=False,
+    action="store_true",
+    help="Reduce the number of events in the dataset.",
+)
 args = parser.parse_args()
+
+NUMBER_QCD_4B= 120923
+NUMBER_QCD_2B= 4424846
+idx = np.random.RandomState(seed=42).permutation(NUMBER_QCD_2B)
+
 
 ## Loading the exported dataset
 # We open the .coffea file and read the output accumulator. The ntuples for the training are saved under the key `columns`.
@@ -75,7 +97,7 @@ features = {
         #     "prov": "provenance",
         # },
         "JetGood": {
-            "ptPnetRegNeutrino": "pt",
+            "pt": "pt",
             "eta": "eta",
             "phi": "phi",
             "mass": "mass",
@@ -83,7 +105,7 @@ features = {
             # "ptPnetRegNeutrino": "ptPnetRegNeutrino",
         },
         "JetGoodHiggs": {
-            "ptPnetRegNeutrino": "pt",
+            "pt": "pt",
             "eta": "eta",
             "phi": "phi",
             "mass": "mass",
@@ -91,7 +113,7 @@ features = {
             # "ptPnetRegNeutrino": "ptPnetRegNeutrino",
         },
         "JetGoodHiggsMatched": {
-            "ptPnetRegNeutrino": "pt",
+            "pt": "pt",
             "eta": "eta",
             "phi": "phi",
             "mass": "mass",
@@ -102,7 +124,7 @@ features = {
             # "hadronFlavour" : "hadronFlavour"
         },
         "JetGoodMatched": {
-            "ptPnetRegNeutrino": "pt",
+            "pt": "pt",
             "eta": "eta",
             "phi": "phi",
             "mass": "mass",
@@ -112,7 +134,7 @@ features = {
             # "pdgId" : "pdgId",
             # "hadronFlavour" : "hadronFlavour"
         },
-        #TODO add the new variables
+        # TODO add the new variables
     },
     "by_sample": {},
 }
@@ -148,6 +170,7 @@ kl_dict = {
 
 sig_bkg_dict = {
     "QCD-4Jets": 0,
+    "2022_postEE_EraE": 0,
     "GluGlutoHHto4B_kl-1p00": 1,
 }
 
@@ -174,11 +197,13 @@ matched_collections_dict = {
     "JetGood": "JetGoodMatched",
 }
 
-samples = df["columns"].keys()
+samples = df["columns"].keys() if not args.sample else [args.sample]
+print("Full samples", df["columns"].keys())
 print("Samples: ", samples)
 
-for sample in samples:
 
+
+for sample in samples:
     # Compose the features dictionary with common features and sample-specific features
     features_dict = features["common"].copy()
     if sample in features["by_sample"].keys():
@@ -193,31 +218,12 @@ for sample in samples:
     array_dict = {k: defaultdict(dict) for k in features_dict.keys()}
     datasets = df["columns"][sample].keys()
 
+    # print("datasets", datasets)
+
     if args.kl:
         datasets = [dataset for dataset in datasets if args.kl in dataset]
+
     print("Datasets: ", datasets)
-
-    ## Normalize the genweights
-    # Since the array `weight` is filled on the fly with the weight associated with the event, it does not take into account the overall scaling by the sum of genweights (`sum_genweights`).
-    # In order to correct for this, we have to scale by hand the `weight` array dividing by the sum of genweights.
-    for dataset in datasets:
-        weight = df["columns"][sample][dataset][args.cat]["weight"].value
-        for x in norm_xsec.keys():
-            if x in dataset:
-                norm_factor = norm_xsec[x]
-                print("norm_factor: ", norm_factor)
-                break
-            else:
-                norm_factor = 1.0
-
-        weight_new = (
-            column_accumulator(weight / df["sum_genweights"][dataset] / norm_factor)
-        )
-        df["columns"][sample][dataset][args.cat]["weight"] = weight_new
-
-    ## Accumulate ntuples from different data-taking eras
-    # In order to enlarge our training sample, we merge ntuples coming from different data-taking eras.
-    cs = accumulate([df["columns"][sample][dataset][args.cat] for dataset in datasets])
 
     dataset_lenght = [
         len(
@@ -228,29 +234,76 @@ for sample in samples:
         for dataset in datasets
     ]
 
-    kl_list = [-999.]*len(datasets)
-    for i, dataset in   enumerate(datasets):
+    print("dataset_lenght",  dataset_lenght)
+
+    ## Normalize the genweights
+    # Since the array `weight` is filled on the fly with the weight associated with the event, it does not take into account the overall scaling by the sum of genweights (`sum_genweights`).
+    # In order to correct for this, we have to scale by hand the `weight` array dividing by the sum of genweights.
+    for dataset in datasets:
+        if "weight" in df["columns"][sample][dataset][args.cat].keys():
+            weight = df["columns"][sample][dataset][args.cat]["weight"].value
+            print("weights", weight)
+            print("norma_xsec keys",norm_xsec.keys())
+            for x in norm_xsec.keys():
+                if x in dataset:
+                    print("x", x)
+                    print("dataset", dataset)
+                    norm_factor = norm_xsec[x]
+                    print("norm_factor: ", norm_factor)
+                    break
+                else:
+                    norm_factor = 1.0
+
+            weight_new = column_accumulator(
+                weight / df["sum_genweights"][dataset] / norm_factor
+            )
+            df["columns"][sample][dataset][args.cat]["weight"] = weight_new
+            print("weight_new",weight_new)
+            plt.hist(weight_new.value, np.logspace(-9,-3,60))
+            plt.yscale("log")
+            plt.xscale("log")
+            plt.savefig(f"/t3home/ramella/HH4b_SPANet/weights_plots/{dataset}")
+        else:
+            df["columns"][sample][dataset][args.cat]["weight"] = column_accumulator(
+                np.ones(dataset_lenght[list(datasets).index(dataset)])
+                / dataset_lenght[list(datasets).index(dataset)]
+            )
+
+        print("\n dataset", dataset)
+        print("weights", df["columns"][sample][dataset][args.cat]["weight"])
+
+    print("\nSamples colums:" , df["columns"].keys())
+    print("Dataset columns: ", df["columns"][sample].keys())
+    print("Category columns: ", df["columns"][sample][dataset].keys())
+    ## Accumulate ntuples from different data-taking eras
+    # In order to enlarge our training sample, we merge ntuples coming from different data-taking eras.
+    cs = accumulate([df["columns"][sample][dataset][args.cat] for dataset in datasets])
+
+    kl_list = [-999.0] * len(datasets)
+    for i, dataset in enumerate(datasets):
         for kl in kl_dict.keys():
             if kl in dataset:
-                kl_list[i]=(kl_dict[kl])
+                kl_list[i] = kl_dict[kl]
                 break
     print("kl_list: ", kl_list)
 
-    sb_list = [-999.]*len(datasets)
+    sb_list = [-999.0] * len(datasets)
     for i, dataset in enumerate(datasets):
         for sb in sig_bkg_dict.keys():
+            print("keys sb", sig_bkg_dict.keys())
+            print("\n dataset sb", dataset)
             if sb in dataset:
-                sb_list[i]=(sig_bkg_dict[sb])
+                sb_list[i] = sig_bkg_dict[sb]
                 break
     print("sb_list: ", sb_list)
 
-    print("dataset_lenght: ", dataset_lenght)
+    # print("dataset_lenght: ", dataset_lenght)
     kl_dataset = np.repeat(kl_list, dataset_lenght)
-    print("kl_dataset: ", kl_dataset)
-    print("kl_dataset shape: ", kl_dataset.shape)
+    # print("kl_dataset: ", kl_dataset)
+    # print("kl_dataset shape: ", kl_dataset.shape)
     sb_dataset = np.repeat(sb_list, dataset_lenght)
-    print("sb_dataset: ", sb_dataset)
-    print("sb_dataset shape: ", sb_dataset.shape)
+    # print("sb_dataset: ", sb_dataset)
+    # print("sb_dataset shape: ", sb_dataset.shape)
 
     ## Build the Momentum4D arrays for the jets, partons, leptons, met and higgs
     # In order to get the numpy array from the column_accumulator, we have to access the `value` attribute.
@@ -319,9 +372,27 @@ for sample in samples:
         with_name="Momentum4D",
     )
 
+    if "GluGlutoHHto4B" not in samples and args.reduce :
+        print("sample loop", samples)
+        for collection, _ in zipped_dict.items():
+            print("\n collection", collection)
+            print("zip", zipped_dict[collection])
+            print("dataset", dataset)
+            print("len zip", len(zipped_dict[collection]))
+
+            # NOTE: for 2b data we are just shuffling the dataset up to the
+            # index given by the length of the 2b QCD dataset
+            # but this is still fine!
+            zipped_dict[collection]= zipped_dict[collection][idx]
+            print("new_zipped_1", len(zipped_dict[collection]))
+            zipped_dict[collection]= zipped_dict[collection][: NUMBER_QCD_4B]
+            print("new_zipped",zipped_dict[collection])
+            print(len(zipped_dict["event"]["weight"]))
+            print("len new_zipped", len(zipped_dict[collection]))
+
     # The Momentum4D arrays are zipped together to form the final dictionary of arrays.
     print("Zipping the collections into a single dictionary...")
     df_out = ak.zip(zipped_dict, depth_limit=1)
-    filename = os.path.join(main_dir, f"{sample}{args.kl}.parquet")
+    filename = os.path.join(main_dir, f"{sample}_{args.cat}{args.kl}.parquet")
     print(f"Saving the output dataset to file: {os.path.abspath(filename)}")
     ak.to_parquet(df_out, filename)

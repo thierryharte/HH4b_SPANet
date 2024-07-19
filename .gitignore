@@ -1,6 +1,7 @@
 logs_condor
 
 *out*
+*log*
 *.png
 *.pyc
 inputs_files/
