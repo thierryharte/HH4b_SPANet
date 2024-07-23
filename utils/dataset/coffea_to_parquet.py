@@ -54,7 +54,7 @@ parser.add_argument(
 )
 args = parser.parse_args()
 
-NUMBER_QCD_4B= 120923
+NUMBER_QCD_4B= 121529 #NOTE: this has changed
 NUMBER_QCD_2B= 4424846
 idx = np.random.RandomState(seed=42).permutation(NUMBER_QCD_2B)
 

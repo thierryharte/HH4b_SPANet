@@ -1,9 +1,8 @@
-#safe resources for signal region:
-    # for 2b total dataset test--> 3.5h, 15Gb
-    # for 2b total dataset train-->
-    # for reduced test --> 1h, 3Gb
-    # for reduced train --> 3h, 3Gb
-
+# safe resources for signal region:
+# for 2b total dataset test--> 3.5h, 15Gb
+# for 2b total dataset train--> 7h, 20Gb
+# for reduced test --> 1h, 3Gb
+# for reduced train --> 3h, 3Gb
 
 
 import awkward as ak
@@ -116,6 +115,7 @@ args = parser.parse_args()
 
 if args.classification or args.signal:
     import onnxruntime
+
     sess_opts = onnxruntime.SessionOptions()
     sess_opts.execution_mode = onnxruntime.ExecutionMode.ORT_PARALLEL
     sess_opts.inter_op_num_threads = args.num_threads  # parallelize the call
@@ -342,7 +342,9 @@ def get_pairing_information(jets, file):
     # for i in track(range(nbatches), "Inference"):
     for i in range(nbatches):
         if i % 1 == 0:
-            print(f"Batch {i}/{nbatches}  //  percentage {i/nbatches*100} %", flush=True)
+            print(
+                f"Batch {i}/{nbatches}  //  percentage {i/nbatches*100} %", flush=True
+            )
 
         start = i * batch_size
         if i < (nbatches - 1):
@@ -463,10 +465,20 @@ def create_inputs(file, jets, jet_4vector, max_num_jets, global_fifth_jet, event
             jet_4vector, predictions_best
         )
         if args.signal:
-            r_HH = np.sqrt(
-                (HiggsLeading.mass - 125) ** 2 + (HiggsSubLeading.mass - 120) ** 2
+            r_HH = ak.to_numpy(
+                np.sqrt(
+                    (HiggsLeading.mass - 125) ** 2 + (HiggsSubLeading.mass - 120) ** 2
+                )
             )
             mask_sr = ak.to_numpy(r_HH < 30)
+            r_HH = r_HH[mask_sr]
+            r_HH_ds = file.create_dataset(
+                "INPUTS/Event/r_HH",
+                np.shape(r_HH),
+                dtype="float32",
+                data=r_HH,
+            )
+
         else:
             mask_sr = np.full(len(jets), True)
         print("r_hh", r_HH)
@@ -992,6 +1004,7 @@ def create_inputs(file, jets, jet_4vector, max_num_jets, global_fifth_jet, event
         )
     return mask_sr
 
+
 def add_info_to_file(input_to_file):
     # since the input an enumerate object, k corresponds to the index and jets to the actual list
     k, jets = input_to_file
@@ -1016,7 +1029,7 @@ def add_info_to_file(input_to_file):
     # print("bes sum", best_pairing_probabilities_sum)
     # print("second best", second_best_pairing_probabilities_sum)
 
-    mask_sr=create_inputs(
+    mask_sr = create_inputs(
         file_out,
         jets,
         jet_4vector,
@@ -1024,8 +1037,12 @@ def add_info_to_file(input_to_file):
         global_fifth_jet,
         events_list[k],
     )
-    create_targets(file_out, "h1", jets.prov[mask_sr], file_dict[k], max_num_jets_list[k])
-    create_targets(file_out, "h2", jets.prov[mask_sr], file_dict[k], max_num_jets_list[k])
+    create_targets(
+        file_out, "h1", jets.prov[mask_sr], file_dict[k], max_num_jets_list[k]
+    )
+    create_targets(
+        file_out, "h2", jets.prov[mask_sr], file_dict[k], max_num_jets_list[k]
+    )
     print("Completed file ", file_dict[k])
     file_out.close()
 
