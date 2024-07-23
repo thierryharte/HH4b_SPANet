@@ -16,7 +16,7 @@ parser.add_argument("-cf", "--checkpoint", type=str, default=None,
                          "Fully restores model weights and optimizer state.")
 parser.add_argument('--dry', action="store_true")
 parser.add_argument('--interactive', action="store_true")
-parser.add_argument('--ngpu', type=int, default=2)
+parser.add_argument('--ngpu', type=int, default=1)
 parser.add_argument('--ncpu', type=int, default=3)
 parser.add_argument("--good-gpus", action="store_true")
 parser.add_argument("--seed", type=int, default=None, help="Random seed")
