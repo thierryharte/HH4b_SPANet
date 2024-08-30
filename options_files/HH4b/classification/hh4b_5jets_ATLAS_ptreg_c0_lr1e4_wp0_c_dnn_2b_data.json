@@ -30,7 +30,7 @@
     "skip_connections": true,
     "initial_embedding_skip_connections": true,
     "event_info_file": "/afs/cern.ch/user/r/ramellar/HH4b_SPANet/event_files/HH4b/classification/hh4b_ptreg_c_dnn.yaml",
-    "training_file": "/afs/cern.ch/user/r/ramellar/public/inputs_files/output_JetGood_train.h5",
+    "training_file": "/afs/cern.ch/user/r/ramellar/public/inputs_files/signal_region_2b_data_reduced/output_JetGood_train.h5",
 
     "normalize_features": true,
     "limit_to_num_jets": 0,

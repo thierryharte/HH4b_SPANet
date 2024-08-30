@@ -55,6 +55,7 @@ parser.add_argument(
 
 args = parser.parse_args()
 
+
 # redirect stout
 sys.stdout = open(f"{args.plot_dir}/efficiency.txt", "w")
 
@@ -69,7 +70,7 @@ else:
     # spanet_dir = "/afs/cern.ch/user/m/mmalucch/public/out_prediction_files/"
     spanet_dir = "/eos/home-m/mmalucch/spanet_inputs/out_prediction_files/"
     spanet_dict = {
-        # "5_jets_ATLAS_ptreg": f"{spanet_dir}out_spanet_prediction_5jets_ptreg_ATLAS.h5",  # THIS
+        "5_jets_ATLAS_ptreg": f"{spanet_dir}out_spanet_prediction_5jets_ptreg_ATLAS.h5",  # THIS
         # "5_jets_ATLAS_ptreg_5train_klambda0": f"{spanet_dir}out_spanet_prediction_5jets_klambda0.h5",
         # "5_jets_ATLAS_ptreg_5train_klambda2p45": f"{spanet_dir}out_spanet_prediction_5jets_klambda2p45.h5",
         # "5_jets_ATLAS_ptreg_5train_klambda5": f"{spanet_dir}out_spanet_prediction_5jets_klambda5.h5",
@@ -84,14 +85,17 @@ else:
         # "4_jets_ATLAS_ptreg_5train_klambda2p45": f"{spanet_dir}out_spanet_prediction_4jets_klambda2p45_5jetstrainig.h5",
         # "4_jets_ATLAS_ptreg_5train_klambda5": f"{spanet_dir}out_spanet_prediction_4jets_klambda5_5jetstrainig.h5",
         #
-        # "4_jets_5global_ATLAS_ptreg": f"{spanet_dir}out_9_spanet_prediction_4jets_5global_ATLAS_ptreg_klambda1.h5",  # THIS
+        "4_jets_5global_ATLAS_ptreg": f"{spanet_dir}out_9_spanet_prediction_4jets_5global_ATLAS_ptreg_klambda1.h5",  # THIS
         # "4_jets_5global_ATLAS_ptreg_klambda0": f"{spanet_dir}out_9_spanet_prediction_4jets_5global_ATLAS_ptreg_klambda0.h5",
         # "4_jets_5global_ATLAS_ptreg_klambda2p45": f"{spanet_dir}out_9_spanet_prediction_4jets_5global_ATLAS_ptreg_klambda2p45.h5",
         # "4_jets_5global_ATLAS_ptreg_klambda5": f"{spanet_dir}out_9_spanet_prediction_4jets_5global_ATLAS_ptreg_klambda5.h5",
         #
-        # "5_jets_ATLAS_ptreg_allklambda_train_klinput": f"{spanet_dir}out_spanet_prediction_5jets_lr1e4_kl_300e.h5",  # "/work/mmalucch/out_hh4b/out_spanet/output_JetGood_test.h5",  # HERE
-        # "5_jets_ATLAS_ptreg_allklambda_train": f"{spanet_dir}out_spanet_prediction_5jets_lr1e4_noevkl_300e.h5",  # "/work/mmalucch/out_hh4b/out_spanet/output_JetGood_test.h5",  # HERE
-        # "5_jets_ATLAS_ptreg_allklambda_eval": f"{spanet_dir}out_spanet_prediction_SMtraining_lr1e4_evkl.h5",  # "/work/mmalucch/out_hh4b/out_spanet/output_JetGood_test.h5",  # HERE
+        # "5_jets_ATLAS_ptreg_allklambda_train_klinput": f"{spanet_dir}out_spanet_prediction_5jets_lr1e4_kl_300e.h5",  
+        # # "/work/mmalucch/out_hh4b/out_spanet/output_JetGood_test.h5",  # HERE
+        # "5_jets_ATLAS_ptreg_allklambda_train": f"{spanet_dir}out_spanet_prediction_5jets_lr1e4_noevkl_300e.h5",  
+        # # "/work/mmalucch/out_hh4b/out_spanet/output_JetGood_test.h5",  # HERE
+        # "5_jets_ATLAS_ptreg_allklambda_eval": f"{spanet_dir}out_spanet_prediction_SMtraining_lr1e4_evkl.h5", 
+        # "/work/mmalucch/out_hh4b/out_spanet/output_JetGood_test.h5",  # HERE
         #
         # "5_jets_ATLAS_ptreg_allklambda_train_klinput_newkl_newCuts_newCutsEval": f"{spanet_dir}spanet_prediction_nc_on_nc_300e.h5",
         # "5_jets_ATLAS_ptreg_allklambda_train_klinput_newkl_newCuts_oldCutsEval": f"{spanet_dir}spanet_prediction_nc_on_oc_kl3p5.h5",
@@ -112,9 +116,9 @@ else:
         # "4_jets_5global_ATLAS_ptreg_cos_sin_phi": f"{spanet_dir}out_01_spanet_prediction_ATLAS_4jets_5global_ptreg_cos_sin_phi.h5",
         # "4_jets_5global_ptreg_cos_sin_phi": f"{spanet_dir}out_01_spanet_prediction_4jets_5global_ptreg_cos_sin_phi.h5",
         #
-        "5_jets_ATLAS_ptreg_allklambda_train_klinput_newkl_oldCuts_newCutsEval": f"{spanet_dir}spanet_prediction_oc_kl3p5_on_nc.h5",
-        "5_jets_ATLAS_ptreg_allklambda_train_noklinput_newkl_oldCuts_newCutsEval": f"{spanet_dir}spanet_prediction_oc_kl3p5_noklinp_nc.h5",
-        "5_jets_ATLAS_ptreg_sm_train_allklambda_eval_noklinput_newkl_oldCuts_newCutsEval": f"{spanet_dir}spanet_prediction_sm_on_nc.h5",
+        # "5_jets_ATLAS_ptreg_allklambda_train_klinput_newkl_oldCuts_newCutsEval": f"{spanet_dir}spanet_prediction_oc_kl3p5_on_nc.h5",
+        # "5_jets_ATLAS_ptreg_allklambda_train_noklinput_newkl_oldCuts_newCutsEval": f"{spanet_dir}spanet_prediction_oc_kl3p5_noklinp_nc.h5",
+        # "5_jets_ATLAS_ptreg_sm_train_allklambda_eval_noklinput_newkl_oldCuts_newCutsEval": f"{spanet_dir}spanet_prediction_sm_on_nc.h5",
         # "5_jets_ATLAS_ptreg_allklambda_train_noklinput_newkl_newCuts_newCutsEval": f"{spanet_dir}spanet_prediction_nc_noklinput_on_nc.h5",  # doesnt exist
         #
         # 2b data samples
@@ -130,8 +134,8 @@ else:
         #
         # "5_jets_data_ATLAS_ptreg_5train_newlr_SMtrain_oldCuts_newCutsEval": f"{spanet_dir}spanet_prediction_sm_oc_on_data_nc.h5",
         # "5_jets_data_ATLAS_ptreg_5train_newlr_SMtrain_newCuts_newCutsEval": f"{spanet_dir}spanet_prediction_sm_nc_on_data_nc.h5",
-        "5_jets_data_ATLAS_ptreg_5train_allklambda_noklinput_oldCuts_newCutsEval": f"{spanet_dir}spanet_prediction_oc_kl3p5_noklinp_data_nc.h5",
-        "5_jets_data_ATLAS_ptreg_5train_allklambda_noklinput_newCuts_newCutsEval": f"{spanet_dir}spanet_prediction_nc_noklinp_on_data.h5",
+        # "5_jets_data_ATLAS_ptreg_5train_allklambda_noklinput_oldCuts_newCutsEval": f"{spanet_dir}spanet_prediction_oc_kl3p5_noklinp_data_nc.h5",
+        # "5_jets_data_ATLAS_ptreg_5train_allklambda_noklinput_newCuts_newCutsEval": f"{spanet_dir}spanet_prediction_nc_noklinp_on_data.h5",
     }
     if args.data:
         # remove non data samples
@@ -151,22 +155,21 @@ else:
         "4 jets": f"{true_dir}output_JetGoodHiggs_test.h5",
         "5 jets": f"{true_dir}output_JetGood_test.h5",
         "5_jets_btag_presel": f"{true_dir}output_JetGood_btag_presel_test.h5",
-        "4_jets_klambda0": f"{true_dir}kl0_output_JetGoodHiggs_test.h5",
-        # "4_jets_klambda0": f"{true_dir}output_JetGoodHiggs_test_kl0_private.h5",
-        "4_jets_klambda2p45": f"{true_dir}kl2p45_output_JetGoodHiggs_test.h5",
-        "4_jets_klambda5": f"{true_dir}kl5_output_JetGoodHiggs_test.h5",
-        "5_jets_klambda0": f"{true_dir}kl0_output_JetGood_test.h5",
-        "5_jets_klambda2p45": f"{true_dir}kl2p45_output_JetGood_test.h5",
-        "5_jets_klambda5": f"{true_dir}kl5_output_JetGood_test.h5",
-        "4_jets_data": f"{spanet_dir}out_spanet_prediction_data_ev4jets_training5jet_ptreg_ATLAS.h5",
-        "5_jets_data": f"{spanet_dir}out_spanet_prediction_data_ev5jets_training5jet_ptreg_ATLAS.h5",
-        "5_jets_data_oldCuts": f"{spanet_dir}spanet_prediction_sm_on_data_oc.h5",
-        "5_jets_data_newCuts": f"{spanet_dir}spanet_prediction_nc_noklinp_on_data.h5",
-        "4_jets_allklambda": f"{true_dir}output_JetGood_test_allkl_new_kl_newcuts.h5",  # output_JetGoodHiggs_allkl_test
-        "5_jets_allklambda": f"{true_dir}output_JetGood_test_allkl_new_kl_newcuts.h5",  # output_JetGood_allkl_test
-        "5_jets_allklambda_newkl_oldCuts": f"{true_dir}output_JetGood_test_allkl_new_kl_oldcuts.h5",  # "/work/mmalucch/out_hh4b/out_spanet/output_JetGood_test.h5",
-        "5_jets_allklambda_newkl_newCuts": f"{true_dir}output_JetGood_test_allkl_new_kl_newcuts.h5",  # "/work/mmalucch/out_hh4b/out_spanet/output_JetGood_test.h5",
-        "4_jets_allklambda_newkl_newCuts": f"{true_dir}output_JetGoodHiggs_test_allkl_new_kl_newcuts.h5",  # "/work/mmalucch/out_hh4b/out_spanet/output_JetGood_test.h5",
+        # "4_jets_klambda0": f"{true_dir}kl0_output_JetGoodHiggs_test.h5",
+        # "4_jets_klambda2p45": f"{true_dir}kl2p45_output_JetGoodHiggs_test.h5",
+        # "4_jets_klambda5": f"{true_dir}kl5_output_JetGoodHiggs_test.h5",
+        # "5_jets_klambda0": f"{true_dir}kl0_output_JetGood_test.h5",
+        # "5_jets_klambda2p45": f"{true_dir}kl2p45_output_JetGood_test.h5",
+        # "5_jets_klambda5": f"{true_dir}kl5_output_JetGood_test.h5",
+        # "4_jets_data": f"{spanet_dir}out_spanet_prediction_data_ev4jets_training5jet_ptreg_ATLAS.h5",
+        # "5_jets_data": f"{spanet_dir}out_spanet_prediction_data_ev5jets_training5jet_ptreg_ATLAS.h5",
+        # "5_jets_data_oldCuts": f"{spanet_dir}spanet_prediction_sm_on_data_oc.h5",
+        # "5_jets_data_newCuts": f"{spanet_dir}spanet_prediction_nc_noklinp_on_data.h5",
+        # "4_jets_allklambda": f"{true_dir}output_JetGood_test_allkl_new_kl_newcuts.h5",  # output_JetGoodHiggs_allkl_test
+        # "5_jets_allklambda": f"{true_dir}output_JetGood_test_allkl_new_kl_newcuts.h5",  # output_JetGood_allkl_test
+        # "5_jets_allklambda_newkl_oldCuts": f"{true_dir}output_JetGood_test_allkl_new_kl_oldcuts.h5",  # "/work/mmalucch/out_hh4b/out_spanet/output_JetGood_test.h5",
+        # "5_jets_allklambda_newkl_newCuts": f"{true_dir}output_JetGood_test_allkl_new_kl_newcuts.h5",  # "/work/mmalucch/out_hh4b/out_spanet/output_JetGood_test.h5",
+        # "4_jets_allklambda_newkl_newCuts": f"{true_dir}output_JetGoodHiggs_test_allkl_new_kl_newcuts.h5",  # "/work/mmalucch/out_hh4b/out_spanet/output_JetGood_test.h5",
     }
 
 
@@ -201,6 +204,9 @@ os.makedirs(plot_dir, exist_ok=True)
 df_true = [h5py.File(f, "r") for f in true_dict.values()]
 df_spanet_pred = [h5py.File(f, "r") for f in spanet_dict.values()]
 
+
+print("df_true", true_dict.keys(), flush=True)
+print("df_spanet_pred", spanet_dict.keys(), flush=True)
 
 idx_b1_true = [df["TARGETS"]["h1"]["b1"][()] for df in df_true]
 idx_b2_true = [df["TARGETS"]["h1"]["b2"][()] for df in df_true]
@@ -891,15 +897,18 @@ true_higgs_fully_matched = [
     )
     for i in range(len(jet))
 ]
+
+print("true_higgs_fully_matched", true_higgs_fully_matched)
+
 true_hh_fully_matched = [
     true_higgs_fully_matched[i][:, 0] + true_higgs_fully_matched[i][:, 1]
     for i in range(len(true_higgs_fully_matched))
 ]
 if not args.data:
 
-    print("Plotting true higgs")
-    plot_true_higgs(true_higgs_fully_matched, mh_bins, 1, plot_dir)
-    plot_true_higgs(true_higgs_fully_matched, mh_bins, 2, plot_dir)
+    # print("Plotting true higgs")
+    # plot_true_higgs(true_higgs_fully_matched, mh_bins, 1, plot_dir)
+    # plot_true_higgs(true_higgs_fully_matched, mh_bins, 2, plot_dir)
 
     diff_eff_spanet = []
     unc_diff_eff_spanet = []
@@ -1005,20 +1014,20 @@ run2_higgs_fully_matched_mask30 = [
     for j, idx in zip(jet_fully_matched_mask30, idx_run2_pred_fully_matched_mask30)
 ]
 
-print("Plotting higgs 1d mask30")
-for bins, name in zip([mh_bins, mh_bins_peak], ["", "_peak"]):
-    for number in [1, 2]:
-        plot_histos_1d(
-            bins,
-            [true[:, number - 1].mass for true in true_higgs_fully_matched_mask30],
-            [run2[:, number - 1].mass for run2 in run2_higgs_fully_matched_mask30],
-            [higgs[:, number - 1].mass for higgs in spanet_higgs_fully_matched_mask30],
-            list(spanet_dict.keys()),
-            list(true_dict.keys()),
-            number,
-            name=name + "_mask30",
-            plot_dir=plot_dir,
-        )
+# print("Plotting higgs 1d mask30")
+# for bins, name in zip([mh_bins, mh_bins_peak], ["", "_peak"]):
+#     for number in [1, 2]:
+#         plot_histos_1d(
+#             bins,
+#             [true[:, number - 1].mass for true in true_higgs_fully_matched_mask30],
+#             [run2[:, number - 1].mass for run2 in run2_higgs_fully_matched_mask30],
+#             [higgs[:, number - 1].mass for higgs in spanet_higgs_fully_matched_mask30],
+#             list(spanet_dict.keys()),
+#             list(true_dict.keys()),
+#             number,
+#             name=name + "_mask30",
+#             plot_dir=plot_dir,
+#         )
 
 print("Plotting higgs 2d mask30")
 # 2D histograms of the mass of the higgs1 and higgs2

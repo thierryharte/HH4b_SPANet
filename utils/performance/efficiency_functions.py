@@ -10,7 +10,7 @@ vector.register_awkward()
 vector.register_numba()
 
 
-k_lambda = [-2.0, -1.0, 0.0, 0.5, 1.0, 1.5, 2.0, 2.45, 3.0, 3.5, 4.0, 5.0]
+k_lambda = [-2.0, -1.0, 0.0, 0.5, 1.0, 1.5, 2.0, 2.45, 3.0,3.5, 4.0, 5.0]
 
 names_dict = {
     "total_diff_eff_spanet": "Total Pairing Efficiency",
@@ -38,19 +38,25 @@ names_dict = {
     "5_jets_ATLAS_ptreg_allklambda_train_noklinput_newkl_newCuts_newCutsEval": r"SPANet - $\kappa_{\lambda}$ - Loose Selection",
     "5_jets_data_ATLAS_ptreg_5train_allklambda_noklinput_oldCuts_newCutsEval": r"SPANet - $\kappa_{\lambda}$ - Tight Selection",
     "5_jets_data_ATLAS_ptreg_5train_allklambda_noklinput_newCuts_newCutsEval": r"SPANet - $\kappa_{\lambda}$ - Loose Selection",
-    "5_jets_allklambda_newkl_newCuts": "Run 2",
-    "4_jets_allklambda_newkl_newCuts": "Run 2",
+    "5_jets_allklambda_newkl_newCuts": "$D_{HH}$-method",
+    "4_jets_allklambda_newkl_newCuts": "$D_{HH}$-method",
 }
 
+
+
 color_dict = {
-    "5_jets_ATLAS_ptreg_allklambda_train_klinput_newkl_oldCuts_newCutsEval": "tab:blue",
-    "5_jets_ATLAS_ptreg_allklambda_train_noklinput_newkl_oldCuts_newCutsEval": "tab:orange",
-    "5_jets_ATLAS_ptreg_sm_train_allklambda_eval_noklinput_newkl_oldCuts_newCutsEval": "tab:green",
-    "5_jets_ATLAS_ptreg_allklambda_train_noklinput_newkl_newCuts_newCutsEval": "purple",
-    "5_jets_data_ATLAS_ptreg_5train_allklambda_noklinput_oldCuts_newCutsEval": "tab:orange",
-    "5_jets_data_ATLAS_ptreg_5train_allklambda_noklinput_newCuts_newCutsEval": "purple",
-    "5_jets_allklambda_newkl_newCuts": "red",
-    "4_jets_allklambda_newkl_newCuts": "red",
+    # "5_jets_ATLAS_ptreg_allklambda_train_klinput_newkl_oldCuts_newCutsEval": "tab:blue",
+    # "5_jets_ATLAS_ptreg_allklambda_train_noklinput_newkl_oldCuts_newCutsEval": "tab:orange",
+    # "5_jets_ATLAS_ptreg_sm_train_allklambda_eval_noklinput_newkl_oldCuts_newCutsEval": "tab:green",
+    # "5_jets_ATLAS_ptreg_allklambda_train_noklinput_newkl_newCuts_newCutsEval": "purple",
+    "5_jets_data_ATLAS_ptreg_5train_allklambda_noklinput_oldCuts_newCutsEval": "deepskyblue",
+    "5_jets_data_ATLAS_ptreg_5train_allklambda_noklinput_newCuts_newCutsEval": "coral",
+    "5_jets_allklambda_newkl_newCuts": "yellowgreen",
+    "4_jets_allklambda_newkl_newCuts": "yellowgreen",
+    "5_jets_ATLAS_ptreg_allklambda_train_noklinput_newkl_newCuts_newCutsEval": "coral" ,
+    "5_jets_ATLAS_ptreg_allklambda_train_noklinput_newkl_oldCuts_newCutsEval": "deepskyblue" ,
+    "5_jets_ATLAS_ptreg_allklambda_train_klinput_newkl_oldCuts_newCutsEval": "darkorange",
+    "5_jets_ATLAS_ptreg_sm_train_allklambda_eval_noklinput_newkl_oldCuts_newCutsEval": "deeppink",
 }
 
 
@@ -264,11 +270,12 @@ def plot_histos_1d(
                 histtype="step",
                 linewidth=1,
                 density=True,
-                color="red",
+                color="yellowgreen",
             )
         labels_list.append(check_names(label))
-    ax.grid()
+    ax.grid(linestyle=":")
     true_hist = [np.histogram(true[i], bins[i]) for i in range(len(true))]
+    print("true_hist", true_hist)
     run2_hist = (
         [np.histogram(run2[i], bins[i]) for i in range(len(run2))] if run2 else []
     )
@@ -276,6 +283,7 @@ def plot_histos_1d(
         np.histogram(spanet[i], bins[check_names(spanet_labels[i])])
         for i in range(len(spanet))
     ]
+    print("spaner_hists",spanet_hists)
     ax.set_ylim(
         0,
         max(
@@ -293,14 +301,14 @@ def plot_histos_1d(
         (r[0] / np.sum(r[0])) / (t[0] / np.sum(t[0]))
         for r, t in zip(run2_hist, true_hist)
     ]
-    residuals_spanet = [
-        (spanet_hists[i][0] / np.sum(spanet_hists[i][0]))
-        / (
-            true_hist[check_names(spanet_labels[i])][0]
-            / np.sum(true_hist[check_names(spanet_labels[i])][0])
-        )
-        for i in range(len(spanet_labels))
-    ]
+    # residuals_spanet = [
+    #     (spanet_hists[i][0] / np.sum(spanet_hists[i][0]))
+    #     / (
+    #         true_hist[check_names(spanet_labels[i])][0]
+    #         / np.sum(true_hist[check_names(spanet_labels[i])][0])
+    #     )
+    #     for i in range(len(spanet_labels))
+    # ]
 
     # TODO: compute the error correctly
     # residual_run2_err = (
@@ -335,7 +343,9 @@ def plot_histos_1d(
         for sn, label in zip(spanet_hists, spanet_labels)
     ]
     labels_list = []
-    if not any(["data" in label for label in spanet_labels]):
+    if False :
+        # not any(["data" in label for label in spanet_labels]):
+        
         for sn, label, sn_err in zip(
             residuals_spanet, spanet_labels, residual_spanet_err
         ):
@@ -382,6 +392,7 @@ def plot_histos_1d(
         com="13.6",
         label=f"Private Work",
         ax=ax,
+        data=True
     )
     plt.savefig(f"{plot_dir}/higgs_mass_{num}{name}.png", dpi=300, bbox_inches="tight")
     plt.close()
@@ -420,19 +431,19 @@ def plot_histos_2d(mh_bins, higgs, label, name, plot_dir="plots"):
         label=f"{name} {label}",
         density=True,
         # yellow and green colors
-        cmap=plt.cm.viridis,
+        cmap=plt.cm.GnBu,
         # alpha=0.5,
     )
-    cmap = mpl.cm.get_cmap("viridis")
+    cmap = mpl.cm.get_cmap("GnBu")
     norm = mpl.colors.Normalize(vmin=0, vmax=1.0)
     plt.colorbar(mpl.cm.ScalarMappable(norm=norm, cmap=cmap), ax=ax).set_label(
         "Normalized counts", loc="center", fontsize=10
     )
     # plot two lines at 125 GeV
-    ax.plot([mh_bins[0], mh_bins[-1]], [120, 120], color="red")
-    ax.plot([125, 125], [mh_bins[0], mh_bins[-1]], color="red")
+    ax.plot([mh_bins[0], mh_bins[-1]], [120, 120], color="black")
+    ax.plot([125, 125], [mh_bins[0], mh_bins[-1]], color="black")
     # draw a circle at 125 GeV or radius 5 GeV
-    circle = plt.Circle((125, 120), 30, color="red", fill=False)
+    circle = plt.Circle((125, 120), 30, color="black", fill=False)
     ax.add_artist(circle)
 
     ax.set_xlabel(r"Leading $m_{H}$ [GeV]")
@@ -446,6 +457,7 @@ def plot_histos_2d(mh_bins, higgs, label, name, plot_dir="plots"):
         com="13.6",
         label=f"Private Work",
         ax=ax,
+        data=True
     )
     plt.savefig(
         f"{plot_dir}/higgs_mass_2d_{name}_{label}.png", dpi=300, bbox_inches="tight"
@@ -474,6 +486,7 @@ def plot_diff_eff(
             yerr=unc_eff,
             label=f"{names_dict[label] if label in names_dict else label}",
             marker="o",
+            color=color_dict[label] if label in color_dict else None,
         )
 
         if check_names(label) in labels_list or not run2 or len(labels_list) > 0:
@@ -486,15 +499,15 @@ def plot_diff_eff(
             0.5 * (mhh_bins[1:] + mhh_bins[:-1]),
             run2[which_run2],
             yerr=unc_run2[which_run2],
-            label=f"Run 2",
+            label=r"$D_{HH}$-method",
             marker="o",
-            color="red",
+            color="yellowgreen",
         )
         labels_list.append(check_names(label))
     ax.legend(frameon=False, loc="lower right")
     ax.set_xlabel(r"$m_{HH}$ [GeV]")
     ax.set_ylabel(names_dict[file_name])
-    ax.grid()
+    ax.grid(linestyle=":")
     hep.cms.label(
         year="2022",
         com="13.6",
@@ -716,7 +729,7 @@ def plot_diff_eff_klambda(eff, kl_values, allkl_names, name, plot_dir="plots"):
     ax.legend(frameon=False, loc="lower left")
     ax.set_xlabel(r"$\kappa_{\lambda}$")
     ax.set_ylabel(names_dict[name] if name in names_dict else name)
-    ax.grid()
+    ax.grid(linestyle=":")
     hep.cms.label(
         year="2022",
         com="13.6",
