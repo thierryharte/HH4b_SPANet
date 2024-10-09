@@ -1,5 +1,5 @@
 # ttHbb_SPANet
-Repository for development of a signal vs background classifier in the ttH(bb) analysis based on SPANet.
+Repository for development of a signal vs background classifier in the HH4b analysis based on SPANet.
 
 ## Running SPANet within the `cmsml` docker container
 
@@ -76,3 +76,9 @@ In order to compute the predictions from a previously trained SPANet model, one 
 python -m spanet.predict $LOG_DIRECTORY predicitons.h5 -tf input.h5 --gpu
 ```
 where `$LOG_DIRECTORY` is the output folder where the checkpoints of the trained SPANet model are saved, `predicitons.h5` is the customizable name of the output file containing the predictions and `input.h5` is the input `.h5` file in SPANet format. With the `--gpu` flag one can profit from the available GPUs.
+
+## Train on HTCondor
+In order to train the SPANet model on HTCondor, one can use the following command:
+```bash
+coming soon
+```

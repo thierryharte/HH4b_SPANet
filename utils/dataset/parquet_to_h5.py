@@ -9,7 +9,6 @@ import awkward as ak
 import numba
 import numpy as np
 import pandas as pd
-import awkward as ak
 import os
 import h5py
 import vector
