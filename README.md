@@ -1,4 +1,4 @@
-# ttHbb_SPANet
+# HH4b_SPANet
 Repository for development of a signal vs background classifier in the HH4b analysis based on SPANet.
 
 ## Running SPANet within the `cmsml` docker container
@@ -80,5 +80,5 @@ where `$LOG_DIRECTORY` is the output folder where the checkpoints of the trained
 ## Train on HTCondor
 In order to train the SPANet model on HTCondor, one can use the following command:
 ```bash
-coming soon
+python jobs/submit_jobs_seed.py -o options_files/option_file.json -c jobs/config/config.yaml -s start_seed:end_seed -a "additional arguments to pass to spanet.train" --suffix directory_suffix
 ```

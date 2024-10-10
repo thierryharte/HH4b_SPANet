@@ -17,12 +17,11 @@ from sklearn.metrics import roc_auc_score, roc_curve, auc
 import matplotlib
 matplotlib.rcParams["figure.dpi"] = 300
 import os
-import matplotlib.pyplot as plt
 from scipy.interpolate import interp1d
 
 import argparse
 
-from AUC_functions import *
+from infer_4b_data_functions import *
 
 path_p= "/eos/home-r/ramellar/4_classification/classification_predictions/"
 path_v= "/eos/home-r/ramellar/4_classification/variability_study"
@@ -134,9 +133,9 @@ fpr_2b_data_full_stats_dnn_ev_on_sr, tpr_2b_data_full_stats_dnn_ev_on_sr= fpr_tp
 
 fpr_ratio(fpr_2b_data_full_stats_dnn_proba_ev_on_sr, tpr_2b_data_full_stats_dnn_proba_ev_on_sr, AUC_4b_data_dnn_proba_sr_m , btag_ratio_dnn_proba, model_ratio_dnn_proba, "4b_data_dnn_proba_eval_on_sr", x1, x2, True)
 fpr_ratio(fpr_2b_data_full_stats_dnn_ev_on_sr, tpr_2b_data_full_stats_dnn_ev_on_sr, AUC_4b_data_dnn_sr , btag_ratio_dnn, model_ratio_dnn, "4b_data_dnn_eval_on_sr", x1, x2, True)
-
+fpr_tpr
 #Training on signal region
-fpr_4b_QCD_sr_dnn, tpr_4b_QCD_sr_dnn = fpr_tpr("spanet_pred_c_4b_QCD_sr_dnn.h5", "signal_region/signal_region_4b_QCD/output_JetGood_test.h5")
+fpr_4b_QCD_sr_dnn, tpr_4b_QCD_sr_dnn = ("spanet_pred_c_4b_QCD_sr_dnn.h5", "signal_region/signal_region_4b_QCD/output_JetGood_test.h5")
 fpr_4b_QCD_sr_dnn_proba, tpr_4b_QCD_sr_dnn_proba = fpr_tpr("spanet_pred_c_4b_QCD_sr_dnn_proba.h5", "signal_region/signal_region_4b_QCD/output_JetGood_test.h5")
 
 fpr_4b_QCD_dnn_2, tpr_4b_QCD_dnn_2 = fpr_tpr("spanet_c_pred_4b_QCD_dnn.h5", "spanet_classifier_4b_QCD_working/output_JetGood_test.h5")
@@ -172,28 +171,28 @@ print("\n")
 print("For DNN vars in signal region: \n")
 
 score_2b_data_r_dnn_sr=AUC_scores(
-    "spanet_prediction_c_dnn_2b_data_r_sr.h5", 
+    "spanet_prediction_c_dnn_2b_data_r_sr.h5",
     "signal_region/signal_region_2b_data_reduced/output_JetGood_test.h5"
 )
 print(f"AUC_2b_data_r_dnn {score_2b_data_r_dnn_sr}")
 
 
 score_2b_QCD_r_dnn_sr= AUC_scores(
-    "spanet_prediction_c_dnn_2b_QCD_sr.h5", 
+    "spanet_prediction_c_dnn_2b_QCD_sr.h5",
     "spanet_classifier_2b_QCD_sr/output_JetGood_test.h5"
 )
 print(f"AUC_2b_QCD_r_dnn {score_2b_QCD_r_dnn_sr}")
 
 
 score_2b_data_f_dnn_sr= AUC_scores(
-    "spanet_prediction_c_dnn_2b_data_full_sr.h5", 
+    "spanet_prediction_c_dnn_2b_data_full_sr.h5",
     "signal_region/spanet_full_dataset_2b_data_sr/output_JetGood_test.h5"
 )
 print(f"AUC_2b_data_f_dnn {score_2b_data_f_dnn_sr}")
 
 
 score_4b_QCD_dnn_sr= AUC_scores(
-    "spanet_pred_c_4b_QCD_sr_dnn.h5", 
+    "spanet_pred_c_4b_QCD_sr_dnn.h5",
     "signal_region/signal_region_4b_QCD/output_JetGood_test.h5"
 )
 print(f"AUC_4b_QCD_dnn {score_4b_QCD_dnn_sr}")
@@ -247,16 +246,16 @@ fpr_2b_data_sr_dnn_proba, tpr_2b_data_sr_dnn_proba = fpr_tpr(
     "signal_region/spanet_full_dataset_2b_data_sr/output_JetGood_test.h5")
 
 roc_curve_compare_weights(
-    tpr_2b_data_sr_dnn_proba, 
-    fpr_2b_data_sr_dnn_proba, 
-    "2b data sr with DNN as inputs", 
-    "2b_data_sr_dnn_proba", 
-    "2b data sr with DNN as inputs", 
-    None, 
+    tpr_2b_data_sr_dnn_proba,
+    fpr_2b_data_sr_dnn_proba,
+    "2b data sr with DNN as inputs",
+    "2b_data_sr_dnn_proba",
+    "2b data sr with DNN as inputs",
+    None,
     True
 )
 
-# DNN vs DNN+pd 
+# DNN vs DNN+pd
 tpr_list=[tpr_2b_data_sr_dnn, tpr_2b_data_sr_dnn_proba, tpr_2b_data_dnn, tpr_2b_data_dnn_proba]
 fpr_list=[fpr_2b_data_sr_dnn, fpr_2b_data_sr_dnn_proba, fpr_2b_data_dnn, fpr_2b_data_dnn_proba]
 labels=["2b data SR with DNN as inputs", "2b data SR with DNN and PD as inputs", "2b data with DNN as inputs", "2b data with DNN and PD as inputs"]
@@ -302,7 +301,7 @@ diff_proba_weights_comparison(
     " "
 )
 
-diff_proba_weights_comparison( 
+diff_proba_weights_comparison(
     "spanet_classifier_4b_QCD_working/output_JetGood_test.h5",
     "spanet_c_pred_4b_QCD_dnn.h5" ,
     "4b_QCD",
@@ -316,28 +315,28 @@ diff_proba_weights_comparison_arc_tan(
     " "
 )
 
-diff_proba_weights_comparison_arc_tan( 
+diff_proba_weights_comparison_arc_tan(
     "spanet_classifier_4b_QCD_working/output_JetGood_test.h5",
     "spanet_c_pred_4b_QCD_dnn.h5" ,
     "4b_QCD",
     " "
 )
 
-diff_proba_weights_comparison_arc_tan( 
+diff_proba_weights_comparison_arc_tan(
     "spanet_classifier_2b_QCD/output_JetGood_test.h5",
     "spanet_c_4v_dnn_proba_2b_QCD_new.h5" ,
     "2b_QCD",
     " "
 )
 
-diff_proba_weights_comparison_arc_tan( 
+diff_proba_weights_comparison_arc_tan(
     "2b_data_full_statistics_c/output_JetGood_test.h5",
     "spanet_prediction_2b_data_f_dnn_proba.h5" ,
     "2b_data_f",
     " "
 )
 
-diff_proba_weights_comparison_arc_tan( 
+diff_proba_weights_comparison_arc_tan(
     "spanet_classifier_2b_data/output_JetGood_test.h5",
     "spanet_c_4v_dnn_2b_data_out.h5" ,
     "2b_data_r",
@@ -364,20 +363,20 @@ probabilities(
 
 
 model_ratio_dnn_sr, fpr_2b_QCD_dnn_sr, fpr_2b_data_dnn_sr, tpr_2b_QCD_dnn_sr, tpr_2b_data_dnn_sr = ratio_fpr(
-    "spanet_prediction_c_dnn_2b_QCD_sr.h5", 
-    "spanet_classifier_2b_QCD_sr/output_JetGood_test.h5", 
-    "spanet_prediction_c_dnn_2b_data_full_sr.h5", 
-    "signal_region/spanet_full_dataset_2b_data_sr/output_JetGood_test.h5", 
-    x1, 
+    "spanet_prediction_c_dnn_2b_QCD_sr.h5",
+    "spanet_classifier_2b_QCD_sr/output_JetGood_test.h5",
+    "spanet_prediction_c_dnn_2b_data_full_sr.h5",
+    "signal_region/spanet_full_dataset_2b_data_sr/output_JetGood_test.h5",
+    x1,
     x2
 )
 
 
 btag_ratio_dnn_sr, fpr_4b_QCD_dnn_sr, fpr_2b_dnn_QCD_sr, tpr_4b_QCD_dnn_sr, tpr_2b_QCD_dnn_sr = ratio_fpr(
-    "spanet_pred_c_4b_QCD_sr_dnn.h5", 
-    "signal_region/signal_region_4b_QCD/output_JetGood_test.h5", 
-    "spanet_prediction_c_dnn_2b_QCD_sr.h5", 
-    "spanet_classifier_2b_QCD_sr/output_JetGood_test.h5", 
+    "spanet_pred_c_4b_QCD_sr_dnn.h5",
+    "signal_region/signal_region_4b_QCD/output_JetGood_test.h5",
+    "spanet_prediction_c_dnn_2b_QCD_sr.h5",
+    "spanet_classifier_2b_QCD_sr/output_JetGood_test.h5",
     x1,
     x2
 )
@@ -386,32 +385,32 @@ print("AUC_4b_data_dnn_sr", AUC_4b_data_dnn_sr)
 print("btag_ratio_dnn_sr", btag_ratio_dnn_sr)
 print("model_ratio_dnn_sr", model_ratio_dnn_sr)
 
-fpr_ratio(fpr_2b_data_dnn_sr, 
-          tpr_2b_data_dnn_sr, 
-          [AUC_4b_data_dnn_sr] , 
-          btag_ratio_dnn_sr, 
-          model_ratio_dnn_sr, 
-          "4b_data_dnn_sr", 
-          x1, 
-          x2, 
+fpr_ratio(fpr_2b_data_dnn_sr,
+          tpr_2b_data_dnn_sr,
+          [AUC_4b_data_dnn_sr] ,
+          btag_ratio_dnn_sr,
+          model_ratio_dnn_sr,
+          "4b_data_dnn_sr",
+          x1,
+          x2,
           True)
 
 
 model_ratio_dnn_proba_sr, fpr_2b_QCD_dnn_proba_sr, fpr_2b_data_dnn_proba_sr, tpr_2b_QCD_dnn_proba_sr, tpr_2b_data_dnn_proba_sr = ratio_fpr(
-    "spanet_prediction_c_dnn_proba_2b_QCD_sr.h5", 
-    "spanet_classifier_2b_QCD_sr/output_JetGood_test.h5", 
-    "spanet_prediction_c_dnn_proba_2b_data_full_sr.h5", 
-    "signal_region/spanet_full_dataset_2b_data_sr/output_JetGood_test.h5", 
-    x1, 
+    "spanet_prediction_c_dnn_proba_2b_QCD_sr.h5",
+    "spanet_classifier_2b_QCD_sr/output_JetGood_test.h5",
+    "spanet_prediction_c_dnn_proba_2b_data_full_sr.h5",
+    "signal_region/spanet_full_dataset_2b_data_sr/output_JetGood_test.h5",
+    x1,
     x2
 )
 
 
 btag_ratio_dnn_proba_sr, fpr_4b_QCD_dnn_proba_sr, fpr_2b_dnn_proba_QCD_sr, tpr_4b_QCD_dnn_proba_sr, tpr_2b_QCD_dnn_proba_sr = ratio_fpr(
-    "spanet_pred_c_4b_QCD_sr_dnn_proba.h5", 
-    "signal_region/signal_region_4b_QCD/output_JetGood_test.h5", 
-    "spanet_prediction_c_dnn_proba_2b_QCD_sr.h5", 
-    "spanet_classifier_2b_QCD_sr/output_JetGood_test.h5", 
+    "spanet_pred_c_4b_QCD_sr_dnn_proba.h5",
+    "signal_region/signal_region_4b_QCD/output_JetGood_test.h5",
+    "spanet_prediction_c_dnn_proba_2b_QCD_sr.h5",
+    "spanet_classifier_2b_QCD_sr/output_JetGood_test.h5",
     x1,
     x2
 )
@@ -419,14 +418,14 @@ btag_ratio_dnn_proba_sr, fpr_4b_QCD_dnn_proba_sr, fpr_2b_dnn_proba_QCD_sr, tpr_4
 print("AUC_4b_data_dnn_proba_sr", AUC_4b_data_dnn_proba_sr)
 
 
-fpr_ratio(fpr_2b_data_dnn_proba_sr, 
-          tpr_2b_data_dnn_proba_sr, 
-          [AUC_4b_data_dnn_proba_sr] , 
-          btag_ratio_dnn_proba_sr, 
-          model_ratio_dnn_proba_sr, 
-          "4b_data_dnn_proba_sr", 
-          x1, 
-          x2, 
+fpr_ratio(fpr_2b_data_dnn_proba_sr,
+          tpr_2b_data_dnn_proba_sr,
+          [AUC_4b_data_dnn_proba_sr] ,
+          btag_ratio_dnn_proba_sr,
+          model_ratio_dnn_proba_sr,
+          "4b_data_dnn_proba_sr",
+          x1,
+          x2,
           True)
 
 
@@ -434,28 +433,28 @@ print("\n")
 print("For DNN vars in signal region with variability: \n")
 
 score_2b_data_r_dnn_sr=AUC_scores(
-    "spanet_prediction_c_dnn_2b_data_r_sr.h5", 
+    "spanet_prediction_c_dnn_2b_data_r_sr.h5",
     "signal_region/signal_region_2b_data_reduced/output_JetGood_test.h5"
 )
 print(f"AUC_2b_data_r_dnn {score_2b_data_r_dnn_sr}")
 
 
 score_2b_QCD_r_dnn_sr= AUC_scores(
-    "spanet_prediction_c_dnn_2b_QCD_sr.h5", 
+    "spanet_prediction_c_dnn_2b_QCD_sr.h5",
     "spanet_classifier_2b_QCD_sr/output_JetGood_test.h5"
 )
 print(f"AUC_2b_QCD_r_dnn {score_2b_QCD_r_dnn_sr}")
 
 
 score_2b_data_f_dnn_sr= AUC_scores(
-    "spanet_prediction_c_dnn_2b_data_full_sr.h5", 
+    "spanet_prediction_c_dnn_2b_data_full_sr.h5",
     "signal_region/spanet_full_dataset_2b_data_sr/output_JetGood_test.h5"
 )
 print(f"AUC_2b_data_f_dnn {score_2b_data_f_dnn_sr}")
 
 
 score_4b_QCD_dnn_sr_var= AUC_scores(
-    "prediction_dnn_4b_QCD_sr_seeds/", 
+    "prediction_dnn_4b_QCD_sr_seeds/",
     "signal_region/signal_region_4b_QCD/output_JetGood_test.h5",
     True)
 print(f"AUC_4b_QCD_dnn {score_4b_QCD_dnn_sr_var}")
@@ -469,20 +468,20 @@ print( "AUC 4b data", AUC_4b_data_dnn_sr_var)
 
 
 model_ratio_dnn_sr, fpr_2b_QCD_dnn_sr, fpr_2b_data_dnn_sr, tpr_2b_QCD_dnn_sr, tpr_2b_data_dnn_sr = ratio_fpr(
-    "spanet_prediction_c_dnn_2b_QCD_sr.h5", 
-    "spanet_classifier_2b_QCD_sr/output_JetGood_test.h5", 
-    "spanet_prediction_c_dnn_2b_data_full_sr.h5", 
-    "signal_region/spanet_full_dataset_2b_data_sr/output_JetGood_test.h5", 
-    x1, 
+    "spanet_prediction_c_dnn_2b_QCD_sr.h5",
+    "spanet_classifier_2b_QCD_sr/output_JetGood_test.h5",
+    "spanet_prediction_c_dnn_2b_data_full_sr.h5",
+    "signal_region/spanet_full_dataset_2b_data_sr/output_JetGood_test.h5",
+    x1,
     x2
 )
 
 
 btag_ratio_dnn_sr_var_fpr, fpr_4b_QCD_dnn_sr, fpr_2b_dnn_QCD_sr, tpr_4b_QCD_dnn_sr, tpr_2b_QCD_dnn_sr = ratio_fpr(
-    "prediction_dnn_4b_QCD_sr_seeds/", 
-    "signal_region/signal_region_4b_QCD/output_JetGood_test.h5", 
-    "spanet_prediction_c_dnn_2b_QCD_sr.h5", 
-    "spanet_classifier_2b_QCD_sr/output_JetGood_test.h5", 
+    "prediction_dnn_4b_QCD_sr_seeds/",
+    "signal_region/signal_region_4b_QCD/output_JetGood_test.h5",
+    "spanet_prediction_c_dnn_2b_QCD_sr.h5",
+    "spanet_classifier_2b_QCD_sr/output_JetGood_test.h5",
     x1,
     x2,
     True
@@ -491,13 +490,13 @@ btag_ratio_dnn_sr_var_fpr, fpr_4b_QCD_dnn_sr, fpr_2b_dnn_QCD_sr, tpr_4b_QCD_dnn_
 print("len last var",len(btag_ratio_dnn_sr_var_fpr))
 print(len(AUC_4b_data_dnn_sr_var))
 
-fpr_ratio(fpr_2b_data_dnn_sr, 
-          tpr_2b_data_dnn_sr, 
-          AUC_4b_data_dnn_sr_var, 
-          btag_ratio_dnn_sr_var_fpr, 
-          model_ratio_dnn_sr, 
-          "4b_data_dnn_sr_variability", 
-          x1, 
+fpr_ratio(fpr_2b_data_dnn_sr,
+          tpr_2b_data_dnn_sr,
+          AUC_4b_data_dnn_sr_var,
+          btag_ratio_dnn_sr_var_fpr,
+          model_ratio_dnn_sr,
+          "4b_data_dnn_sr_variability",
+          x1,
           x2,
           True
 )
@@ -506,39 +505,39 @@ labels=list(range(len(tpr_4b_QCD_dnn_sr)))
 
 
 roc_curve_compare_weights(
-    tpr_4b_QCD_dnn_sr, 
-    fpr_4b_QCD_dnn_sr, 
-    labels, 
+    tpr_4b_QCD_dnn_sr,
+    fpr_4b_QCD_dnn_sr,
+    labels,
     "4b_QCD_sr_dnn_variability",
-    " ", 
+    " ",
     True)
 
 print("\n")
 print("For DNN vars and PD in signal region with variability: \n")
 
 score_2b_data_r_dnn_proba_sr=AUC_scores(
-    "spanet_prediction_c_dnn_proba_2b_data_r_sr.h5", 
+    "spanet_prediction_c_dnn_proba_2b_data_r_sr.h5",
     "signal_region/signal_region_2b_data_reduced/output_JetGood_test.h5"
 )
 print(f"AUC_2b_data_r_dnn_proba {score_2b_data_r_dnn_proba_sr}")
 
 
 score_2b_QCD_r_dnn_proba_sr= AUC_scores(
-    "spanet_prediction_c_dnn_proba_2b_QCD_sr.h5", 
+    "spanet_prediction_c_dnn_proba_2b_QCD_sr.h5",
     "spanet_classifier_2b_QCD_sr/output_JetGood_test.h5"
 )
 print(f"AUC_2b_QCD_r_dnn_proba {score_2b_QCD_r_dnn_proba_sr}")
 
 
 score_2b_data_f_dnn_proba_sr= AUC_scores(
-    "spanet_prediction_c_dnn_proba_2b_data_full_sr.h5", 
+    "spanet_prediction_c_dnn_proba_2b_data_full_sr.h5",
     "signal_region/spanet_full_dataset_2b_data_sr/output_JetGood_test.h5"
 )
 print(f"AUC_2b_data_f_dnn_proba {score_2b_data_f_dnn_proba_sr}")
 
 
 score_4b_QCD_dnn_proba_sr_var= AUC_scores(
-    "prediction_dnn_proba_4b_QCD_sr_seeds/", 
+    "prediction_dnn_proba_4b_QCD_sr_seeds/",
     "signal_region/signal_region_4b_QCD/output_JetGood_test.h5",
     True)
 print(f"AUC_4b_QCD_dnn_proba {score_4b_QCD_dnn_proba_sr_var}")
@@ -552,20 +551,20 @@ print( "AUC 4b data", AUC_4b_data_dnn_proba_sr_var)
 
 
 model_ratio_dnn_proba_sr, fpr_2b_QCD_dnn_proba_sr, fpr_2b_data_dnn_proba_sr, tpr_2b_QCD_dnn_proba_sr, tpr_2b_data_dnn_proba_sr = ratio_fpr(
-    "spanet_prediction_c_dnn_proba_2b_QCD_sr.h5", 
-    "spanet_classifier_2b_QCD_sr/output_JetGood_test.h5", 
-    "spanet_prediction_c_dnn_proba_2b_data_full_sr.h5", 
-    "signal_region/spanet_full_dataset_2b_data_sr/output_JetGood_test.h5", 
-    x1, 
+    "spanet_prediction_c_dnn_proba_2b_QCD_sr.h5",
+    "spanet_classifier_2b_QCD_sr/output_JetGood_test.h5",
+    "spanet_prediction_c_dnn_proba_2b_data_full_sr.h5",
+    "signal_region/spanet_full_dataset_2b_data_sr/output_JetGood_test.h5",
+    x1,
     x2
 )
 
 
 btag_ratio_dnn_proba_sr_var_fpr, fpr_4b_QCD_dnn_proba_sr, fpr_2b_dnn_proba_QCD_sr, tpr_4b_QCD_dnn_proba_sr, tpr_2b_QCD_dnn_proba_sr = ratio_fpr(
-    "prediction_dnn_proba_4b_QCD_sr_seeds/", 
-    "signal_region/signal_region_4b_QCD/output_JetGood_test.h5", 
-    "spanet_prediction_c_dnn_proba_2b_QCD_sr.h5", 
-    "spanet_classifier_2b_QCD_sr/output_JetGood_test.h5", 
+    "prediction_dnn_proba_4b_QCD_sr_seeds/",
+    "signal_region/signal_region_4b_QCD/output_JetGood_test.h5",
+    "spanet_prediction_c_dnn_proba_2b_QCD_sr.h5",
+    "spanet_classifier_2b_QCD_sr/output_JetGood_test.h5",
     x1,
     x2,
     True
@@ -574,94 +573,94 @@ btag_ratio_dnn_proba_sr_var_fpr, fpr_4b_QCD_dnn_proba_sr, fpr_2b_dnn_proba_QCD_s
 print("len last var",len(btag_ratio_dnn_proba_sr_var_fpr))
 print(len(AUC_4b_data_dnn_proba_sr_var))
 
-fpr_ratio(fpr_2b_data_dnn_proba_sr, 
-          tpr_2b_data_dnn_proba_sr, 
-          AUC_4b_data_dnn_proba_sr_var, 
-          btag_ratio_dnn_proba_sr_var_fpr, 
-          model_ratio_dnn_proba_sr, 
-          "4b_data_dnn_proba_sr_variability", 
-          x1, 
+fpr_ratio(fpr_2b_data_dnn_proba_sr,
+          tpr_2b_data_dnn_proba_sr,
+          AUC_4b_data_dnn_proba_sr_var,
+          btag_ratio_dnn_proba_sr_var_fpr,
+          model_ratio_dnn_proba_sr,
+          "4b_data_dnn_proba_sr_variability",
+          x1,
           x2,
           True
 )
 
 roc_curve_compare_weights(
-    tpr_4b_QCD_dnn_proba_sr, 
-    fpr_4b_QCD_dnn_proba_sr, 
-    labels, 
+    tpr_4b_QCD_dnn_proba_sr,
+    fpr_4b_QCD_dnn_proba_sr,
+    labels,
     "4b_QCD_sr_dnn_proba_variability",
-    " ", 
+    " ",
     True
 )
 
 # fpr_2b_data_dnn, tpr_2b_data_dnn= fpr_tpr_variability(
-#     "prediction__2b_data_dnn_vars_seeds", 
+#     "prediction__2b_data_dnn_vars_seeds",
 #     "spanet_classifier_2b_data/output_JetGood_test.h5")
 # fpr_2b_data_dnn_proba, tpr_2b_data_dnn_proba= fpr_tpr_variability(
-#     "prediction__2b_data_dnn_proba_vars_seeds", 
+#     "prediction__2b_data_dnn_proba_vars_seeds",
 #     "spanet_classifier_2b_data/output_JetGood_test.h5")
 
 # fpr_2b_QCD_dnn, tpr_2b_QCD_dnn= fpr_tpr_variability(
-#     "prediction__2b_QCD_dnn_vars_seeds", 
+#     "prediction__2b_QCD_dnn_vars_seeds",
 #     "spanet_classifier_2b_data/output_JetGood_test.h5")
 # fpr_2b_QCD_dnn_proba, tpr_2b_QCD_dnn_proba= fpr_tpr_variability(
-#     "prediction__2b_QCD_dnn_proba_vars_seeds", 
+#     "prediction__2b_QCD_dnn_proba_vars_seeds",
 #     "spanet_classifier_2b_data/output_JetGood_test.h5")
 
 
 
-# Redifne the AUC so that they are with the seeds  
+# Redifne the AUC so that they are with the seeds
 
 # roc_curve_compare_weights(
-#     tpr_2b_QCD_dnn_proba, 
-#     fpr_2b_QCD_dnn_proba, 
-#     labels, 
+#     tpr_2b_QCD_dnn_proba,
+#     fpr_2b_QCD_dnn_proba,
+#     labels,
 #     "2b_QCD_dnn_proba_variability",
-#     " ", 
+#     " ",
 #     True
 # )
 
 # roc_curve_compare_weights(
-#     tpr_2b_QCD_dnn, 
-#     fpr_2b_QCD_dnn, 
-#     labels, 
+#     tpr_2b_QCD_dnn,
+#     fpr_2b_QCD_dnn,
+#     labels,
 #     "2b_QCD_dnn_variability",
-#     " ", 
+#     " ",
 #     True
 # )
 
 # roc_curve_compare_weights(
-#     tpr_2b_data_dnn_proba, 
-#     fpr_2b_data_dnn_proba, 
-#     labels, 
+#     tpr_2b_data_dnn_proba,
+#     fpr_2b_data_dnn_proba,
+#     labels,
 #     "2b_data_dnn_proba_variability",
-#     " ", 
+#     " ",
 #     True
 # )
 
 # roc_curve_compare_weights(
-#     tpr_2b_data_dnn, 
-#     fpr_2b_data_dnn, 
-#     labels, 
+#     tpr_2b_data_dnn,
+#     fpr_2b_data_dnn,
+#     labels,
 #     "2b_data_dnn_variability",
-#     " ", 
+#     " ",
 #     True
 # )
 
 # roc_curve_compare_weights(
-#     tpr_4b_QCD_dnn, 
-#     fpr_4b_QCD_dnn, 
-#     labels, 
+#     tpr_4b_QCD_dnn,
+#     fpr_4b_QCD_dnn,
+#     labels,
 #     "4b_QCD_dnn_variability",
-#     " ", 
+#     " ",
 #     True
 # )
 # roc_curve_compare_weights(
-#     tpr_4b_QCD_dnn_proba, 
-#     fpr_4b_QCD_dnn_proba, 
-#     labels, 
+#     tpr_4b_QCD_dnn_proba,
+#     fpr_4b_QCD_dnn_proba,
+#     labels,
 #     "4b_QCD_dnn_proba_variability",
-#     " ", 
+#     " ",
 #     True
 # )
 
@@ -671,21 +670,21 @@ roc_curve_compare_weights(
 
 probabilities(
     "signal_region/signal_region_4b_QCD/output_JetGood_test.h5",
-    "spanet_pred_c_4b_QCD_sr_dnn_proba.h5", 
+    "spanet_pred_c_4b_QCD_sr_dnn_proba.h5",
     "4b_QCD_sr_dnn_proba",
     ""
 )
 
 probabilities(
     "spanet_classifier_4b_QCD_working/output_JetGood_test.h5",
-    "spanet_c_pred_4b_QCD_dnn.h5", 
+    "spanet_c_pred_4b_QCD_dnn.h5",
     "4b_QCD_dnn",
     ""
 )
 
 probabilities(
     "spanet_classifier_4b_QCD_working/output_JetGood_test.h5",
-    "spanet_c_pred_4b_QCD_dnn_proba.h5", 
+    "spanet_c_pred_4b_QCD_dnn_proba.h5",
     "4b_QCD_dnn_proba",
     ""
 )
@@ -705,18 +704,18 @@ labels_list=["4b QCD with DNN as inputs", "4b QCD with DNN and probability diffe
 
 roc_curve_compare_no_weights(df_test, list_pred, labels_list, "4b_QCD","")
 
-fpr_ratio_2(fpr_2b_data_dnn_proba_sr, 
-          tpr_2b_data_dnn_proba_sr, 
-          fpr_2b_data_dnn_sr, 
+fpr_ratio_2(fpr_2b_data_dnn_proba_sr,
+          tpr_2b_data_dnn_proba_sr,
+          fpr_2b_data_dnn_sr,
           tpr_2b_data_dnn_sr,
-          AUC_4b_data_dnn_proba_sr_var, 
+          AUC_4b_data_dnn_proba_sr_var,
           AUC_4b_data_dnn_sr_var,
           btag_ratio_dnn_proba_sr_var_fpr,
-          btag_ratio_dnn_sr_var_fpr, 
-          model_ratio_dnn_proba_sr, 
+          btag_ratio_dnn_sr_var_fpr,
+          model_ratio_dnn_proba_sr,
           model_ratio_dnn_sr,
-          "4b_data_max_comp", 
-          x1, 
+          "4b_data_max_comp",
+          x1,
           x2,
           True
 )
