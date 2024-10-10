@@ -52,10 +52,20 @@ parser.add_argument(
     action="store_true",
     help="Reduce the number of events in the dataset.",
 )
+
+parser.add_argument(
+    "--oversample",
+    default=False,
+    action="store_true",
+    help="Oversample the dataset.",
+)
+
+
 args = parser.parse_args()
 
 NUMBER_QCD_4B= 121529 #NOTE: this has changed
 NUMBER_QCD_2B= 4424846
+NUMBER_DATA_2B= 5913750
 idx = np.random.RandomState(seed=42).permutation(NUMBER_QCD_2B)
 
 
@@ -389,6 +399,32 @@ for sample in samples:
             print("new_zipped",zipped_dict[collection])
             print(len(zipped_dict["event"]["weight"]))
             print("len new_zipped", len(zipped_dict[collection]))
+            
+     
+            
+    if "GluGlutoHHto4B" not in samples and args.oversample:
+        for collection, _ in zipped_dict.items():
+            number = int(NUMBER_DATA_2B / len(zipped_dict[collection]))
+            print("number", number)
+            all_shuffled_data = []
+            
+            for i in range(number):
+                idx = np.random.RandomState(seed= (42 + i) ).permutation(len(zipped_dict[collection]))
+                shuffled_idx = ak.Array(zipped_dict[collection])[idx]
+                all_shuffled_data.append(shuffled_idx)
+            
+            oversampled_data = ak.concatenate(all_shuffled_data, axis=0)
+            print("len 1",len(oversampled_data))
+            left_events= NUMBER_DATA_2B - (number*len(zipped_dict[collection]))
+            print("left events", left_events)
+            idx = np.random.RandomState().permutation(len(zipped_dict[collection]))
+            last_events= zipped_dict[collection][idx][:left_events]
+            zipped_dict[collection] =  ak.concatenate([oversampled_data, last_events], axis=0)
+            print("len 2",len(zipped_dict[collection]))
+    
+    
+    print("Check fields", zipped_dict[collection].fields)
+    print("Zipped len", len(zipped_dict[collection]) )   
 
     # The Momentum4D arrays are zipped together to form the final dictionary of arrays.
     print("Zipping the collections into a single dictionary...")
