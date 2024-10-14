@@ -51,7 +51,7 @@ def create_inputs(file, category, subcategory, name, var_array):
 
 def create_jets(file, names, values):
     cat = "INPUTS"
-    subcat = "JET"
+    subcat = "Jet"
     for i in range(len(names)):
         # Messed up direction, now have to transpose:
         val_t = np.array(values[i]).T.tolist()
