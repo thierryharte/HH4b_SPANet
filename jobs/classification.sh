@@ -1,6 +1,6 @@
 #!/bin/bash
-SPANET_DIR=$HOME/SPANet
-HH4b_SPANET_DIR=$HOME/HH4b_SPANet
+SPANET_DIR=$HOME/public/Software/SPANet
+HH4b_SPANET_DIR=$HOME/public/Software/HH4b_SPANet
 NUM_GPU=1
 
 # Create venv in local job dir
