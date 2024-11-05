@@ -38,20 +38,19 @@ if args.seeds:
 
 # get the file name without extension and use it as the directory name
 dir_name = os.path.splitext(os.path.basename(args.option))[0] + args.suffix
-
 add_args = f'--args "{args.add_args}"' if args.add_args else ""
 
 print(add_args)
 
 if args.seeds:
     for seed in range(seed_start, seed_end + 1):
-        cmd = "python3 jobs/submit_to_condor.py --cfg {} -of {} -l out_spanet_outputs/out_{}/out_seed_trainings_{} --seed {} --basedir {}/HH4b_SPANet {}".format(
-            args.config,args.option, dir_name, seed, seed, os.getenv("HOME"), add_args
+        cmd = "python3 jobs/submit_to_condor.py --cfg {} -of {} -l out_spanet_outputs/out_{}/out_seed_trainings_{} --seed {} --basedir {} {}".format(
+            args.config,args.option, dir_name, seed, seed, "/afs/cern.ch/user/t/tharte/public/Software/HH4b_SPANet", add_args
         )
         subprocess.run(cmd, shell=True)
 else:
     for i in range(args.num):
-        cmd = "python3 jobs/submit_to_condor.py --cfg {} -of {} -l out_spanet_outputs/out_{}/out_no_seed_trainings_{} --basedir {}/HH4b_SPANet {}".format(
-            args.config,args.option, dir_name, i, os.getenv("HOME"), add_args
+        cmd = "python3 jobs/submit_to_condor.py --cfg {} -of {} -l out_spanet_outputs/out_{}/out_no_seed_trainings_{} --basedir {} {}".format(
+            args.config,args.option, dir_name, i, "/afs/cern.ch/user/t/tharte/public/Software/HH4b_SPANet", add_args
         )
         subprocess.run(cmd, shell=True)
