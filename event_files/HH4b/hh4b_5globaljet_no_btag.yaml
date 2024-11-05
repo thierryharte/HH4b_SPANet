@@ -15,9 +15,10 @@ INPUTS:
   # REQUIRED - GLOBAL - inputs which will have a single vector per event.
   # ---------------------------------------------------------------------
   GLOBAL:
-    era: normalize
-    
-    
+    FifthJet:
+      ptPnetRegNeutrino: log_normalize
+      eta: normalize
+      phi: normalize
 
 
 # ----------------------------------------------------------------------
