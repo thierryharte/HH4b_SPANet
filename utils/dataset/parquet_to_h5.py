@@ -1046,78 +1046,79 @@ def add_info_to_file(input_to_file):
     file_out.close()
 
 
-main_dir = args.output if args.output else os.path.dirname(args.input[0])
-os.makedirs(main_dir, exist_ok=True)
-dfs = []
-for filename in list(args.input):
-    dfs.append(ak.from_parquet(filename))
-    print(dfs[-1].event.sb)
+if __name__ == "__main__":
+    main_dir = args.output if args.output else os.path.dirname(args.input[0])
+    os.makedirs(main_dir, exist_ok=True)
+    dfs = []
+    for filename in list(args.input):
+        dfs.append(ak.from_parquet(filename))
+        print(dfs[-1].event.sb)
 
 
-df = ak.concatenate(dfs)
-print("df", df)
-print("df shape", df.event.sb)
-# df= ['JetGood', 'JetGoodHiggs', 'JetGoodHiggsMatched', 'JetGoodMatched', 'event']
+    df = ak.concatenate(dfs)
+    print("df", df)
+    print("df shape", df.event.sb)
+    # df= ['JetGood', 'JetGoodHiggs', 'JetGoodHiggsMatched', 'JetGoodMatched', 'event']
 
 
-file_dict = {
-    0: "output_JetGood_train.h5",
-    1: "output_JetGood_test.h5",
-    2: "output_JetGoodHiggs_train.h5",
-    3: "output_JetGoodHiggs_test.h5",
-}
+    file_dict = {
+        0: "output_JetGood_train.h5",
+        1: "output_JetGood_test.h5",
+        2: "output_JetGoodHiggs_train.h5",
+        3: "output_JetGoodHiggs_test.h5",
+    }
 
 
-# create the test and train datasets
-# and create differnt datasetse with jetGood and jetGoodHiggs
+    # create the test and train datasets
+    # and create differnt datasetse with jetGood and jetGoodHiggs
 
-jets_good = df.JetGood[: args.max_events] if args.max_events != -1 else df.JetGood
-jets_good_higgs = (
-    df.JetGoodHiggs[: args.max_events] if args.max_events != -1 else df.JetGoodHiggs
-)
+    jets_good = df.JetGood[: args.max_events] if args.max_events != -1 else df.JetGood
+    jets_good_higgs = (
+        df.JetGoodHiggs[: args.max_events] if args.max_events != -1 else df.JetGoodHiggs
+    )
 
-# print("df=", df.fields)
-# print("jetgood",jets_good.fields)
-# print("jet good higgs",jets_good_higgs.type)
+    # print("df=", df.fields)
+    # print("jetgood",jets_good.fields)
+    # print("jet good higgs",jets_good_higgs.type)
 
-jets_list = []
-events_list = []
-max_num_jets_list = []
-n_events = len(jets_good)
+    jets_list = []
+    events_list = []
+    max_num_jets_list = []
+    n_events = len(jets_good)
 
-# Randomly permute a sequence, or return a permuted range. in this case we randomly permute the number of events
-# I think we fix the seed so that the permutation is the same in jet_good and jet_good_higgs but not sure
-idx = np.random.RandomState(seed=42).permutation(n_events)
-for i, jets_all in enumerate([jets_good, jets_good_higgs]):
-    events_all = df.event[: args.max_events] if args.max_events != -1 else df.event
-    print("events_all", events_all)
-    print("jets_all", jets_all)
-    print(f"Creating dataset for {'JetGood' if i == 0 else 'JetGoodHiggs'}")
-    print(f"Number of events: {n_events}")
-    # The ceil of the scalar x is the smallest integer i, such that i >= x
-    idx_train_max = int(np.ceil(n_events * args.frac_train))
-    print(f"Number of events for training: {idx_train_max}")
-    print(f"Number of events for testing: {n_events - idx_train_max}")
+    # Randomly permute a sequence, or return a permuted range. in this case we randomly permute the number of events
+    # I think we fix the seed so that the permutation is the same in jet_good and jet_good_higgs but not sure
+    idx = np.random.RandomState(seed=42).permutation(n_events)
+    for i, jets_all in enumerate([jets_good, jets_good_higgs]):
+        events_all = df.event[: args.max_events] if args.max_events != -1 else df.event
+        print("events_all", events_all)
+        print("jets_all", jets_all)
+        print(f"Creating dataset for {'JetGood' if i == 0 else 'JetGoodHiggs'}")
+        print(f"Number of events: {n_events}")
+        # The ceil of the scalar x is the smallest integer i, such that i >= x
+        idx_train_max = int(np.ceil(n_events * args.frac_train))
+        print(f"Number of events for training: {idx_train_max}")
+        print(f"Number of events for testing: {n_events - idx_train_max}")
 
-    # i believe here we shuffle the indices
-    if not args.no_shuffle:
-        jets_all = jets_all[idx]
-        events_all = events_all[idx]
+        # i believe here we shuffle the indices
+        if not args.no_shuffle:
+            jets_all = jets_all[idx]
+            events_all = events_all[idx]
 
-    jets_train = jets_all[:idx_train_max]
-    jets_test = jets_all[idx_train_max:]
-    events_train = events_all[:idx_train_max]
-    events_test = events_all[idx_train_max:]
+        jets_train = jets_all[:idx_train_max]
+        jets_test = jets_all[idx_train_max:]
+        events_train = events_all[:idx_train_max]
+        events_test = events_all[idx_train_max:]
 
-    for jets, ev in zip([jets_train, jets_test], [events_train, events_test]):
-        # list of shuffled jets i believe in the end there are 4 bc there is test and train for jet good and jet good higgs
-        jets_list.append(jets)
-        # lkist of the number of events
-        events_list.append(ev)
-        max_num_jets_list.append(args.num_jets if i == 0 else 4)
+        for jets, ev in zip([jets_train, jets_test], [events_train, events_test]):
+            # list of shuffled jets i believe in the end there are 4 bc there is test and train for jet good and jet good higgs
+            jets_list.append(jets)
+            # lkist of the number of events
+            events_list.append(ev)
+            max_num_jets_list.append(args.num_jets if i == 0 else 4)
 
-if args.type != -1:
-    add_info_to_file((args.type, jets_list[args.type]))
-else:
-    for number, jet in enumerate(jets_list):
-        add_info_to_file((number, jet))
+    if args.type != -1:
+        add_info_to_file((args.type, jets_list[args.type]))
+    else:
+        for number, jet in enumerate(jets_list):
+            add_info_to_file((number, jet))
