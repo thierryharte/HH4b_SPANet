@@ -208,8 +208,8 @@ matched_collections_dict = {
 }
 
 samples = df["columns"].keys() if not args.sample else [args.sample]
-print("Full samples", df["columns"].keys())
-print("Samples: ", samples)
+#print("Full samples", df["columns"].keys())
+#print("Samples: ", samples)
 
 
 
@@ -250,16 +250,17 @@ for sample in samples:
     # Since the array `weight` is filled on the fly with the weight associated with the event, it does not take into account the overall scaling by the sum of genweights (`sum_genweights`).
     # In order to correct for this, we have to scale by hand the `weight` array dividing by the sum of genweights.
     for dataset in datasets:
+        #print(df["columns"][sample][dataset][args.cat]["JetGoodHiggsMatched_provenance"])
         if "weight" in df["columns"][sample][dataset][args.cat].keys():
             weight = df["columns"][sample][dataset][args.cat]["weight"].value
-            print("weights", weight)
-            print("norma_xsec keys",norm_xsec.keys())
+            #print("weights", weight)
+            #print("norma_xsec keys",norm_xsec.keys())
             for x in norm_xsec.keys():
                 if x in dataset:
-                    print("x", x)
-                    print("dataset", dataset)
+                    #print("x", x)
+                    #print("dataset", dataset)
                     norm_factor = norm_xsec[x]
-                    print("norm_factor: ", norm_factor)
+                    #print("norm_factor: ", norm_factor)
                     break
                 else:
                     norm_factor = 1.0
@@ -269,18 +270,27 @@ for sample in samples:
             )
             df["columns"][sample][dataset][args.cat]["weight"] = weight_new
             print("weight_new",weight_new)
+<<<<<<< HEAD
             # plt.hist(weight_new.value, np.logspace(-9,-3,60))
             # plt.yscale("log")
             # plt.xscale("log")
             # plt.savefig(f"/t3home/ramella/HH4b_SPANet/weights_plots/{dataset}")
+=======
+            plt.hist(weight_new.value, np.logspace(-9,-3,60))
+            plt.yscale("log")
+            plt.xscale("log")
+            if not os.path.exists("weights_plots"):
+                os.makedirs("weights_plots")
+            plt.savefig(f"./weights_plots/{dataset}")
+>>>>>>> 2978cc5 (Adapted files for coffea to h5 to my use and changed jet assignmend)
         else:
             df["columns"][sample][dataset][args.cat]["weight"] = column_accumulator(
                 np.ones(dataset_lenght[list(datasets).index(dataset)])
                 / dataset_lenght[list(datasets).index(dataset)]
             )
 
-        print("\n dataset", dataset)
-        print("weights", df["columns"][sample][dataset][args.cat]["weight"])
+        #print("\n dataset", dataset)
+        #print("weights", df["columns"][sample][dataset][args.cat]["weight"])
 
     print("\nSamples colums:" , df["columns"].keys())
     print("Dataset columns: ", df["columns"][sample].keys())
@@ -288,6 +298,7 @@ for sample in samples:
     ## Accumulate ntuples from different data-taking eras
     # In order to enlarge our training sample, we merge ntuples coming from different data-taking eras.
     cs = accumulate([df["columns"][sample][dataset][args.cat] for dataset in datasets])
+    print(cs["JetGoodHiggsMatched_provenance"])
 
     kl_list = [-999.0] * len(datasets)
     for i, dataset in enumerate(datasets):
@@ -295,17 +306,17 @@ for sample in samples:
             if kl in dataset:
                 kl_list[i] = kl_dict[kl]
                 break
-    print("kl_list: ", kl_list)
+    #print("kl_list: ", kl_list)
 
     sb_list = [-999.0] * len(datasets)
     for i, dataset in enumerate(datasets):
         for sb in sig_bkg_dict.keys():
-            print("keys sb", sig_bkg_dict.keys())
-            print("\n dataset sb", dataset)
+     #       print("keys sb", sig_bkg_dict.keys())
+     #       print("\n dataset sb", dataset)
             if sb in dataset:
                 sb_list[i] = sig_bkg_dict[sb]
                 break
-    print("sb_list: ", sb_list)
+    #print("sb_list: ", sb_list)
 
     # print("dataset_lenght: ", dataset_lenght)
     kl_dataset = np.repeat(kl_list, dataset_lenght)
@@ -323,6 +334,7 @@ for sample in samples:
             #     array_dict[collection][key_feature] = cs[f"bQuarkHiggsMatched_{key_coffea}"].value
             # else:
             array_dict[collection][key_feature] = cs[f"{collection}_{key_coffea}"].value
+        print(array_dict["JetGoodHiggsMatched"]["prov"])
 
         # Add padded features to the array, according to the features dictionary
         if collection in features_pad_dict.keys():
@@ -347,6 +359,8 @@ for sample in samples:
             )
         print(f"Collection: {collection}")
         print("Fields: ", zipped_dict[collection].fields)
+        if "prov" in zipped_dict[collection].fields:
+            print(zipped_dict[collection]["prov"])
 
     for collection in zipped_dict.keys():
         # Pad the matched collections with None if there is no matching
@@ -355,10 +369,16 @@ for sample in samples:
             masked_arrays = ak.mask(
                 zipped_dict[matched_collection],
                 zipped_dict[matched_collection].pt == -999,
+<<<<<<< HEAD
                 valid_when=False,
+=======
+                valid_when=False
+>>>>>>> 2978cc5 (Adapted files for coffea to h5 to my use and changed jet assignmend)
             )
             print("masked_arrays: ", masked_arrays)
+            print("zipped_values:", zipped_dict[matched_collection].pt)
             zipped_dict[matched_collection] = masked_arrays
+            print(ak.count_nonzero(zipped_dict["JetGoodHiggsMatched"]["prov"]))
             # Add the matched flag and the provenance to the matched jets
             if collection == "JetGoodHiggs" or collection == "JetGood":
                 print(
@@ -424,7 +444,8 @@ for sample in samples:
 
 
     print("Check fields", zipped_dict[collection].fields)
-    print("Zipped len", len(zipped_dict[collection]) )
+    print("Zipped len", len(zipped_dict[collection]) )   
+    print("Zipped ", zipped_dict )
 
     # The Momentum4D arrays are zipped together to form the final dictionary of arrays.
     print("Zipping the collections into a single dictionary...")
