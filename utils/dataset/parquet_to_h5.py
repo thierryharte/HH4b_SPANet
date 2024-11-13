@@ -21,6 +21,7 @@ vector.register_numba()
 vector.register_awkward()
 import psutil
 from rich.progress import track
+import onnxruntime
 
 from prediction_selection import *
 
@@ -113,7 +114,6 @@ parser.add_argument(
 args = parser.parse_args()
 
 if args.classification or args.signal:
-    import onnxruntime
 
     sess_opts = onnxruntime.SessionOptions()
     sess_opts.execution_mode = onnxruntime.ExecutionMode.ORT_PARALLEL
@@ -126,23 +126,23 @@ if args.classification or args.signal:
         flush=True,
     )
 
-# low, medium and tight WP
-btag_wp = [0.0499, 0.2605, 0.6915]
+    # low, medium and tight WP
+    btag_wp = [0.0499, 0.2605, 0.6915]
 
-# load the model
-session = onnxruntime.InferenceSession(
-    args.spanet_training,
-    providers=onnxruntime.get_available_providers(),
-    sess_opts=sess_opts,
-)
-# name of the inputs and outputs of the model
-input_name = [input.name for input in session.get_inputs()]
-output_name = [output.name for output in session.get_outputs()]
+    # load the model
+    session = onnxruntime.InferenceSession(
+        args.spanet_training,
+        providers=onnxruntime.get_available_providers(),
+        sess_opts=sess_opts,
+    )
+    # name of the inputs and outputs of the model
+    input_name = [input.name for input in session.get_inputs()]
+    output_name = [output.name for output in session.get_outputs()]
 
-input_shape = [input.shape for input in session.get_inputs()]
-output_shape = [output.shape for output in session.get_outputs()]
+    input_shape = [input.shape for input in session.get_inputs()]
+    output_shape = [output.shape for output in session.get_outputs()]
 
-# set the names of the groups in the h5 out file (used in add_info_to_file)
+    # set the names of the groups in the h5 out file (used in add_info_to_file)
 
 
 def create_groups(file):
@@ -232,6 +232,9 @@ def reconstruct_higgs(jet_collection, idx_collection):
 def create_targets(file, particle, jets_prov, filename, max_num_jets):
     indices = ak.local_index(jets_prov)
     higgs_targets = {1: ["b1", "b2"], 2: ["b3", "b4"]}
+    
+    print("PREDICTIONS BEST")
+    print(jets_prov)
 
     for j in [1, 2]:
         if particle == f"h{j}":
@@ -251,8 +254,8 @@ def create_targets(file, particle, jets_prov, filename, max_num_jets):
                 index_b1 = indices_prov[:, 0]
                 index_b2 = indices_prov[:, 1]
 
-                index_b1 = ak.where(index_b1 < max_num_jets, index_b1, -1)
-                index_b2 = ak.where(index_b2 < max_num_jets, index_b2, -1)
+#                index_b1 = ak.where(index_b1 < max_num_jets, index_b1, -1)
+#                index_b2 = ak.where(index_b2 < max_num_jets, index_b2, -1)
 
             file.create_dataset(
                 f"TARGETS/h{j}/{higgs_targets[j][0]}",
@@ -553,7 +556,8 @@ def create_inputs(file, jets, jet_4vector, max_num_jets, global_fifth_jet, event
     btag_ds = file.create_dataset(
         "INPUTS/Jet/btag", np.shape(btag), dtype="float32", data=btag
     )
-
+    
+    btag_wp = [0.0499, 0.2605, 0.6915]
     btag_wp_array = ak.to_numpy(
         ak.fill_none(
             ak.pad_none(
@@ -1022,11 +1026,11 @@ def add_info_to_file(input_to_file):
     jet_4vector = jet_four_vector(jets)
 
     # evaluate the model for the events
-    # predictions_best,  best_pairing_probabilities_sum , second_best_pairing_probabilities_sum= get_pairing_information(jets,file_out)
+    #predictions_best,  best_pairing_probabilities_sum , second_best_pairing_probabilities_sum= get_pairing_information(jets,file_out)
 
-    # print("best", predictions_best)
-    # print("bes sum", best_pairing_probabilities_sum)
-    # print("second best", second_best_pairing_probabilities_sum)
+    #print("best", predictions_best)
+    #print("bes sum", best_pairing_probabilities_sum)
+    #print("second best", second_best_pairing_probabilities_sum)
 
     mask_sr = create_inputs(
         file_out,
