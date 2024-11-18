@@ -126,25 +126,23 @@ if args.classification or args.signal:
         flush=True,
     )
 
+    # load the model
+    session = onnxruntime.InferenceSession(
+        args.spanet_training,
+        providers=onnxruntime.get_available_providers(),
+        sess_opts=sess_opts,
+    )
+    # name of the inputs and outputs of the model
+    input_name = [input.name for input in session.get_inputs()]
+    output_name = [output.name for output in session.get_outputs()]
+
+    input_shape = [input.shape for input in session.get_inputs()]
+    output_shape = [output.shape for output in session.get_outputs()]
+
 # low, medium and tight WP
 btag_wp = [0.0499, 0.2605, 0.6915]
 
-# load the model
-session = onnxruntime.InferenceSession(
-    args.spanet_training,
-    providers=onnxruntime.get_available_providers(),
-    sess_opts=sess_opts,
-)
-# name of the inputs and outputs of the model
-input_name = [input.name for input in session.get_inputs()]
-output_name = [output.name for output in session.get_outputs()]
-
-input_shape = [input.shape for input in session.get_inputs()]
-output_shape = [output.shape for output in session.get_outputs()]
-
 # set the names of the groups in the h5 out file (used in add_info_to_file)
-
-
 def create_groups(file):
     file.create_group("TARGETS/h1")  # higgs 1 -> b1 b2
     file.create_group("TARGETS/h2")  # higgs 2 -> b3 b4
@@ -242,7 +240,7 @@ def create_targets(file, particle, jets_prov, filename, max_num_jets):
                 else:
                     index_b1 = ak.full_like(jets_prov[:, 0], 0)
                     index_b2 = ak.full_like(jets_prov[:, 0], 0)
-                # print(filename, particle, index_b1, index_b2)
+                # print(filename, particle, index_b1, index_b2)1
             else:
                 mask = jets_prov == j  # H->b1b2
                 indices_prov = ak.fill_none(ak.pad_none(indices[mask], 2), -1)

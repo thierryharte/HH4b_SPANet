@@ -269,10 +269,10 @@ for sample in samples:
             )
             df["columns"][sample][dataset][args.cat]["weight"] = weight_new
             print("weight_new",weight_new)
-            plt.hist(weight_new.value, np.logspace(-9,-3,60))
-            plt.yscale("log")
-            plt.xscale("log")
-            plt.savefig(f"/t3home/ramella/HH4b_SPANet/weights_plots/{dataset}")
+            # plt.hist(weight_new.value, np.logspace(-9,-3,60))
+            # plt.yscale("log")
+            # plt.xscale("log")
+            # plt.savefig(f"/t3home/ramella/HH4b_SPANet/weights_plots/{dataset}")
         else:
             df["columns"][sample][dataset][args.cat]["weight"] = column_accumulator(
                 np.ones(dataset_lenght[list(datasets).index(dataset)])
@@ -355,7 +355,7 @@ for sample in samples:
             masked_arrays = ak.mask(
                 zipped_dict[matched_collection],
                 zipped_dict[matched_collection].pt == -999,
-                None,
+                valid_when=False,
             )
             print("masked_arrays: ", masked_arrays)
             zipped_dict[matched_collection] = masked_arrays
@@ -399,20 +399,20 @@ for sample in samples:
             print("new_zipped",zipped_dict[collection])
             print(len(zipped_dict["event"]["weight"]))
             print("len new_zipped", len(zipped_dict[collection]))
-            
-     
-            
+
+
+
     if "GluGlutoHHto4B" not in samples and args.oversample:
         for collection, _ in zipped_dict.items():
             number = int(NUMBER_DATA_2B / len(zipped_dict[collection]))
             print("number", number)
             all_shuffled_data = []
-            
+
             for i in range(number):
                 idx = np.random.RandomState(seed= (42 + i) ).permutation(len(zipped_dict[collection]))
                 shuffled_idx = ak.Array(zipped_dict[collection])[idx]
                 all_shuffled_data.append(shuffled_idx)
-            
+
             oversampled_data = ak.concatenate(all_shuffled_data, axis=0)
             print("len 1",len(oversampled_data))
             left_events= NUMBER_DATA_2B - (number*len(zipped_dict[collection]))
@@ -421,10 +421,10 @@ for sample in samples:
             last_events= zipped_dict[collection][idx][:left_events]
             zipped_dict[collection] =  ak.concatenate([oversampled_data, last_events], axis=0)
             print("len 2",len(zipped_dict[collection]))
-    
-    
+
+
     print("Check fields", zipped_dict[collection].fields)
-    print("Zipped len", len(zipped_dict[collection]) )   
+    print("Zipped len", len(zipped_dict[collection]) )
 
     # The Momentum4D arrays are zipped together to form the final dictionary of arrays.
     print("Zipping the collections into a single dictionary...")
