@@ -891,7 +891,15 @@ def create_inputs(file, jets, jet_4vector, max_num_jets, global_fifth_jet, event
             dtype="float32",
             data=difference,
         )
-
+    
+    else:
+        weight_array = ak.to_numpy(events.weight)
+        weight_ds = file.create_dataset(
+            "WEIGHTS/weight",
+            np.shape(weight_array),
+            dtype="float32",
+            data=ak.ones_like(weight_array,dtype=float)
+        )
     # create new global variables for the fifth jet (if it exists) otherwise fill with PAD_VALUE
     if global_fifth_jet is not None:
         global_fifth_jet = global_fifth_jet[mask_sr]
