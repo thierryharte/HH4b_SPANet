@@ -1,3 +1,5 @@
+# sbatch -p short --time 00:20:00 --account=t3 --mem 15gb --cpus-per-task=32 --wrap="python parquet_to_h5_classification.py -i /work/ramella/parquet_files/full_dataset/DATA_JetMET_JMENano_2b_region.parquet  /work/ramella/parquet_files/GluGlutoHHto4B_4b_region.parquet  -o  /work/ramella/h5_files/full_dataset/ -c"
+
 # safe resources for signal region:
 # for 2b total dataset test--> 3.5h, 15Gb
 # for 2b total dataset train--> 7h, 20Gb
@@ -22,7 +24,7 @@ vector.register_awkward()
 import psutil
 from rich.progress import track
 
-from prediction_selection import *
+from prediction_selection import extract_predictions
 
 
 # pass arguments to run the code
@@ -141,6 +143,7 @@ if args.classification or args.signal:
 
 # low, medium and tight WP
 btag_wp = [0.0499, 0.2605, 0.6915]
+
 
 # set the names of the groups in the h5 out file (used in add_info_to_file)
 def create_groups(file):
@@ -552,18 +555,20 @@ def create_inputs(file, jets, jet_4vector, max_num_jets, global_fifth_jet, event
         "INPUTS/Jet/btag", np.shape(btag), dtype="float32", data=btag
     )
 
-    btag_wp_array = ak.to_numpy(
-        ak.fill_none(
-            ak.pad_none(
-                ak.where(btag > btag_wp[0], 1, 0)
-                + ak.where(btag > btag_wp[1], 1, 0)
-                + ak.where(btag > btag_wp[2], 1, 0),
-                max_num_jets,
-                clip=True,
-            ),
-            PAD_VALUE,
-        )
+    btag_wp_array_ak = ak.fill_none(
+        ak.pad_none(
+            ak.where(btag > btag_wp[0], 1, 0)
+            + ak.where(btag > btag_wp[1], 1, 0)
+            + ak.where(btag > btag_wp[2], 1, 0),
+            max_num_jets,
+            clip=True,
+        ),
+        PAD_VALUE,
     )
+    btag_wp_array = ak.to_numpy(
+        ak.where(btag == PAD_VALUE, PAD_VALUE, btag_wp_array_ak)
+    )
+
     btag_wp_ds = file.create_dataset(
         "INPUTS/Jet/btag_wp_bit",
         np.shape(btag_wp_array),
@@ -1052,12 +1057,10 @@ if __name__ == "__main__":
         dfs.append(ak.from_parquet(filename))
         print(dfs[-1].event.sb)
 
-
     df = ak.concatenate(dfs)
     print("df", df)
     print("df shape", df.event.sb)
     # df= ['JetGood', 'JetGoodHiggs', 'JetGoodHiggsMatched', 'JetGoodMatched', 'event']
-
 
     file_dict = {
         0: "output_JetGood_train.h5",
@@ -1065,7 +1068,6 @@ if __name__ == "__main__":
         2: "output_JetGoodHiggs_train.h5",
         3: "output_JetGoodHiggs_test.h5",
     }
-
 
     # create the test and train datasets
     # and create differnt datasetse with jetGood and jetGoodHiggs
