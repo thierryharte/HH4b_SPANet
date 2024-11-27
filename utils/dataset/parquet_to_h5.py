@@ -255,8 +255,8 @@ def create_targets(file, particle, jets_prov, filename, max_num_jets):
                 index_b1 = indices_prov[:, 0]
                 index_b2 = indices_prov[:, 1]
 
-#                index_b1 = ak.where(index_b1 < max_num_jets, index_b1, -1)
-#                index_b2 = ak.where(index_b2 < max_num_jets, index_b2, -1)
+                index_b1 = ak.where(index_b1 < max_num_jets, index_b1, -1)
+                index_b2 = ak.where(index_b2 < max_num_jets, index_b2, -1)
 
             file.create_dataset(
                 f"TARGETS/h{j}/{higgs_targets[j][0]}",
