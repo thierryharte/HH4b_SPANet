@@ -46,14 +46,11 @@ args = parser.parse_args()
 # redirect stout
 # sys.stdout = open(f"{args.plot_dir}/efficiency.txt", "w")
 
-
 if args.data:
     # remove non data samples
     spanet_dict = {k: v for k, v in spanet_dict.items() if "data" in k}
 else:
     spanet_dict = {k: v for k, v in spanet_dict.items() if "data" not in k}
-
-
 
 
 # bin definitions
@@ -279,7 +276,7 @@ if not args.data:
             total_efficiencies_fully_matched_spanet[-len(kl_values_spanet) :]
         )
         print("\n")
-        print("Plotting fficiencies fully matched for all klambda values")
+        print("Plotting efficiencies fully matched for all klambda values")
         plot_diff_eff_klambda(
             efficiencies_fully_matched_spanet_allklambda,
             kl_values_spanet,
