@@ -4,8 +4,7 @@ HH4b_SPANET_DIR=$HOME/public/Software/HH4b_SPANet
 NUM_GPU=1
 
 # Create venv in local job dir
-python -m venv myenv --system-site-packages
-source myenv/bin/activate
+source $HOME/py_spanet/bin/activate
 
 # Install SPANet in virtual environment
 cd $SPANET_DIR
