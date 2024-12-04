@@ -68,7 +68,7 @@ def check_names(name):
     ):
         for kl in k_lambda:
             if f"{kl}" in name:
-                return lenght_true_dict + k_lambda.index(kl) + len(k_lambda) * 3
+                return lenght_true_dict + k_lambda.index(kl) + len(k_lambda) *4 #before it was 3. why?
         return 17
     #UPDATE_HERE adding a new if statement
     elif "allklambda" in name and "4_jets" in name:
