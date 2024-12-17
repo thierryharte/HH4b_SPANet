@@ -112,6 +112,13 @@ parser.add_argument(
     default=False,
     help="Mask for signal region",
 )
+parser.add_argument(
+    "-r",
+    "--random_pt",
+    action="store_true",
+    default=False,
+    help="Applying a random weight to pT to reduce mass dependence",
+)
 
 args = parser.parse_args()
 
@@ -162,23 +169,41 @@ def jet_four_vector_fully_matched(jet):
     jet_phi_unflat = ak.unflatten(jet.phi, len(jet))
     jet_mass_unflat = ak.unflatten(jet.mass, len(jet))
     jet_btag_unflat = ak.unflatten(jet.btag, len(jet))
+    
+    if args.random_pt:
+        jet_pt_weigt_unflat = ak.unflatten(jet.pt_weight, len(jet))
 
     count_ones = ak.sum(jet_prov_unflat == 1, axis=1)
     count_twos = ak.sum(jet_prov_unflat == 2, axis=1)
 
     mask_fully_matched = (count_ones == 2) & (count_twos == 2)
 
-    jet_fully_matched = ak.zip(
-        {
-            "pt": jet_pt_unflat[mask_fully_matched],
-            "eta": jet_eta_unflat[mask_fully_matched],
-            "phi": jet_phi_unflat[mask_fully_matched],
-            "mass": jet_mass_unflat[mask_fully_matched],
-            "btag": jet_btag_unflat[mask_fully_matched],
-            "prov": jet_prov_unflat[mask_fully_matched],
-        },
-        with_name="Momentum4D",
-    )
+    if args.random_pt:
+        jet_fully_matched = ak.zip(
+            {
+                "pt": jet_pt_unflat[mask_fully_matched],
+                "eta": jet_eta_unflat[mask_fully_matched],
+                "phi": jet_phi_unflat[mask_fully_matched],
+                "mass": jet_mass_unflat[mask_fully_matched],
+                "btag": jet_btag_unflat[mask_fully_matched],
+                "prov": jet_prov_unflat[mask_fully_matched],
+                "pt_weight": jet_pt_weight_unflat[mask_fully_matched],
+            },
+            with_name="Momentum4D",
+        )
+    
+    else:
+        jet_fully_matched = ak.zip(
+            {
+                "pt": jet_pt_unflat[mask_fully_matched],
+                "eta": jet_eta_unflat[mask_fully_matched],
+                "phi": jet_phi_unflat[mask_fully_matched],
+                "mass": jet_mass_unflat[mask_fully_matched],
+                "btag": jet_btag_unflat[mask_fully_matched],
+                "prov": jet_prov_unflat[mask_fully_matched],
+            },
+            with_name="Momentum4D",
+        )
     print(jet_fully_matched)
     return jet_fully_matched
 
@@ -282,18 +307,35 @@ def jet_four_vector(jets_list):
     jet_phi_unflat = jets_list.phi
     jet_mass_unflat = jets_list.mass
     jet_btag_unflat = jets_list.btag
-
-    jet = ak.zip(
-        {
-            "pt": jet_pt_unflat,
-            "eta": jet_eta_unflat,
-            "phi": jet_phi_unflat,
-            "mass": jet_mass_unflat,
-            "btag": jet_btag_unflat,
-            "prov": jet_prov_unflat,
-        },
-        with_name="Momentum4D",
-    )
+    
+    if args.random_pt:
+        jet_pt_weight_unflat = ak.Array(np.random.rand(np.shape(jet_pt_unflat))+0.5) # Weight between 0.5 and 1.5
+        jet_pt_unflat = jet_pt_unflat * jet_pt_weight_unflat
+        jet = ak.zip(
+            {
+                "pt": jet_pt_unflat,
+                "eta": jet_eta_unflat,
+                "phi": jet_phi_unflat,
+                "mass": jet_mass_unflat,
+                "btag": jet_btag_unflat,
+                "prov": jet_prov_unflat,
+                "pt_weight": jet_pt_weight_unflat,
+            },
+            with_name="Momentum4D",
+        )
+    
+    else:
+        jet = ak.zip(
+            {
+                "pt": jet_pt_unflat,
+                "eta": jet_eta_unflat,
+                "phi": jet_phi_unflat,
+                "mass": jet_mass_unflat,
+                "btag": jet_btag_unflat,
+                "prov": jet_prov_unflat,
+            },
+            with_name="Momentum4D",
+        )
     print("jet_4vector 1", jet, flush=True)
     # jet_4vector.append(jet)
     # print("jet_4vector 2",jet_4vector)
