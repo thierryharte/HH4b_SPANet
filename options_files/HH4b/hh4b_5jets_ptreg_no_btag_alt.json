@@ -29,18 +29,15 @@
 
     "skip_connections": true,
     "initial_embedding_skip_connections": true,
-    "event_info_file": "/afs/cern.ch/user/r/ramellar/HH4b_SPANet/event_files/HH4b/classification/hh4b_ptreg_c_pred_dnn.yaml",
-    "training_file": "/afs/cern.ch/user/r/ramellar/public/inputs_files/spanet_classifier_2b_QCD_sr/output_JetGood_train.h5",
+    "event_info_file": "/afs/cern.ch/user/t/tharte/public/Software/HH4b_SPANet/event_files/HH4b/hh4b_5jet_no_btag.yaml",
+    "training_file": "/afs/cern.ch/user/t/tharte/public/samplesets/jet5global_pt_tight/output_JetGood_train.h5",
 
     "normalize_features": true,
     "limit_to_num_jets": 0,
 
     "balance_jets": false,
     "partial_events": true,
-    "balance_particles": false,
-    "balance_classifications": true,
-    "balance_events": true,
-    "balance_losses": false,
+    "balance_particles": true,
 
     "dataset_limit": 1.0,
     "train_validation_split": 0.95,
@@ -51,15 +48,15 @@
     "combine_pair_loss": "min",
     "optimizer": "AdamW",
     "focal_gamma": 0.0,
-    "learning_rate": 0.0001,
-    "learning_rate_cycles": 0,
-    "learning_rate_warmup_epochs": 0.0,
+    "learning_rate": 0.00659,
+    "learning_rate_cycles": 1,
+    "learning_rate_warmup_epochs": 1.0,
 
-    "assignment_loss_scale": 0.0,
+    "assignment_loss_scale": 1.0,
     "detection_loss_scale": 0.0,
     "kl_loss_scale": 0.0,
     "regression_loss_scale": 0.0,
-    "classification_loss_scale": 1.0,
+    "classification_loss_scale": 0.0,
 
     "l2_penalty": 0.000374,
     "gradient_clip": 0.425,

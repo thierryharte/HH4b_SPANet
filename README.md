@@ -44,10 +44,18 @@ python -m spanet.train --help
 ```
 
 ## Dataset creation
+
+### Coffea to H5 conversion
+In order to create the `.h5` dataset from the `.coffea` output file, one can use the following command:
+```bash
+cd HH4b_SPANet
+python utils/dataset/coffea_to_h5.py -i input.coffea 
+```
+
 ### Coffea to Parquet conversion
 In order to create the `.parquet` dataset from the `.coffea` output file, one can use the following command:
 ```bash
-cd ttHbb_SPANet
+cd HH4b_SPANet
 python utils/dataset/coffea_to_parquet.py -i input.coffea -o output_folder
 ```
 
@@ -58,16 +66,11 @@ Once the `.parquet` file is saved, the `.h5` file in the SPANet format can be pr
 ```bash
 python utils/dataset/parquet_to_h5.py -i input.parquet -o output.h5
 ```
-Additionally, one can save only ttHbb events with exactly 2 jets from the Higgs, 3 jets from the W or hadronic top, and 1 lepton from the leptonic top.
-One can specify whether the events are fully matched with the `--fully_matched` flag:
-```bash
-python utils/dataset/parquet_to_h5.py -i input.parquet -o output.h5 --fully_matched
-```
 
 ## Train SPANet model for jet assignment
 In order to train the SPANet model for jet assignment, run the following command:
 ```bash
-python -m spanet.train -of options_files/ttHbb_semileptonic/options_test_inclusive.json --gpus 1
+python -m spanet.train -of options_file --gpus 1
 ```
 
 ## Compute predictions
@@ -80,5 +83,5 @@ where `$LOG_DIRECTORY` is the output folder where the checkpoints of the trained
 ## Train on HTCondor
 In order to train the SPANet model on HTCondor, one can use the following command:
 ```bash
-python jobs/submit_jobs_seed.py -o options_files/option_file.json -c jobs/config/config.yaml -s start_seed:end_seed -a "additional arguments to pass to spanet.train" --suffix directory_suffix
+python jobs/submit_jobs_seed.py -o <options_files/option_file.json> -c <jobs/config/config.yaml> -s <start_seed>:<end_seed> -a <"additional arguments to pass to spanet.train"> --suffix <directory_suffix>
 ```

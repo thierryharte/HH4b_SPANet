@@ -7,17 +7,45 @@ INPUTS:
   # -----------------------------------------------------------------------------
   SEQUENTIAL:
     Jet:
-      ptPnetRegNeutrino: log_normalize
+      pt: log_normalize
       eta: normalize
       phi: normalize
+      mass: log_normalize
 
   # ---------------------------------------------------------------------
   # REQUIRED - GLOBAL - inputs which will have a single vector per event.
   # ---------------------------------------------------------------------
   GLOBAL:
-    
-    
-
+    Event:
+      era: normalize
+      dR_min: normalize
+      dR_max: normalize
+      HT: log_normalize
+    HiggsLeading:
+      pt: log_normalize
+      eta: normalize
+      phi: normalize
+      mass: log_normalize
+      dR: normalize
+      helicityCosTheta: normalize
+      sigma_over_higgs1_reco_mass: normalize
+    HiggsSubLeading:
+      pt: log_normalize
+      eta: normalize
+      phi: normalize
+      mass: log_normalize
+      dR: normalize
+      helicityCosTheta: normalize
+      sigma_over_higgs2_reco_mass: normalize
+    HH:
+      pt: log_normalize
+      eta: normalize
+      phi: normalize
+      mass: log_normalize
+      dR: normalize
+      cos_theta_star: normalize
+      dEta: normalize
+      dPhi: normalize
 
 # ----------------------------------------------------------------------
 # REQUIRED - EVENT - Complete list of resonance particles and daughters.
@@ -53,3 +81,5 @@ REGRESSIONS:
 # REQUIRED - REGRESSIONS - List of desired classes to predict from observables.
 # -----------------------------------------------------------------------------
 CLASSIFICATIONS:
+  EVENT:
+    - signal

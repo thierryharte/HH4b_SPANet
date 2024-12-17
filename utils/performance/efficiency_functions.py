@@ -9,126 +9,102 @@ import matplotlib as mpl
 vector.register_awkward()
 vector.register_numba()
 
+from efficiency_configuration import *
 
 k_lambda = [-2.0, -1.0, 0.0, 0.5, 1.0, 1.5, 2.0, 2.45, 3.0,3.5, 4.0, 5.0]
 
-names_dict = {
-    "total_diff_eff_spanet": "Total Pairing Efficiency",
-    "diff_eff_spanet": "Pairing Efficiency",
-    "total_diff_eff_mask30": r"Total Efficiency ($\Delta D_{HH} > 30$ GeV)",
-    "diff_eff_mask30": r"Efficiency ($\Delta D_{HH} > 30$ GeV)",
-    "5_jets_ATLAS_ptreg": "SPANet Lite 5 jets",
-    "4_jets_ATLAS_ptreg_5train": "SPANet Lite 5 jets (4 jets eval)",
-    "4_jets_5global_ATLAS_ptreg": "SPANet Lite 4 jets",
-    "5_jets_data_ATLAS_ptreg_5train": "SPANet Lite 5 jets",
-    "4_jets_data_ATLAS_ptreg_5train": "SPANet Lite 5 jets (4 jets eval)",
-    "4_jets_data_ATLAS_5global_ptreg": "SPANet Lite 4 jets",
-    "5_jets_ATLAS_ptreg_allklambda_train_klinput": r"SPANet Lite 5 jets all $\kappa_{\lambda}$ ($\kappa_{\lambda}$ inputs)",
-    "5_jets_ATLAS_ptreg_allklambda_train_klinput_newkl_newCuts": r"SPANet Lite 5 jets new $\kappa_{\lambda}$ ($\kappa_{\lambda}$ inputs)",
-    "5_jets_ATLAS_ptreg_allklambda_train": r"SPANet Lite 5 jets all $\kappa_{\lambda}$",
-    "5_jets_ATLAS_ptreg_allklambda_eval": "SPANet Lite 5 jets SM",
-    # "4_jets_allklambda": "Run 2",
-    "eff_fully_matched_allklambda": "Pairing Efficiency",
-    "tot_eff_fully_matched_allklambda": "Total Pairing Efficiency",
-    "eff_fully_matched_mask30_allklambda": r"Pairing Efficiency ($\Delta D_{HH} > 30$ GeV)",
-    "tot_eff_fully_matched_mask30_allklambda": r"Total Pairing Efficiency ($\Delta D_{HH} > 30$ GeV)",
-    "5_jets_ATLAS_ptreg_allklambda_train_klinput_newkl_oldCuts_newCutsEval": r"SPANet - $\kappa_{\lambda}$ ($\kappa_{\lambda}$ inputs) - Tight Selection",
-    "5_jets_ATLAS_ptreg_allklambda_train_noklinput_newkl_oldCuts_newCutsEval": r"SPANet - $\kappa_{\lambda}$ - Tight Selection",
-    "5_jets_ATLAS_ptreg_sm_train_allklambda_eval_noklinput_newkl_oldCuts_newCutsEval": "SPANet - SM - Tight Selection",
-    "5_jets_ATLAS_ptreg_allklambda_train_noklinput_newkl_newCuts_newCutsEval": r"SPANet - $\kappa_{\lambda}$ - Loose Selection",
-    "5_jets_data_ATLAS_ptreg_5train_allklambda_noklinput_oldCuts_newCutsEval": r"SPANet - $\kappa_{\lambda}$ - Tight Selection",
-    "5_jets_data_ATLAS_ptreg_5train_allklambda_noklinput_newCuts_newCutsEval": r"SPANet - $\kappa_{\lambda}$ - Loose Selection",
-    "5_jets_allklambda_newkl_newCuts": "$D_{HH}$-method",
-    "4_jets_allklambda_newkl_newCuts": "$D_{HH}$-method",
-}
-
-
-
-color_dict = {
-    # "5_jets_ATLAS_ptreg_allklambda_train_klinput_newkl_oldCuts_newCutsEval": "tab:blue",
-    # "5_jets_ATLAS_ptreg_allklambda_train_noklinput_newkl_oldCuts_newCutsEval": "tab:orange",
-    # "5_jets_ATLAS_ptreg_sm_train_allklambda_eval_noklinput_newkl_oldCuts_newCutsEval": "tab:green",
-    # "5_jets_ATLAS_ptreg_allklambda_train_noklinput_newkl_newCuts_newCutsEval": "purple",
-    "5_jets_data_ATLAS_ptreg_5train_allklambda_noklinput_oldCuts_newCutsEval": "deepskyblue",
-    "5_jets_data_ATLAS_ptreg_5train_allklambda_noklinput_newCuts_newCutsEval": "coral",
-    "5_jets_allklambda_newkl_newCuts": "yellowgreen",
-    "4_jets_allklambda_newkl_newCuts": "yellowgreen",
-    "5_jets_ATLAS_ptreg_allklambda_train_noklinput_newkl_newCuts_newCutsEval": "coral" ,
-    "5_jets_ATLAS_ptreg_allklambda_train_noklinput_newkl_oldCuts_newCutsEval": "deepskyblue" ,
-    "5_jets_ATLAS_ptreg_allklambda_train_klinput_newkl_oldCuts_newCutsEval": "darkorange",
-    "5_jets_ATLAS_ptreg_sm_train_allklambda_eval_noklinput_newkl_oldCuts_newCutsEval": "deeppink",
-}
-
-
 def check_names(name):
-    if "klambda0" in name and "4_jets" in name:
-        return 3
-    elif "klambda2p45" in name and "4_jets" in name:
-        return 4
-    elif "klambda5" in name and "4_jets" in name:
-        return 5
-    elif "klambda0" in name and "5_jets" in name:
-        return 6
-    elif "klambda2p45" in name and "5_jets" in name:
-        return 7
-    elif "klambda5" in name and "5_jets" in name:
-        return 8
-    elif "5_jets_data" in name and "oldCutsEval" in name:
-        return 11
-    elif "5_jets_data" in name and "newCutsEval" in name:
-        return 12
-    elif "4_jets_data" in name:
-        return 9
-    elif "5_jets_data" in name:
-        return 10
-    elif (
-        "allklambda" in name
-        and "5_jets" in name
-        and "oldCutsEval" in name
-        and "newkl" in name
-    ):
+    #to be updated everytime you add a new item in the true dictionary
+    # UPDATE_HERE indicates where to change the function
+    lenght_true_dict=4 #UPDATE_HERE to the new lenght of the true_dict
+    if 'SM' in name and '5_jets' in name:
         for kl in k_lambda:
             if f"{kl}" in name:
-                return 18 + k_lambda.index(kl) + len(k_lambda) * 2
-        return 15
-    elif (
-        "allklambda" in name
-        and "5_jets" in name
-        and "newCutsEval" in name
-        and "newkl" in name
-    ):
-        for kl in k_lambda:
-            if f"{kl}" in name:
-                return 18 + k_lambda.index(kl) + len(k_lambda) * 3
-        return 16
-    elif (
-        "allklambda" in name
-        and "4_jets" in name
-        and "newCutsEval" in name
-        and "newkl" in name
-    ):
-        for kl in k_lambda:
-            if f"{kl}" in name:
-                return 18 + k_lambda.index(kl) + len(k_lambda) * 3
-        return 17
-    elif "allklambda" in name and "4_jets" in name:
-        for kl in k_lambda:
-            if f"{kl}" in name:
-                return 18 + k_lambda.index(kl)
-        return 13
-    elif "allklambda" in name and "5_jets" in name:
-        for kl in k_lambda:
-            if f"{kl}" in name:
-                return 18 + k_lambda.index(kl) + len(k_lambda)
-        return 14
-    elif "5_jets_btag_presel" in name:
-        return 2
-    elif "4_jets" in name:
-        return 0
-    elif "5_jets" in name:
+                return lenght_true_dict + k_lambda.index(kl) + len(k_lambda)
         return 1
+    if 'SM' in name and '4_jets' in name:
+        return 3
+    elif '5_jets' in name:
+        for kl in k_lambda:
+            if f"{kl}" in name:
+                return lenght_true_dict + k_lambda.index(kl)
+        return 0
+    elif '4_jets' in name:
+        return 2
     else:
         raise ValueError(f"Name {name} not recognized")
+
+#def check_names(name):
+#    #to be updated everytime you add a new item in the true dictionary
+#    # UPDATE_HERE indicates where to change the function
+#    lenght_true_dict=2 #UPDATE_HERE to the new lenght of the true_dict
+#    if "klambda0" in name and "4_jets" in name:
+#        return 3
+#    elif "klambda2p45" in name and "4_jets" in name:
+#        return 4
+#    elif "klambda5" in name and "4_jets" in name:
+#        return 5
+#    elif "klambda0" in name and "5_jets" in name:
+#        return 6
+#    elif "klambda2p45" in name and "5_jets" in name:
+#        return 7
+#    elif "klambda5" in name and "5_jets" in name:
+#        return 8
+#    elif "5_jets_data" in name and "oldCutsEval" in name:
+#        return 11
+#    elif "5_jets_data" in name and "newCutsEval" in name:
+#        return 12
+#    elif "4_jets_data" in name:
+#        return 9
+#    elif "5_jets_data" in name:
+#        return 10
+#    elif (
+#        "allklambda" in name
+#        and "5_jets" in name
+#        and "oldCutsEval" in name
+#        and "newkl" in name
+#    ):
+#        for kl in k_lambda:
+#            if f"{kl}" in name:
+#                return lenght_true_dict + k_lambda.index(kl) + len(k_lambda) * 2
+#        return 15
+#    elif (
+#        "allklambda" in name
+#        and "5_jets" in name
+#        and "newCutsEval" in name
+#        and "newkl" in name
+#    ):
+#        for kl in k_lambda:
+#            if f"{kl}" in name:
+#                return lenght_true_dict + k_lambda.index(kl) + len(k_lambda) * 3
+#        return 16
+#    elif (
+#        "allklambda" in name
+#        and "4_jets" in name
+#        and "newCutsEval" in name
+#        and "newkl" in name
+#    ):
+#        for kl in k_lambda:
+#            if f"{kl}" in name:
+#                return lenght_true_dict + k_lambda.index(kl) + len(k_lambda) * 3
+#        return 17
+#    #UPDATE_HERE adding a new if statement
+#    elif "allklambda" in name and "4_jets" in name:
+#        for kl in k_lambda:
+#            if f"{kl}" in name:
+#                return lenght_true_dict + k_lambda.index(kl)
+#        return 13
+#    elif "allklambda" in name and "5_jets" in name:
+#        for kl in k_lambda:
+#            if f"{kl}" in name:
+#                return lenght_true_dict + k_lambda.index(kl) + len(k_lambda)
+#        return 14
+#    elif "5_jets_btag_presel" in name:
+#        return 2
+#    elif "5_jets" in name:
+#        return 0
+#    elif "5_jets" in name:
+#        return 1
 
 
 def distance_func(higgs_pair, k):
@@ -275,7 +251,7 @@ def plot_histos_1d(
         labels_list.append(check_names(label))
     ax.grid(linestyle=":")
     true_hist = [np.histogram(true[i], bins[i]) for i in range(len(true))]
-    print("true_hist", true_hist)
+    # print("true_hist", true_hist)
     run2_hist = (
         [np.histogram(run2[i], bins[i]) for i in range(len(run2))] if run2 else []
     )
@@ -283,7 +259,7 @@ def plot_histos_1d(
         np.histogram(spanet[i], bins[check_names(spanet_labels[i])])
         for i in range(len(spanet))
     ]
-    print("spaner_hists",spanet_hists)
+    # print("spanet_hists",spanet_hists)
     ax.set_ylim(
         0,
         max(
@@ -301,19 +277,16 @@ def plot_histos_1d(
         (r[0] / np.sum(r[0])) / (t[0] / np.sum(t[0]))
         for r, t in zip(run2_hist, true_hist)
     ]
-    # residuals_spanet = [
-    #     (spanet_hists[i][0] / np.sum(spanet_hists[i][0]))
-    #     / (
-    #         true_hist[check_names(spanet_labels[i])][0]
-    #         / np.sum(true_hist[check_names(spanet_labels[i])][0])
-    #     )
-    #     for i in range(len(spanet_labels))
-    # ]
+    residuals_spanet = [
+        (spanet_hists[i][0] / np.sum(spanet_hists[i][0]))
+        / (
+            true_hist[check_names(spanet_labels[i])][0]
+            / np.sum(true_hist[check_names(spanet_labels[i])][0])
+        )
+        for i in range(len(spanet_labels))
+    ]
 
-    # TODO: compute the error correctly
-    # residual_run2_err = (
-    #     [np.sqrt(r[0]) / t[0] for r, t in zip(run2_hist, true_hist)] if run2 else []
-    # )
+
     residual_run2_err = (
         [
             np.sqrt(
@@ -343,9 +316,8 @@ def plot_histos_1d(
         for sn, label in zip(spanet_hists, spanet_labels)
     ]
     labels_list = []
-    if False :
-        # not any(["data" in label for label in spanet_labels]):
-        
+    if not any(["data" in label for label in spanet_labels]):
+
         for sn, label, sn_err in zip(
             residuals_spanet, spanet_labels, residual_spanet_err
         ):
