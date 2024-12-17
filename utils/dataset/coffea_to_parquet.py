@@ -270,19 +270,12 @@ for sample in samples:
             )
             df["columns"][sample][dataset][args.cat]["weight"] = weight_new
             print("weight_new",weight_new)
-<<<<<<< HEAD
-            # plt.hist(weight_new.value, np.logspace(-9,-3,60))
-            # plt.yscale("log")
-            # plt.xscale("log")
-            # plt.savefig(f"/t3home/ramella/HH4b_SPANet/weights_plots/{dataset}")
-=======
             plt.hist(weight_new.value, np.logspace(-9,-3,60))
             plt.yscale("log")
             plt.xscale("log")
             if not os.path.exists("weights_plots"):
                 os.makedirs("weights_plots")
             plt.savefig(f"./weights_plots/{dataset}")
->>>>>>> 2978cc5 (Adapted files for coffea to h5 to my use and changed jet assignmend)
         else:
             df["columns"][sample][dataset][args.cat]["weight"] = column_accumulator(
                 np.ones(dataset_lenght[list(datasets).index(dataset)])
@@ -369,11 +362,7 @@ for sample in samples:
             masked_arrays = ak.mask(
                 zipped_dict[matched_collection],
                 zipped_dict[matched_collection].pt == -999,
-<<<<<<< HEAD
                 valid_when=False,
-=======
-                valid_when=False
->>>>>>> 2978cc5 (Adapted files for coffea to h5 to my use and changed jet assignmend)
             )
             print("masked_arrays: ", masked_arrays)
             print("zipped_values:", zipped_dict[matched_collection].pt)
