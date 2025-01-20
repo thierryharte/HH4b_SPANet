@@ -574,43 +574,49 @@ if not args.data:
             total_efficiency_fully_matched_run2_mask30[-len(kl_values_true) :]
         )
         first_run2_idx = (
-            len(kl_values_true) // kl_values_true.count(kl_values_true[0]) * (-1)
+            len(kl_values_true) // kl_values_true.count(kl_values_true[0]) * (-1) * 4
+        )  # HERE
+        last_run2_idx = (
+            len(kl_values_true) // kl_values_true.count(kl_values_true[0]) * (-1) * 3
         )  # HERE
         print("first_run2_idx", first_run2_idx)
-        print("kl_values_true", kl_values_true[first_run2_idx:])
-        print("allkl_names_true", allkl_names_true[first_run2_idx:])
+        print("kl_values_true", kl_values_true[first_run2_idx:last_run2_idx])
+        print("allkl_names_true", allkl_names_true)
         efficiencies_fully_matched_mask30_allklambda = (
             efficiencies_fully_matched_spanet_mask30_allklambda
-            + efficiency_fully_matched_run2_mask30_allklambda[first_run2_idx:]
+            + efficiency_fully_matched_run2_mask30_allklambda[first_run2_idx:last_run2_idx]
         )
         total_efficiencies_fully_matched_mask30_allklambda = (
             total_efficiencies_fully_matched_spanet_mask30_allklambda
-            + total_efficiency_fully_matched_run2_mask30_allklambda[first_run2_idx:]
+            + total_efficiency_fully_matched_run2_mask30_allklambda[first_run2_idx:last_run2_idx]
         )
+        print(kl_values_true)
         print("\n")
         print("Plotting efficiencies fully matched for all klambda values")
         plot_diff_eff_klambda(
             efficiencies_fully_matched_mask30_allklambda,
-            kl_values_spanet + kl_values_true[first_run2_idx:],
-            allkl_names_spanet + allkl_names_true[-1:],
+            kl_values_spanet + kl_values_true[first_run2_idx:last_run2_idx],
+            allkl_names_spanet + allkl_names_true[-4:-3],
             "eff_fully_matched_mask30_allklambda",
             plot_dir,
         )
         plot_diff_eff_klambda(
             total_efficiencies_fully_matched_mask30_allklambda,
-            kl_values_spanet + kl_values_true[first_run2_idx:],
-            allkl_names_spanet + allkl_names_true[-1:],
+            kl_values_spanet + kl_values_true[first_run2_idx:last_run2_idx],
+            allkl_names_spanet + allkl_names_true[-4:-3],
             "tot_eff_fully_matched_mask30_allklambda",
             plot_dir,
         )
 
 
-# Reconstruct the Higgs boson candidates with the four-vectors
+# Reconstruct the Higgs boson candidates with the ciency_fully_matched_run2_mask30_allklambda = (
 # of the jets considering the true pairings, the spanet pairings
 # and the run2 pairings
 jet_fully_matched_mask30 = [
     j[m_30][m[m_30]] for j, m_30, m in zip(jet, mask_30, mask_fully_matched)
 ]
+for index, (j, idx) in enumerate(zip(jet_fully_matched_mask30, idx_true_fully_matched_mask30)):
+    best_reco_higgs(j,idx)
 true_higgs_fully_matched_mask30 = [
     best_reco_higgs(j, idx)
     for j, idx in zip(jet_fully_matched_mask30, idx_true_fully_matched_mask30)

@@ -16,95 +16,86 @@ k_lambda = [-2.0, -1.0, 0.0, 0.5, 1.0, 1.5, 2.0, 2.45, 3.0,3.5, 4.0, 5.0]
 def check_names(name):
     #to be updated everytime you add a new item in the true dictionary
     # UPDATE_HERE indicates where to change the function
-    lenght_true_dict=4 #UPDATE_HERE to the new lenght of the true_dict
-    if 'SM' in name and '5_jets' in name:
+    lenght_true_dict=20 #UPDATE_HERE to the new lenght of the true_dict
+    if "klambda0" in name and "4_jets" in name:
+        return 3
+    elif "klambda2p45" in name and "4_jets" in name:
+        return 4
+    elif "klambda5" in name and "4_jets" in name:
+        return 5
+    elif "klambda0" in name and "5_jets" in name:
+        return 6
+    elif "klambda2p45" in name and "5_jets" in name:
+        return 7
+    elif "klambda5" in name and "5_jets" in name:
+        return 8
+    elif "5_jets_data" in name and "oldCutsEval" in name:
+        return 11
+    elif "5_jets_data" in name and "newCutsEval" in name:
+        return 12
+    elif "4_jets_data" in name:
+        return 9
+    elif "5_jets_data" in name:
+        return 10
+    elif (
+        "allklambda" in name
+        and "5_jets" in name
+        and "oldCutsEval" in name
+        and "newkl" in name
+    ):
         for kl in k_lambda:
             if f"{kl}" in name:
-                return lenght_true_dict + k_lambda.index(kl) + len(k_lambda)
-        return 1
-    if 'SM' in name and '4_jets' in name:
-        return 3
-    elif '5_jets' in name:
+                return lenght_true_dict + k_lambda.index(kl) + len(k_lambda) * 2
+        return 15
+    elif (
+        "allklambda" in name
+        and "5_jets" in name
+        and "newCutsEval" in name
+        and "newkl" in name
+    ):
+        for kl in k_lambda:
+            if f"{kl}" in name:
+                return lenght_true_dict + k_lambda.index(kl) + len(k_lambda) * 3
+        return 16
+    elif (
+        "allklambda" in name
+        and "4_jets" in name
+        and "newCutsEval" in name
+        and "newkl" in name
+    ):
+        for kl in k_lambda:
+            if f"{kl}" in name:
+                return lenght_true_dict + k_lambda.index(kl) + len(k_lambda) * 4
+        return 17
+    #UPDATE_HERE adding a new if statement
+    if '5_jets_pt' in name:
+        for kl in k_lambda:
+            if f"{kl}" in name:
+                return lenght_true_dict + k_lambda.index(kl) + len(k_lambda) * 5 
+        return 18
+    elif '4_jets_pt' in name:
+        for kl in k_lambda:
+            if f"{kl}" in name:
+                return lenght_true_dict + k_lambda.index(kl) + len(k_lambda) * 6
+        return 19 
+    elif "allklambda" in name and "4_jets" in name:
         for kl in k_lambda:
             if f"{kl}" in name:
                 return lenght_true_dict + k_lambda.index(kl)
-        return 0
-    elif '4_jets' in name:
+        return 13
+    elif "allklambda" in name and "5_jets" in name:
+        for kl in k_lambda:
+            if f"{kl}" in name:
+                return lenght_true_dict + k_lambda.index(kl) + len(k_lambda)
+        return 14
+    elif "5_jets_btag_presel" in name:
         return 2
+    elif "4_jets" in name:
+        return 0
+    elif "5_jets" in name:
+        return 1
     else:
         raise ValueError(f"Name {name} not recognized")
-
-#def check_names(name):
-#    #to be updated everytime you add a new item in the true dictionary
-#    # UPDATE_HERE indicates where to change the function
-#    lenght_true_dict=2 #UPDATE_HERE to the new lenght of the true_dict
-#    if "klambda0" in name and "4_jets" in name:
-#        return 3
-#    elif "klambda2p45" in name and "4_jets" in name:
-#        return 4
-#    elif "klambda5" in name and "4_jets" in name:
-#        return 5
-#    elif "klambda0" in name and "5_jets" in name:
-#        return 6
-#    elif "klambda2p45" in name and "5_jets" in name:
-#        return 7
-#    elif "klambda5" in name and "5_jets" in name:
-#        return 8
-#    elif "5_jets_data" in name and "oldCutsEval" in name:
-#        return 11
-#    elif "5_jets_data" in name and "newCutsEval" in name:
-#        return 12
-#    elif "4_jets_data" in name:
-#        return 9
-#    elif "5_jets_data" in name:
-#        return 10
-#    elif (
-#        "allklambda" in name
-#        and "5_jets" in name
-#        and "oldCutsEval" in name
-#        and "newkl" in name
-#    ):
-#        for kl in k_lambda:
-#            if f"{kl}" in name:
-#                return lenght_true_dict + k_lambda.index(kl) + len(k_lambda) * 2
-#        return 15
-#    elif (
-#        "allklambda" in name
-#        and "5_jets" in name
-#        and "newCutsEval" in name
-#        and "newkl" in name
-#    ):
-#        for kl in k_lambda:
-#            if f"{kl}" in name:
-#                return lenght_true_dict + k_lambda.index(kl) + len(k_lambda) * 3
-#        return 16
-#    elif (
-#        "allklambda" in name
-#        and "4_jets" in name
-#        and "newCutsEval" in name
-#        and "newkl" in name
-#    ):
-#        for kl in k_lambda:
-#            if f"{kl}" in name:
-#                return lenght_true_dict + k_lambda.index(kl) + len(k_lambda) * 3
-#        return 17
-#    #UPDATE_HERE adding a new if statement
-#    elif "allklambda" in name and "4_jets" in name:
-#        for kl in k_lambda:
-#            if f"{kl}" in name:
-#                return lenght_true_dict + k_lambda.index(kl)
-#        return 13
-#    elif "allklambda" in name and "5_jets" in name:
-#        for kl in k_lambda:
-#            if f"{kl}" in name:
-#                return lenght_true_dict + k_lambda.index(kl) + len(k_lambda)
-#        return 14
-#    elif "5_jets_btag_presel" in name:
-#        return 2
-#    elif "5_jets" in name:
-#        return 0
-#    elif "5_jets" in name:
-#        return 1
 
 
 def distance_func(higgs_pair, k):
@@ -686,7 +677,6 @@ def plot_diff_eff_klambda(eff, kl_values, allkl_names, name, plot_dir="plots"):
     # split the arrays depending on how many times the first kl value appears
     kl_values_split = np.split(np.array(kl_values), kl_values.count(kl_values[0]))
     eff_split = np.split(np.array(eff), kl_values.count(kl_values[0]))
-
     fig, ax = plt.subplots(figsize=(6, 6))
     for i, (net_name, kls) in enumerate(zip(allkl_names, kl_values_split)):
         ax.plot(
