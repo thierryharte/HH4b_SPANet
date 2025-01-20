@@ -29,7 +29,7 @@
 
     "skip_connections": true,
     "initial_embedding_skip_connections": true,    
-    "event_info_file": "/afs/cern.ch/user/t/tharte/public/Software/HH4b_SPANet/event_files/HH4b/hh4b_5jet_no_btag.yaml",
+    "event_info_file": "/afs/cern.ch/user/t/tharte/public/Software/HH4b_SPANet/event_files/HH4b/hh4b_5jet_btag.yaml",
     "training_file": "/afs/cern.ch/user/t/tharte/public/samplesets/jet5global_pt_tight/output_JetGood_train.h5",
 
     "normalize_features": true,
@@ -62,7 +62,7 @@
     "gradient_clip": 0.425,
     "dropout": 0.0059,
     
-    "epochs": 300,
+    "epochs": 50,
     "num_gpu": 1,
     "verbose_output": true
 }
