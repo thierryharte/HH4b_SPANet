@@ -208,8 +208,9 @@ matched_collections_dict = {
 }
 
 samples = df["columns"].keys() if not args.sample else [args.sample]
-#print("Full samples", df["columns"].keys())
-#print("Samples: ", samples)
+print(df)
+print("Full samples", df["columns"].keys())
+print("Samples: ", samples)
 
 
 
@@ -281,7 +282,6 @@ for sample in samples:
                 np.ones(dataset_lenght[list(datasets).index(dataset)])
                 / dataset_lenght[list(datasets).index(dataset)]
             )
-
         #print("\n dataset", dataset)
         #print("weights", df["columns"][sample][dataset][args.cat]["weight"])
 
@@ -383,11 +383,16 @@ for sample in samples:
                     zipped_dict[collection],
                     ak.fill_none(masked_arrays.prov, -1),
                     "prov",
-                )
-    ## Add the kl coefficient to the dataset
+                    )
+                ## Add the kl coefficient to the dataset
     # The kl coefficient is added to the dataset as a new feature.
+    print(cs)
     zipped_dict["event"] = ak.zip(
         {"kl": kl_dataset, "sb": sb_dataset, "weight": cs["weight"].value},
+        with_name="Momentum4D",
+    )
+    zipped_dict["event"] = ak.zip(
+            {"kl": kl_dataset, "sb": sb_dataset, "weight": cs["weight"].value, "random_pt_weights": cs["events_random_pt_weights"].value},
         with_name="Momentum4D",
     )
 
