@@ -60,5 +60,8 @@ coffea_to_parquet = f"python3 {script_dir}/coffea_to_parquet.py -i {args.input} 
 parquet_to_h5 = f"python3 {script_dir}/parquet_to_h5.py -i {os.path.dirname(args.input)}/{args.sample}_{args.cat}.parquet -o {out_dir} -f {args.frac_train} {'--no-shuffle' if args.no_shuffle else ''} {random_pt_parameter}"
 #subprocess.run(parquet_to_h5, shell=True)
 
-total_command=f"{coffea_to_parquet} && {parquet_to_h5}"
+print(coffea_to_parquet)
+print(parquet_to_h5)
+total_command=f"{coffea_to_parquet} && echo 'First part done' && {parquet_to_h5}"
+#total_command=f"{parquet_to_h5}"
 subprocess.run(total_command, shell=True)
