@@ -11,9 +11,18 @@ session = onnxruntime.InferenceSession(
     providers=['CUDAExecutionProvider', 'CPUExecutionProvider']
 )
 
-print("Inputs name:", [input.name for input in session.get_inputs()])
-print("Outputs name:", [output.name for output in session.get_outputs()])
+input_name=[input.name for input in session.get_inputs()]
+output_name=[output.name for output in session.get_outputs()]
+print("Inputs name:", input_name)
+print("Outputs name:", output_name)
 
+input_shape=[input.shape for input in session.get_inputs()]
+output_shape=[output.shape for output in session.get_outputs()]
+print("Inputs shape:", input_shape)
+print("Outputs shape:", output_shape)
 
-print("Inputs shape:", [input.shape for input in session.get_inputs()])
-print("Outputs shape:", [output.shape for output in session.get_outputs()])
+input_data = [1.]* input_shape[0][1]
+
+input_example = {input_name[0]: [input_data]}
+output = session.run(output_name, input_example)
+print("Output:", output)
