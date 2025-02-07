@@ -52,10 +52,10 @@ if args.data:
 else:
     spanet_dict = {k: v for k, v in spanet_dict.items() if "data" not in k}
 
-
+print(spanet_dict)
 # bin definitions
 mh_bins = [
-    np.linspace(60, 190, n)
+    np.linspace(0, 300, n)
     for n in [80, 80, 80, 40, 40, 40, 40, 40, 40, 80, 80, 80, 80, 80, 80, 80]
 ]
 mh_bins_peak = [
@@ -202,6 +202,10 @@ mask_fully_matched = [ak.all(ak.all(idx >= 0, axis=-1), axis=-1) for idx in idx_
 
 idx_true_fully_matched = [idx[mask] for idx, mask in zip(idx_true, mask_fully_matched)]
 print("idx_true_fully_matched", [len(idx) for idx in idx_true_fully_matched])
+print("idx_spanet_pred", [len(pred) for pred in idx_spanet_pred])
+print("mask_fully_matched", [len(mask) for mask in mask_fully_matched])
+print([check_names(list(spanet_dict.keys())[i]) for i in range(len(idx_spanet_pred))])
+
 idx_spanet_pred_fully_matched = [
     idx_spanet_pred[i][mask_fully_matched[check_names(list(spanet_dict.keys())[i])]]
     for i in range(len(idx_spanet_pred))
@@ -573,15 +577,42 @@ if not args.data:
         total_efficiency_fully_matched_run2_mask30_allklambda = (
             total_efficiency_fully_matched_run2_mask30[-len(kl_values_true) :]
         )
+        print(run2_dataset)
+        run2_idxs = [check_names(key) for key in true_dict.keys() if "f{run2_dataset}_" in key]
         first_run2_idx = (
-            len(kl_values_true) // kl_values_true.count(kl_values_true[0]) * (-1) * 4
+            len(kl_values_true) // kl_values_true.count(kl_values_true[0]) * (-1) * 7
         )  # HERE
         last_run2_idx = (
-            len(kl_values_true) // kl_values_true.count(kl_values_true[0]) * (-1) * 3
+            len(kl_values_true) // kl_values_true.count(kl_values_true[0]) * (-1) * 6
         )  # HERE
         print("first_run2_idx", first_run2_idx)
-        print("kl_values_true", kl_values_true[first_run2_idx:last_run2_idx])
+        print("kl_values_true", [kl_values_true[x] for x in run2_idxs])
         print("allkl_names_true", allkl_names_true)
+        #efficiencies_fully_matched_mask30_allklambda = (
+        #    efficiencies_fully_matched_spanet_mask30_allklambda
+        #    + [efficiency_fully_matched_run2_mask30_allklambda[x] for x in run2_idxs]
+        #)
+        #total_efficiencies_fully_matched_mask30_allklambda = (
+        #    total_efficiencies_fully_matched_spanet_mask30_allklambda
+        #    + [total_efficiency_fully_matched_run2_mask30_allklambda[x] for x in run2_idxs]
+        #)
+        #print(kl_values_true)
+        #print("\n")
+        #print("Plotting efficiencies fully matched for all klambda values")
+        #plot_diff_eff_klambda(
+        #    efficiencies_fully_matched_mask30_allklambda,
+        #    kl_values_spanet + [kl_values_true[x] for x in run2_idxs],
+        #    allkl_names_spanet + allkl_names_true[-4:-3],
+        #    "eff_fully_matched_mask30_allklambda",
+        #    plot_dir,
+        #)
+        #plot_diff_eff_klambda(
+        #    total_efficiencies_fully_matched_mask30_allklambda,
+        #    kl_values_spanet + [kl_values_true[x] for x in run2_idxs],
+        #    allkl_names_spanet + allkl_names_true[-4:-3],
+        #    "tot_eff_fully_matched_mask30_allklambda",
+        #    plot_dir,
+        #)
         efficiencies_fully_matched_mask30_allklambda = (
             efficiencies_fully_matched_spanet_mask30_allklambda
             + efficiency_fully_matched_run2_mask30_allklambda[first_run2_idx:last_run2_idx]
@@ -607,6 +638,7 @@ if not args.data:
             "tot_eff_fully_matched_mask30_allklambda",
             plot_dir,
         )
+
 
 
 # Reconstruct the Higgs boson candidates with the ciency_fully_matched_run2_mask30_allklambda = (
@@ -900,20 +932,20 @@ run2_higgs_fully_matched_mask30 = [
     for j, idx in zip(jet_fully_matched_mask30, idx_run2_pred_fully_matched_mask30)
 ]
 
-# print("Plotting higgs 1d mask30")
-# for bins, name in zip([mh_bins, mh_bins_peak], ["", "_peak"]):
-#     for number in [1, 2]:
-#         plot_histos_1d(
-#             bins,
-#             [true[:, number - 1].mass for true in true_higgs_fully_matched_mask30],
-#             [run2[:, number - 1].mass for run2 in run2_higgs_fully_matched_mask30],
-#             [higgs[:, number - 1].mass for higgs in spanet_higgs_fully_matched_mask30],
-#             list(spanet_dict.keys()),
-#             list(true_dict.keys()),
-#             number,
-#             name=name + "_mask30",
-#             plot_dir=plot_dir,
-#         )
+print("Plotting higgs 1d mask30")
+for bins, name in zip([mh_bins, mh_bins_peak], ["", "_peak"]):
+    for number in [1, 2]:
+        plot_histos_1d(
+            bins,
+            [true[:, number - 1].mass for true in true_higgs_fully_matched_mask30],
+            [run2[:, number - 1].mass for run2 in run2_higgs_fully_matched_mask30],
+            [higgs[:, number - 1].mass for higgs in spanet_higgs_fully_matched_mask30],
+            list(spanet_dict.keys()),
+            list(true_dict.keys()),
+            number,
+            name=name + "_mask30",
+            plot_dir=plot_dir,
+        )
 
 print("Plotting higgs 2d mask30")
 # 2D histograms of the mass of the higgs1 and higgs2
@@ -997,65 +1029,65 @@ mask_hh_mass_400_mask30 = [
     & (true_hh_fully_matched_mask30[i].mass < 700)
     for i in range(len(true_hh_fully_matched_mask30))
 ]
-print("Plotting higgs 1d for high and low mhh mask30")
-for number in range(1, 3):
-    for bins, name in zip([mh_bins, mh_bins_peak], ["", "_peak"]):
-        for mask_mhh, name_mhh in zip(
-            [mask_hh_mass_400_mask30, [~m for m in mask_hh_mass_400_mask30]],
-            ["_mass400_700", "_mass0_400"],
-        ):
-            plot_histos_1d(
-                bins,
-                [
-                    true[mask][:, number - 1].mass
-                    for true, mask in zip(true_higgs_fully_matched_mask30, mask_mhh)
-                ],
-                [
-                    run2[mask][:, number - 1].mass
-                    for run2, mask in zip(run2_higgs_fully_matched_mask30, mask_mhh)
-                ],
-                [
-                    spanet_higgs_fully_matched_mask30[i][
-                        mask_mhh[check_names(list(spanet_dict.keys())[i])]
-                    ][:, number - 1].mass
-                    for i in range(len(spanet_higgs_fully_matched_mask30))
-                ],
-                list(spanet_dict.keys()),
-                list(true_dict.keys()),
-                number,
-                name + name_mhh + "_mask30",
-                plot_dir=plot_dir,
-            )
+#print("Plotting higgs 1d for high and low mhh mask30")
+#for number in range(1, 3):
+#    for bins, name in zip([mh_bins, mh_bins_peak], ["", "_peak"]):
+#        for mask_mhh, name_mhh in zip(
+#            [mask_hh_mass_400_mask30, [~m for m in mask_hh_mass_400_mask30]],
+#            ["_mass400_700", "_mass0_400"],
+#        ):
+#            plot_histos_1d(
+#                bins,
+#                [
+#                    true[mask][:, number - 1].mass
+#                    for true, mask in zip(true_higgs_fully_matched_mask30, mask_mhh)
+#                ],
+#                [
+#                    run2[mask][:, number - 1].mass
+#                    for run2, mask in zip(run2_higgs_fully_matched_mask30, mask_mhh)
+#                ],
+#                [
+#                    spanet_higgs_fully_matched_mask30[i][
+#                        mask_mhh[check_names(list(spanet_dict.keys())[i])]
+#                    ][:, number - 1].mass
+#                    for i in range(len(spanet_higgs_fully_matched_mask30))
+#                ],
+#                list(spanet_dict.keys()),
+#                list(true_dict.keys()),
+#                number,
+#                name + name_mhh + "_mask30",
+#                plot_dir=plot_dir,
+#            )
 
 
-# all events
-mask_hh_mass_400 = [
-    (true_hh_fully_matched[i].mass > 400) & (true_hh_fully_matched[i].mass < 700)
-    for i in range(len(true_hh_fully_matched))
-]
-print("Plotting higgs 1d for high and low mhh all events")
-for number in range(1, 3):
-    for bins, name in zip([mh_bins, mh_bins_peak], ["", "_peak"]):
-        for mask_mhh, name_mhh in zip(
-            [mask_hh_mass_400, [~m for m in mask_hh_mass_400]],
-            ["_mass400_700", "_mass0_400"],
-        ):
-            plot_histos_1d(
-                bins,
-                [
-                    true[mask][:, number - 1].mass
-                    for true, mask in zip(true_higgs_fully_matched, mask_mhh)
-                ],
-                None,
-                [
-                    spanet_higgs_fully_matched[i][
-                        mask_mhh[check_names(list(spanet_dict.keys())[i])]
-                    ][:, number - 1].mass
-                    for i in range(len(spanet_higgs_fully_matched))
-                ],
-                list(spanet_dict.keys()),
-                list(true_dict.keys()),
-                number,
-                name + name_mhh + "_all",
-                plot_dir=plot_dir,
-            )
+## all events
+#mask_hh_mass_400 = [
+#    (true_hh_fully_matched[i].mass > 400) & (true_hh_fully_matched[i].mass < 700)
+#    for i in range(len(true_hh_fully_matched))
+#]
+#print("Plotting higgs 1d for high and low mhh all events")
+#for number in range(1, 3):
+#    for bins, name in zip([mh_bins, mh_bins_peak], ["", "_peak"]):
+#        for mask_mhh, name_mhh in zip(
+#            [mask_hh_mass_400, [~m for m in mask_hh_mass_400]],
+#            ["_mass400_700", "_mass0_400"],
+#        ):
+#            plot_histos_1d(
+#                bins,
+#                [
+#                    true[mask][:, number - 1].mass
+#                    for true, mask in zip(true_higgs_fully_matched, mask_mhh)
+#                ],
+#                None,
+#                [
+#                    spanet_higgs_fully_matched[i][
+#                        mask_mhh[check_names(list(spanet_dict.keys())[i])]
+#                    ][:, number - 1].mass
+#                    for i in range(len(spanet_higgs_fully_matched))
+#                ],
+#                list(spanet_dict.keys()),
+#                list(true_dict.keys()),
+#                number,
+#                name + name_mhh + "_all",
+#                plot_dir=plot_dir,
+#            )

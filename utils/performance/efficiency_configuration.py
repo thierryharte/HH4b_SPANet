@@ -1,7 +1,10 @@
 
 
 spanet_dir = "/eos/user/t/tharte/Analysis_Project/predictions/"
-spanet_dir_matteo = "/eos/home-m/mmalucch/spanet_inputs/out_prediction_files/"
+spanet_dir_matteo = "/eos/user/m/mmalucch/spanet_inputs/out_prediction_files/"
+
+true_dir_thierry = "/eos/user/t/tharte/Analysis_Project/samplesets"
+true_dir_matteo = "/eos/user/m/mmalucch/spanet_inputs/out_prediction_files/true_files/"
 
 # uncomment the configurations that you want to use
 print(
@@ -14,13 +17,20 @@ spanet_dict = {
     # "5_jets_pt_300e_allklambda": f"{spanet_dir}spanet_hh4b_5jets_300_predict_s101.h5",  # THIS
     # "5_jets_pt_SM_50e_allklambda": f"{spanet_dir}spanet_hh4b_5jets_50_predict_s100_SM.h5",  # THIS
     # "5_jets_pt_btag_50e_allklambda": f"{spanet_dir}spanet_hh4b_5jets_50_predict_s155_btag.h5",  # THIS
+
     "5_jets_ptnone_btag_300e_allklambda": f"{spanet_dir}spanet_hh4b_5jets_300_ptnone_loose_s100_btag.h5",  # THIS
-    # "5_jets_pt_btag_300e_allklambda": f"{spanet_dir}spanet_hh4b_5jets_300_predict_s160_btag.h5",  # THIS
-    "5_jets_ptvary_loose_btag_300e_01_10_allklambda": f"{spanet_dir}spanet_hh4b_5jets_300_ptvary_01_10_loose_s100_btag.h5",  # THIS
+    #"5_jets_pt_btag_300e_allklambda": f"{spanet_dir}spanet_hh4b_5jets_300_predict_s160_btag.h5",  # THIS
+    #"5_jets_ptvary_loose_btag_300e_01_10_allklambda": f"{spanet_dir}spanet_hh4b_5jets_300_ptvary_01_10_loose_s100_btag.h5",  # THIS
+    #"5_jets_ptvary_loose_btag_300e_01_10_allklambda_rerun": f"{spanet_dir}rerun/spanet_hh4b_5jets_300_ptvary_01_10_loose_s100_btag.h5",  # THIS
     # "5_jets_ptvary_loose_btag_300e_wide_allklambda": f"{spanet_dir}spanet_hh4b_5jets_300_ptvary_wide_loose_s100_btag.h5",  # THIS
-    "5_jets_ptvary_loose_btag_300e_allklambda": f"{spanet_dir}spanet_hh4b_5jets_300_ptvary_loose_s50_btag.h5",  # THIS
-    "5_jets_ptvary_loose_btag_300e_wide_allklambda_SM": f"{spanet_dir}SM_train/spanet_hh4b_5jets_300_ptvary_wide_loose_s100_btag.h5",  # THIS
-    "5_jets_ptvary_loose_btag_300e_wide_allklambda_onlylog": f"{spanet_dir}spanet_hh4b_5jets_300_ptvary_wide_onlylog_loose_s100_btag.h5",  # THIS
+    #"5_jets_ptvary_loose_btag_300e_allklambda": f"{spanet_dir}spanet_hh4b_5jets_300_ptvary_loose_s50_btag.h5",  # THIS
+    #"5_jets_ptvary_loose_btag_300e_wide_allklambda_SM": f"{spanet_dir}SM_train/spanet_hh4b_5jets_300_ptvary_wide_loose_s100_btag.h5",  # THIS
+    #"5_jets_ptvary_loose_btag_300e_wide_allklambda_onlylog": f"{spanet_dir}spanet_hh4b_5jets_300_ptvary_wide_onlylog_loose_s100_btag.h5",  # THIS
+    "5_jets_ptreg_loose_btag_300e_allklambda_nophi": f"{spanet_dir}spanet_hh4b_5jets_300_ptreg_loose_s100_btag_nophi.h5",
+    "5_jets_ptvary_loose_btag_300e_01_10_allklambda_rerun": f"{spanet_dir}rerun/spanet_rerun_hh4b_5jets_300_ptvary_loose_s100_btag_01_10.h5",
+    "5_jets_ptvary_loose_btag_300e_01_10_allklambda_rerun_nophi": f"{spanet_dir}rerun/spanet_rerun_hh4b_data_5jets_300_ptvary_loose_s100_btag_01_10_nophi.h5",
+    # "5_jets_ptvary_loose_btag_300e_03_17_allklambda_rerun": f"{spanet_dir}rerun/spanet_rerun_hh4b_data_5jets_300_ptvary_loose_s100_btag_03_17.h5",
+
     # "5_jets_ptvary_tight_btag_300e_wide_allklambda": f"{spanet_dir}spanet_hh4b_5jets_300_ptvary_wide_tight_s100_btag.h5",  # THIS
     # "5_jets_ptvary_tight_btag_300e_allklambda": f"{spanet_dir}spanet_hh4b_5jets_300_ptvary_tight_s100_btag.h5",  # THIS
     # "5_jets_ATLAS_ptreg_5train_klambda0": f"{spanet_dir}out_spanet_prediction_5jets_klambda0.h5",
@@ -49,20 +59,34 @@ spanet_dict = {
     # "5_jets_ATLAS_ptreg_allklambda_eval": f"{spanet_dir_matteo}out_spanet_prediction_SMtraining_lr1e4_evkl.h5",
     # "/work/mmalucch/out_hh4b/out_spanet/output_JetGood_test.h5",  # HERE
     #
-    # "5_jets_ATLAS_ptreg_allklambda_train_klinput_newkl_newCuts_newCutsEval": f"{spanet_dir}spanet_prediction_nc_on_nc_300e.h5",
+    #"5_jets_ATLAS_ptreg_allklambda_train_klinput_newkl_newCuts_newCutsEval": f"{spanet_dir}spanet_prediction_nc_on_nc_300e.h5",
     # "5_jets_ATLAS_ptreg_allklambda_train_klinput_newkl_newCuts_oldCutsEval": f"{spanet_dir}spanet_prediction_nc_on_oc_kl3p5.h5",
-    # "5_jets_ATLAS_ptreg_allklambda_train_klinput_newkl_oldCuts_oldCutsEval": f"{spanet_dir}spanet_prediction_oc_on_oc_kl3p5.h5",
-    # "5_jets_ATLAS_ptreg_5train_allklambda_noklinput_oldCuts_newCutsEval": f"{spanet_dir}spanet_prediction_oc_kl3p5_noklinp_data_nc.h5",
-    # "5_jets_ATLAS_ptreg_5train_allklambda_noklinput_newCuts_newCutsEval": f"{spanet_dir}spanet_prediction_nc_noklinp_on_data.h5",
+    #"5_jets_ATLAS_ptreg_allklambda_train_klinput_newkl_oldCuts_oldCutsEval": f"{spanet_dir}spanet_prediction_oc_on_oc_kl3p5.h5",
+    #"5_jets_ATLAS_ptreg_5train_allklambda_noklinput_oldCuts_newCutsEval": f"{spanet_dir}spanet_prediction_oc_kl3p5_noklinp_data_nc.h5",
+    # "5_jets_ATLAS_ptreg_5train_allklambda_noklinput_newCuts_newCutsEval": f"{spanet_dir_matteo}spanet_prediction_nc_noklinp_on_data.h5",
     # "5_jets_ATLAS_ptreg_allklambda_train_klinput_newkl_oldCuts_newCutsEval": f"{spanet_dir_matteo}spanet_prediction_oc_kl3p5_on_nc.h5",
     "5_jets_ATLAS_ptreg_allklambda_train_noklinput_newkl_oldCuts_newCutsEval": f"{spanet_dir_matteo}spanet_prediction_oc_kl3p5_noklinp_nc.h5",
-}
+  "5_jets_pt_data_btag_300e": f"{spanet_dir}DATA/spanet_hh4b_data_5jets_300_predict_s160_btag.h5",
+  "5_jets_pt_data_none_btag_300e": f"{spanet_dir}DATA/spanet_hh4b_data_5jets_300_ptnone_loose_s100_btag.h5",
+  #"5_jets_pt_data_vary_loose_btag_300e_01_10": f"{spanet_dir}DATA/spanet_hh4b_data_5jets_300_ptvary_01_10_loose_s100_btag.h5",
+  #"5_jets_pt_data_vary_loose_btag_300e": f"{spanet_dir}DATA/spanet_hh4b_data_5jets_300_ptvary_loose_s50_btag.h5",
+  #"5_jets_pt_data_vary_loose_btag_300e_wide": f"{spanet_dir}DATA/spanet_hh4b_data_5jets_300_ptvary_wide_loose_s100_btag.h5",
+#  "5_jets_pt_data_vary_loose_btag_300e_wide_onlylog": f"{spanet_dir}DATA/spanet_hh4b_data_5jets_300_ptvary_wide_onlylog_loose_s100_btag.h5"
+  # "5_jets_pt_data_vary_loose_btag_300e_01_10_rerun": f"{spanet_dir}DATA/rerun/spanet_rerun_hh4b_data_5jets_300_ptvary_loose_s100_btag_01_10.h5",
+  "5_jets_pt_data_vary_loose_btag_300e_01_10_rerun_nophi": f"{spanet_dir}DATA/rerun/spanet_rerun_hh4b_data_5jets_300_ptvary_loose_s100_btag_01_10_nophi.h5",
+    "5_jets_pt_data_loose_btag_300e_nophi": f"{spanet_dir}DATA/spanet_hh4b_data_5jets_300_ptreg_loose_s100_btag_nophi.h5",
+  "5_jets_pt_data_vary_loose_btag_300e_03_17_rerun": f"{spanet_dir}DATA/rerun/spanet_rerun_hh4b_data_5jets_300_ptvary_loose_s100_btag_03_17.h5",
+
+
+  # "5_jets_pt_true_vary_loose_btag_allklambda": f"{spanet_dir}../samplesets/loose_selection_random_pt_mass/output_JetGood_train.h5",  # THIS
+  # "5_jets_pt_true_vary_loose_btag_wide_allklambda": f"{spanet_dir}../samplesets/loose_selection_random_pt_mass_wide/output_JetGood_train.h5",  # THIS
+  # "5_jets_pt_true_vary_loose_btag_01_10_allklambda": f"{spanet_dir}../samplesets/loose_selection_random_pt_mass_01_10/output_JetGood_train.h5",  # THIS
+  # "5_jets_pt_true_btag_allklambda": f"{spanet_dir}../samplesets/jet5global_pt/output_JetGood_train.h5",  # THIS
+  }
 
 
 # true_dir = "/eos/home-r/ramellar/out_prediction_files/true_files/"
 # true_dir = "/afs/cern.ch/user/m/mmalucch/public/out_prediction_files/true_files/"
-true_dir_thierry = "/eos/user/t/tharte/Analysis_Project/samplesets"
-true_dir_matteo = "/eos/home-m/mmalucch/spanet_inputs/out_prediction_files/true_files/"
 
 print(
     "WARNING: do not comment the items of this dictionary",
@@ -88,10 +112,16 @@ true_dict = {
     "5_jets_allklambda_newkl_oldCuts": f"{true_dir_matteo}output_JetGood_test_allkl_new_kl_oldcuts.h5",  # "/work/mmalucch/out_hh4b/out_spanet/output_JetGood_test.h5",
     "5_jets_allklambda_newkl_newCuts": f"{true_dir_matteo}output_JetGood_test_allkl_new_kl_newcuts.h5",  # "/work/mmalucch/out_hh4b/out_spanet/output_JetGood_test.h5",
     "4_jets_allklambda_newkl_newCuts": f"{true_dir_matteo}output_JetGoodHiggs_test_allkl_new_kl_newcuts.h5",  # "/work/mmalucch/out_hh4b/out_spanet/output_JetGood_test.h5",
-    "5_jets_pt_allklambda": f"{true_dir_thierry}/jet5global_pt/output_JetGood_test.h5",
-    "4_jets_pt_allklambda": f"{true_dir_thierry}/jet5global_pt/output_JetGoodHiggs_test.h5",
+    "5_jets_pt_allklambda": f"{true_dir_thierry}/loose_selection/output_JetGood_test.h5",
+    "4_jets_pt_allklambda": f"{true_dir_thierry}/loose_selection/output_JetGoodHiggs_test.h5",
+    "5_jets_pt_data": f"{true_dir_thierry}/DATA_loose_cut/output_JetGood_test.h5",
+    "5_jets_pt_true_btag_allklambda": f"{spanet_dir}../samplesets/loose_selection/output_JetGood_train.h5",  # THIS
+    "5_jets_pt_true_vary_loose_btag_allklambda": f"{spanet_dir}../samplesets/loose_selection_random_pt_mass/output_JetGood_train.h5",  # THIS
+    "5_jets_pt_true_vary_loose_btag_wide_allklambda": f"{spanet_dir}../samplesets/loose_selection_random_pt_mass_wide/output_JetGood_train.h5",  # THIS
+    "5_jets_pt_true_vary_loose_btag_01_10_allklambda": f"{spanet_dir}../samplesets/loose_selection_random_pt_mass_01_10/output_JetGood_train.h5",  # THIS
 }
 
+run2_dataset = "4_jets_allklambda_newkl_newCuts"  # "/work/mmalucch/out_hh4b/out_spanet/output_JetGood_test.h5",
 
 names_dict = {
     "total_diff_eff_spanet": "Total Pairing Efficiency",
@@ -103,6 +133,7 @@ names_dict = {
     "5_jets_pt_btag_50e_allklambda": "SPANet 5 jets pt order with btag 50e",
     "5_jets_pt_btag_300e_allklambda": "SPANet 5 jets pt order with btag",
     "5_jets_ptnone_btag_300e_allklambda": "SPANet 5 jets no pt with btag",
+    "5_jets_ptreg_loose_btag_300e_allklambda_nophi": "btag no phi",
     "5_jets_ptvary_loose_btag_300e_wide_allklambda": "SPANet 5 jets pt order, ptvary [0.3,1.7], loose",
     "5_jets_ptvary_loose_btag_300e_wide_allklambda_SM": "SPANet 5 jets pt order, ptvary [0.3,1.7], loose, SM",
     "5_jets_ptvary_loose_btag_300e_wide_allklambda_onlylog": "SPANet 5 jets pt order, ptvary [0.3,1.7], loose, no normalization",
@@ -110,28 +141,63 @@ names_dict = {
     "5_jets_ptvary_loose_btag_300e_allklambda": "SPANet 5 jets pt order, ptvary [0.5,1.5], loose",
     "5_jets_ptvary_tight_btag_300e_wide_allklambda": "SPANet 5 jets pt order, ptvary [0.3,1.7], tignt",
     "5_jets_ptvary_tight_btag_300e_allklambda": "SPANet 5 jets pt order, ptvary [0.5,1.5], tight",
-    "4_jets_ATLAS_ptreg_5train": "SPANet Lite 5 jets (4 jets eval)",
-    "4_jets_5global_ATLAS_ptreg": "SPANet Lite 4 jets",
-    "5_jets_data_ATLAS_ptreg_5train": "SPANet Lite 5 jets",
-    "4_jets_data_ATLAS_ptreg_5train": "SPANet Lite 5 jets (4 jets eval)",
-    "4_jets_data_ATLAS_5global_ptreg": "SPANet Lite 4 jets",
-    "5_jets_ATLAS_ptreg_allklambda_train_klinput": r"SPANet Lite 5 jets all $\kappa_{\lambda}$ ($\kappa_{\lambda}$ inputs)",
-    "5_jets_ATLAS_ptreg_allklambda_train_klinput_newkl_newCuts": r"SPANet Lite 5 jets new $\kappa_{\lambda}$ ($\kappa_{\lambda}$ inputs)",
-    "5_jets_ATLAS_ptreg_allklambda_train": r"SPANet Lite 5 jets all $\kappa_{\lambda}$",
-    "5_jets_ATLAS_ptreg_allklambda_eval": "SPANet Lite 5 jets SM",
-    "4_jets_allklambda": "Run 2",
-    "eff_fully_matched_allklambda": "Pairing Efficiency",
-    "tot_eff_fully_matched_allklambda": "Total Pairing Efficiency",
-    "eff_fully_matched_mask30_allklambda": r"Pairing Efficiency ($\Delta D_{HH} > 30$ GeV)",
-    "tot_eff_fully_matched_mask30_allklambda": r"Total Pairing Efficiency ($\Delta D_{HH} > 30$ GeV)",
-    "5_jets_ATLAS_ptreg_allklambda_train_klinput_newkl_oldCuts_newCutsEval": r"SPANet - $\kappa_{\lambda}$ ($\kappa_{\lambda}$ inputs) - Tight Selection",
-    "5_jets_ATLAS_ptreg_allklambda_train_noklinput_newkl_oldCuts_newCutsEval": r"SPANet - $\kappa_{\lambda}$ - Tight Selection",
-    "5_jets_ATLAS_ptreg_sm_train_allklambda_eval_noklinput_newkl_oldCuts_newCutsEval": "SPANet - SM - Tight Selection",
-    "5_jets_ATLAS_ptreg_allklambda_train_noklinput_newkl_newCuts_newCutsEval": r"SPANet - $\kappa_{\lambda}$ - Loose Selection",
-    "5_jets_data_ATLAS_ptreg_5train_allklambda_noklinput_oldCuts_newCutsEval": r"SPANet - $\kappa_{\lambda}$ - Tight Selection",
-    "5_jets_data_ATLAS_ptreg_5train_allklambda_noklinput_newCuts_newCutsEval": r"SPANet - $\kappa_{\lambda}$ - Loose Selection",
-    "5_jets_allklambda_newkl_newCuts": "$D_{HH}$-method",
-    "4_jets_allklambda_newkl_newCuts": "$D_{HH}$-method",
+    "5_jets_ptvary_loose_btag_300e_01_10_allklambda_rerun": "ptvary [0.1,10] rerun",
+    "5_jets_ptvary_loose_btag_300e_01_10_allklambda_rerun_nophi": "ptvary [0.1,10] nophi",
+    "5_jets_ptvary_loose_btag_300e_03_17_allklambda_rerun": "ptvary [0.3,1.7] rerun",
+     "4_jets_ATLAS_ptreg_5train": "SPANet Lite 5 jets (4 jets eval)",
+     "4_jets_5global_ATLAS_ptreg": "SPANet Lite 4 jets",
+     "5_jets_data_ATLAS_ptreg_5train": "SPANet Lite 5 jets",
+     "4_jets_data_ATLAS_ptreg_5train": "SPANet Lite 5 jets (4 jets eval)",
+     "4_jets_data_ATLAS_5global_ptreg": "SPANet Lite 4 jets",
+     "5_jets_ATLAS_ptreg_allklambda_train_klinput": r"SPANet Lite 5 jets all $\kappa_{\lambda}$ ($\kappa_{\lambda}$ inputs)",
+     "5_jets_ATLAS_ptreg_allklambda_train_klinput_newkl_newCuts": r"SPANet Lite 5 jets new $\kappa_{\lambda}$ ($\kappa_{\lambda}$ inputs)",
+     "5_jets_ATLAS_ptreg_allklambda_train": r"SPANet Lite 5 jets all $\kappa_{\lambda}$",
+     "5_jets_ATLAS_ptreg_allklambda_eval": "SPANet Lite 5 jets SM",
+     "4_jets_allklambda": "Run 2",
+     "eff_fully_matched_allklambda": "Pairing Efficiency",
+     "tot_eff_fully_matched_allklambda": "Total Pairing Efficiency",
+     "eff_fully_matched_mask30_allklambda": r"Pairing Efficiency ($\Delta D_{HH} > 30$ GeV)",
+     "tot_eff_fully_matched_mask30_allklambda": r"Total Pairing Efficiency ($\Delta D_{HH} > 30$ GeV)",
+     "5_jets_ATLAS_ptreg_allklambda_train_klinput_newkl_oldCuts_newCutsEval": r"SPANet - $\kappa_{\lambda}$ ($\kappa_{\lambda}$ inputs) - Tight Selection",
+     #"5_jets_ATLAS_ptreg_allklambda_train_noklinput_newkl_oldCuts_newCutsEval": r"SPANet - $\kappa_{\lambda}$ - Tight Selection",
+     "5_jets_ATLAS_ptreg_sm_train_allklambda_eval_noklinput_newkl_oldCuts_newCutsEval": "SPANet - SM - Tight Selection",
+     #"5_jets_ATLAS_ptreg_allklambda_train_noklinput_newkl_newCuts_newCutsEval": r"SPANet - $\kappa_{\lambda}$ - Loose Selection",
+     "5_jets_data_ATLAS_ptreg_5train_allklambda_noklinput_oldCuts_newCutsEval": r"SPANet - $\kappa_{\lambda}$ - Tight Selection",
+     #"5_jets_data_ATLAS_ptreg_5train_allklambda_noklinput_newCuts_newCutsEval": r"SPANet - $\kappa_{\lambda}$ - Loose Selection",
+     "5_jets_allklambda_newkl_newCuts": "$D_{HH}$-method",
+     "4_jets_allklambda_newkl_newCuts": "$D_{HH}$-method",
+
+
+      #"5_jets_pt_data_btag_300e": "Normal pt btag",
+      #"5_jets_pt_data_none_btag_300e": "No pt with btag",
+      #"5_jets_pt_data_vary_loose_btag_300e_01_10": "ptvary [0.1,10]",
+      #"5_jets_pt_data_vary_loose_btag_300e": "ptvary [0.5,1.5]",
+      #"5_jets_pt_data_vary_loose_btag_300e_wide": "ptvary [0.3,1.7]",
+      #"5_jets_pt_data_vary_loose_btag_300e_wide_onlylog": "ptvary [0.3,1.7], no norm",
+      # "5_jets_pt_data_vary_loose_btag_300e_01_10_rerun": "ptvary [0.1,10] rerun",
+      # "5_jets_pt_data_vary_loose_btag_300e_01_10_rerun_nophi": "ptvary [0.1,10] nophi",
+      # "5_jets_pt_data_loose_btag_300e_nophi": "btag no phi",
+      # "5_jets_pt_data_vary_loose_btag_300e_03_17_rerun": "ptvary [0.3,1.7] rerun",
+      
+      
+      "5_jets_ptnone_btag_300e_allklambda": "SPANet - No pt",
+      "5_jets_ATLAS_ptreg_allklambda_train_noklinput_newkl_oldCuts_newCutsEval": r"SPANet - Baseline (b-tag ordering, Tight Selection)",
+      # "5_jets_ptvary_loose_btag_300e_03_17_allklambda_rerun": "SPANet - Flattened pt [0.3,1.7]",
+      "5_jets_ptvary_loose_btag_300e_01_10_allklambda_rerun": "SPANet - Flattened pt [0.1,10]",
+      "5_jets_ptreg_loose_btag_300e_allklambda_nophi": "SPANet - No phi",
+      "5_jets_ptvary_loose_btag_300e_01_10_allklambda_rerun_nophi": "SPANet - Flattened pt [0.1,10] - no phi",
+
+      "5_jets_pt_data_none_btag_300e": f"SPANet - No pt",
+      "5_jets_pt_data_vary_loose_btag_300e_03_17_rerun": "SPANet - Flattened pt [0.3,1.7]",
+      "5_jets_pt_data_vary_loose_btag_300e_01_10_rerun": "SPANet - Flattened pt [0.1,10]",
+      "5_jets_pt_data_loose_btag_300e_nophi": "SPANet - No phi",
+      "5_jets_pt_data_vary_loose_btag_300e_01_10_rerun_nophi": "SPANet - Flattened pt [0.1,10] - no phi",
+  # "5_jets_pt_data_btag_300e": "Data SPANet 5 jets pt order with btag",
+  # "5_jets_pt_data_none_btag_300e": "Data SPANet 5 jets no pt with btag",
+  # "5_jets_pt_data_vary_loose_btag_300e_01_10": "Data SPANet 5 jets pt order, ptvary [0.1,10], loose",
+  # "5_jets_pt_data_vary_loose_btag_300e": "Data SPANet 5 jets pt order, ptvary [0.5,1.5], loose",
+  # "5_jets_pt_data_vary_loose_btag_300e_wide": "Data SPANet 5 jets pt order, ptvary [0.3,1.7], loose",
+  # "5_jets_pt_data_vary_loose_btag_300e_wide_onlylog": "Data SPANet 5 jets pt order, ptvary [0.3,1.7], loose, no norm",
 }
 
 
@@ -152,6 +218,8 @@ color_dict = {
     "5_jets_pt_SM_50e_allklambda": "gold",
     "5_jets_pt_btag_50e_allklambda": "royalblue",
     "5_jets_pt_btag_300e_allklambda": "navy",
+    "5_jets_ptreg_loose_btag_300e_allklambda_nophi": "darkmagenta",
+      "5_jets_pt_data_loose_btag_300e_nophi": "darkmagenta",
     "5_jets_ptvary_loose_btag_300e_wide_allklambda": "goldenrod",
     "5_jets_ptvary_loose_btag_300e_wide_allklambda_SM": "lime",
     "5_jets_ptvary_loose_btag_300e_wide_allklambda_onlylog": "deeppink",
@@ -161,4 +229,16 @@ color_dict = {
     "5_jets_ptnone_300e_allklambda": "cyan",
     "5_jets_ptvary_tight_btag_300e_wide_allklambda": "cyan",
     "5_jets_ptvary_tight_btag_300e_allklambda": "darkcyan",
+    "5_jets_pt_data_btag_300e_allklambda": "navy",
+    "5_jets_pt_data_none_btag_300e_allklambda": "cyan",
+    "5_jets_pt_data_vary_loose_btag_300e_01_10_allklambda": "orange",
+    "5_jets_pt_data_vary_loose_btag_300e_allklambda": "gold",
+    "5_jets_pt_data_vary_loose_btag_300e_wide_allklambda": "goldenrod",
+    "5_jets_pt_data_vary_loose_btag_300e_wide_allklambda_onlylog": "deeppink",
+   "5_jets_pt_data_vary_loose_btag_300e_01_10_rerun": "tan",
+   "5_jets_pt_data_vary_loose_btag_300e_01_10_rerun_nophi": "magenta",
+   "5_jets_pt_data_vary_loose_btag_300e_03_17_rerun": "darkgoldenrod",
+    "5_jets_ptvary_loose_btag_300e_01_10_allklambda_rerun": "tan",
+    "5_jets_ptvary_loose_btag_300e_01_10_allklambda_rerun_nophi": "magenta",
+    "5_jets_ptvary_loose_btag_300e_03_17_allklambda_rerun": "darkgoldenrod",
 }

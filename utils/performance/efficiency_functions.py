@@ -11,12 +11,13 @@ vector.register_numba()
 
 from efficiency_configuration import *
 
-k_lambda = [-2.0, -1.0, 0.0, 0.5, 1.0, 1.5, 2.0, 2.45, 3.0,3.5, 4.0, 5.0]
+k_lambda = [-2.0, -1.0, 0.0, 0.5, 1.0, 1.5, 2.0, 2.45, 3.0, 3.5, 4.0, 5.0]
+TRUE_PAIRING = False
 
 def check_names(name):
-    #to be updated everytime you add a new item in the true dictionary
+    # to be updated everytime you add a new item in the true dictionary
     # UPDATE_HERE indicates where to change the function
-    lenght_true_dict=20 #UPDATE_HERE to the new lenght of the true_dict
+    lenght_true_dict = 25  # UPDATE_HERE to the new lenght of the true_dict
     if "klambda0" in name and "4_jets" in name:
         return 3
     elif "klambda2p45" in name and "4_jets" in name:
@@ -68,16 +69,38 @@ def check_names(name):
                 return lenght_true_dict + k_lambda.index(kl) + len(k_lambda) * 4
         return 17
     #UPDATE_HERE adding a new if statement
-    if '5_jets_pt' in name:
+    elif "5_jets_pt_true_btag_allklambda" in name:
         for kl in k_lambda:
             if f"{kl}" in name:
-                return lenght_true_dict + k_lambda.index(kl) + len(k_lambda) * 5 
+                return lenght_true_dict + k_lambda.index(kl) + len(k_lambda) * 7
+        return 21
+    elif "5_jets_pt_true_vary_loose_btag_wide" in name:
+        for kl in k_lambda:
+            if f"{kl}" in name:
+                return lenght_true_dict + k_lambda.index(kl) + len(k_lambda) * 9
+        return 23
+    elif "5_jets_pt_true_vary_loose_btag_01_10" in name:
+        for kl in k_lambda:
+            if f"{kl}" in name:
+                return lenght_true_dict + k_lambda.index(kl) + len(k_lambda) * 10
+        return 24
+    elif "5_jets_pt_true_vary_loose_btag" in name:
+        for kl in k_lambda:
+            if f"{kl}" in name:
+                return lenght_true_dict + k_lambda.index(kl) + len(k_lambda) * 8
+        return 22
+    elif '5_jets_pt_data' in name:
+        return 20
+    elif '5_jets_pt' in name:
+        for kl in k_lambda:
+            if f"{kl}" in name:
+                return lenght_true_dict + k_lambda.index(kl) + len(k_lambda) * 5
         return 18
     elif '4_jets_pt' in name:
         for kl in k_lambda:
             if f"{kl}" in name:
                 return lenght_true_dict + k_lambda.index(kl) + len(k_lambda) * 6
-        return 19 
+        return 19
     elif "allklambda" in name and "4_jets" in name:
         for kl in k_lambda:
             if f"{kl}" in name:
@@ -189,7 +212,7 @@ def best_reco_higgs(jet_collection, idx_collection):
 def plot_histos_1d(
     bins, true, run2, spanet, spanet_labels, true_labels, num, name="", plot_dir="plots"
 ):
-    if any(["data" in label for label in spanet_labels]):
+    if any(["data" in label for label in spanet_labels]) or not TRUE_PAIRING:
         fig, ax = plt.subplots(
             figsize=(6, 6),
         )
@@ -205,6 +228,8 @@ def plot_histos_1d(
 
     labels_list = []
     for sn, label in zip(spanet, spanet_labels):
+        if label[-4:] != "_1.0" and "." in label[-3]:
+            continue
         ax.hist(
             sn,
             bins[check_names(label)],
@@ -216,7 +241,7 @@ def plot_histos_1d(
         )
         if check_names(label) in labels_list:
             continue
-        if "data" not in label:  # and len(labels_list) == 0:
+        if "data" not in label and TRUE_PAIRING:  # and len(labels_list) == 0:
             ax.hist(
                 true[check_names(label)],
                 bins[check_names(label)],
@@ -255,7 +280,8 @@ def plot_histos_1d(
         0,
         max(
             np.histogram(
-                true[check_names(spanet_labels[0])],
+                spanet[0],
+                # true[check_names(spanet_labels[0])],
                 bins[check_names(spanet_labels[0])],
                 density=True,
             )[0]
@@ -307,7 +333,7 @@ def plot_histos_1d(
         for sn, label in zip(spanet_hists, spanet_labels)
     ]
     labels_list = []
-    if not any(["data" in label for label in spanet_labels]):
+    if not any(["data" in label for label in spanet_labels]) and TRUE_PAIRING:
 
         for sn, label, sn_err in zip(
             residuals_spanet, spanet_labels, residual_spanet_err
@@ -358,6 +384,8 @@ def plot_histos_1d(
         data=True
     )
     plt.savefig(f"{plot_dir}/higgs_mass_{num}{name}.png", dpi=300, bbox_inches="tight")
+    plt.savefig(f"{plot_dir}/higgs_mass_{num}{name}.pdf", dpi=300, bbox_inches="tight")
+    plt.savefig(f"{plot_dir}/higgs_mass_{num}{name}.svg", bbox_inches="tight")
     plt.close()
 
 
@@ -382,6 +410,8 @@ def plot_mhh(bins, mhh, plot_dir="plots", name="mhh"):
         ax=ax,
     )
     plt.savefig(f"{plot_dir}/{name}.png", dpi=300, bbox_inches="tight")
+    plt.savefig(f"{plot_dir}/{name}.pdf", bbox_inches="tight")
+    plt.savefig(f"{plot_dir}/{name}.svg", dpi=300, bbox_inches="tight")
     plt.close()
 
 
@@ -424,6 +454,12 @@ def plot_histos_2d(mh_bins, higgs, label, name, plot_dir="plots"):
     )
     plt.savefig(
         f"{plot_dir}/higgs_mass_2d_{name}_{label}.png", dpi=300, bbox_inches="tight"
+    )
+    plt.savefig(
+        f"{plot_dir}/higgs_mass_2d_{name}_{label}.pdf", dpi=300, bbox_inches="tight"
+    )
+    plt.savefig(
+        f"{plot_dir}/higgs_mass_2d_{name}_{label}.svg", bbox_inches="tight"
     )
     plt.close()
 
@@ -478,6 +514,8 @@ def plot_diff_eff(
         ax=ax,
     )
     plt.savefig(f"{plot_dir}/{file_name}.png", dpi=300, bbox_inches="tight")
+    plt.savefig(f"{plot_dir}/{file_name}.pdf", dpi=300, bbox_inches="tight")
+    plt.savefig(f"{plot_dir}/{file_name}.svg", bbox_inches="tight")
     plt.close()
 
 
@@ -540,6 +578,8 @@ def plot_true_higgs(true_higgs_fully_matched, mh_bins, num, plot_dir="plots"):
     ax.set_ylabel("Events")
 
     plt.savefig(f"{plot_dir}/true_higgs_mass_{num}.png", dpi=300, bbox_inches="tight")
+    plt.savefig(f"{plot_dir}/true_higgs_mass_{num}.pdf", dpi=300, bbox_inches="tight")
+    plt.savefig(f"{plot_dir}/true_higgs_mass_{num}.svg", bbox_inches="tight")
     plt.close()
 
 
@@ -699,4 +739,6 @@ def plot_diff_eff_klambda(eff, kl_values, allkl_names, name, plot_dir="plots"):
         ax=ax,
     )
     plt.savefig(f"{plot_dir}/{name}.png", dpi=300, bbox_inches="tight")
+    plt.savefig(f"{plot_dir}/{name}.pdf", dpi=300, bbox_inches="tight")
+    plt.savefig(f"{plot_dir}/{name}.svg", dpi=300, bbox_inches="tight")
     plt.close()
