@@ -20,19 +20,30 @@ parser.add_argument('--ngpu', type=int, default=1)
 parser.add_argument('--ncpu', type=int, default=3)
 parser.add_argument("--good-gpus", action="store_true")
 parser.add_argument("--seed", type=int, default=None, help="Random seed")
-parser.add_argument("--basedir", type=str, default=None, help="Base directory")
+parser.add_argument("--outputdir", type=str, default=None, help="Output directory")
 parser.add_argument("--args", default="", type=str, help="additional args")
 args = parser.parse_args()
 
+basedir = f"{os.path.dirname(os.path.abspath(__file__))}/../"
+print(f"basedir {basedir}")
+homedir = os.environ["HOME"]
+
 print("\nargs:", args.args)
 interactive = args.interactive
+
+singularity_bindings = (
+    "/afs, "
+    "/eos/user/t/tharte/, "
+    "/etc/sysconfig/ngbauth-submit, "
+    "${XDG_RUNTIME_DIR}"
+)
 
 col = htcondor.Collector()
 credd = htcondor.Credd()
 credd.add_user_cred(htcondor.CredTypes.Kerberos, None)
 
 cfg = OmegaConf.load(args.cfg)
-basedir = cfg['path'] if not args.basedir else args.basedir
+outputdir = basedir if not args.outputdir else args.outputdir
 model = cfg['model']
 job_flavour = cfg['job_flavour']
 ngpu = cfg['ngpu']
@@ -52,13 +63,18 @@ if interactive:
 
 if model in ["jet_assignment", "classification","jet_assignment_tune"]:
     sub['Executable'] = f"{basedir}/jobs/{model}.sh"
-    sub['arguments'] = f"{basedir}/{args.options_file} {basedir}/{args.log_dir} {args.seed} {args.args}"
+    sub['arguments'] = f"{basedir}/{args.options_file} {outputdir}/{args.log_dir} {args.seed} {args.args} {homedir}"
     sub['Output'] = f"{basedir}/{args.log_dir}/{model}-$(ClusterId).$(ProcId).out"
     sub['Error'] = f"{basedir}/{args.log_dir}/{model}-$(ClusterId).$(ProcId).err"
     sub['Log'] = f"{basedir}/{args.log_dir}/{model}-$(ClusterId).log"
     sub['MY.SendCredential'] = True
     sub['MY.SingularityImage'] = '"/cvmfs/unpacked.cern.ch/registry.hub.docker.com/cmsml/cmsml:latest"'
     sub['+JobFlavour'] = f'"{job_flavour}"'
+    sub['environment'] = (
+        f'SINGULARITY_BIND_EXPR="{singularity_bindings}", '
+        f'KRB5CCNAME="FILE:${{XDG_RUNTIME_DIR}}/krb5cc"'
+    )
+    sub['MY.SingularityUseGPU'] = True
 else:
     raise ValueError(f"Model {model} not implemented")
 

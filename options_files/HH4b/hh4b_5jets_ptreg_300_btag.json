@@ -30,7 +30,7 @@
     "skip_connections": true,
     "initial_embedding_skip_connections": true,    
     "event_info_file": "/afs/cern.ch/user/t/tharte/public/Software/HH4b_SPANet/event_files/HH4b/hh4b_5jet_btag.yaml",
-    "training_file": "/afs/cern.ch/user/t/tharte/public/samplesets/jet5global_pt_tight/output_JetGood_train.h5",
+    "training_file": "/eos/user/t/tharte/Analysis_Project/samplesets/loose_selection/output_JetGood_train.h5",
 
     "normalize_features": true,
     "limit_to_num_jets": 0,

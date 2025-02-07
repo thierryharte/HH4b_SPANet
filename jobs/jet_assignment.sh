@@ -1,4 +1,7 @@
-#!/bin/bash
+#!/usr/bin/bash
+
+export HOME=$4
+
 SPANET_DIR=$HOME/public/Software/SPANet
 HH4b_SPANET_DIR=$HOME/public/Software/HH4b_SPANet
 NUM_GPU=1
@@ -7,9 +10,9 @@ NUM_GPU=1
 source $HOME/py_spanet/bin/activate
 
 # Install SPANet in virtual environment
-cd $SPANET_DIR
+#cd $SPANET_DIR
 #pip install torch===2.2.2
-pip install -e .
+#pip install -e .
 
 # Install ttHbb_SPANet in virtual environment
 cd $HH4b_SPANET_DIR
@@ -34,7 +37,7 @@ else
            --time_limit 07:00:00:00\
 	   --metric 'validation_accuracy'\
            --gpus $NUM_GPU\
-           "${@:4}"
+           "${@:5}"
 fi
 # elif [ $# -eq 5 ]; then
 #     python -m spanet.train \
