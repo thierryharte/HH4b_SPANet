@@ -9,4 +9,7 @@ inputs_files/
 */log/
 */error/
 */output/
+predictions*
 ramellar.cc
+tharte.cc
+
