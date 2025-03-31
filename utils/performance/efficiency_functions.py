@@ -121,13 +121,14 @@ def check_names(name):
         raise ValueError(f"Name {name} not recognized")
 
 
-def distance_func(higgs_pair, k):
+def distance_pt_func(higgs_pair, k):
     if len(higgs_pair[0, 0]) == 0:
         return np.array([])
     higgs1 = higgs_pair[:, :, 0]
     higgs2 = higgs_pair[:, :, 1]
     dist = abs(higgs1.mass - higgs2.mass * k) / sqrt(1 + k**2)
-    return dist
+    max_pt = np.maximum(higgs1.pt, higgs2.pt)
+    return dist, max_pt
 
 
 def reco_higgs(jet_collection, idx_collection):
@@ -232,7 +233,7 @@ def plot_histos_1d(
             continue
         ax.hist(
             sn,
-            bins[check_names(label)],
+            bins,
             label=f"{names_dict[label] if label in names_dict else label}",
             histtype="step",
             linewidth=1,
@@ -244,7 +245,7 @@ def plot_histos_1d(
         if "data" not in label and TRUE_PAIRING:  # and len(labels_list) == 0:
             ax.hist(
                 true[check_names(label)],
-                bins[check_names(label)],
+                bins,
                 label=f"True ({true_labels[check_names(label)]})",
                 histtype="step",
                 linewidth=1,
@@ -255,10 +256,13 @@ def plot_histos_1d(
             which_run2 = (
                 check_names(label) if ("data" in label or "klambda" in label) else 0
             )
+            print("plotting run2")
+            print(which_run2)
             ax.hist(
                 run2[which_run2],
-                bins[which_run2],
-                label=names_dict[true_labels[which_run2]] if true_labels[which_run2] in names_dict else f"Run 2 ({true_labels[which_run2]})",
+                bins,
+                #label=names_dict[true_labels[which_run2]] if true_labels[which_run2] in names_dict else "D$_{{{HH}}}$ - method", #+f"({true_labels[which_run2]})",
+                label="D$_{{{HH}}}$ - method", #+f"({true_labels[which_run2]})",
                 histtype="step",
                 linewidth=1,
                 density=True,
@@ -266,23 +270,24 @@ def plot_histos_1d(
             )
         labels_list.append(check_names(label))
     ax.grid(linestyle=":")
-    true_hist = [np.histogram(true[i], bins[i]) for i in range(len(true))]
+    true_hist = [np.histogram(true[i], bins) for i in range(len(true))]
     # print("true_hist", true_hist)
     run2_hist = (
-        [np.histogram(run2[i], bins[i]) for i in range(len(run2))] if run2 else []
+        [np.histogram(run2[i], bins) for i in range(len(run2))] if run2 else []
     )
     spanet_hists = [
-        np.histogram(spanet[i], bins[check_names(spanet_labels[i])])
+        np.histogram(spanet[i], bins)
         for i in range(len(spanet))
     ]
-    # print("spanet_hists",spanet_hists)
+    print("spanet_hists",spanet_hists)
+    print(len(spanet_hists))
     ax.set_ylim(
         0,
         max(
             np.histogram(
                 spanet[0],
                 # true[check_names(spanet_labels[0])],
-                bins[check_names(spanet_labels[0])],
+                bins,
                 density=True,
             )[0]
         )
@@ -294,6 +299,10 @@ def plot_histos_1d(
         (r[0] / np.sum(r[0])) / (t[0] / np.sum(t[0]))
         for r, t in zip(run2_hist, true_hist)
     ]
+    print(len(spanet_labels))
+    print(len(spanet_hists[0][0]))
+    print(len(spanet_hists[0][0]))
+
     residuals_spanet = [
         (spanet_hists[i][0] / np.sum(spanet_hists[i][0]))
         / (
@@ -344,7 +353,7 @@ def plot_histos_1d(
                 yerr=sn_err,
                 marker=".",
                 # markersize=1,
-                label=f"{names_dict[label] if label in names_dict else label}",
+                label=f"{names_dict[label]}" if label in names_dict else label,
                 linestyle="None",
             )
             if check_names(label) in labels_list:
@@ -359,7 +368,7 @@ def plot_histos_1d(
                     yerr=residual_run2_err[which_run2],
                     marker=".",
                     # markersize=1,
-                    label=f"Run 2 ({true_labels[which_run2]})",
+                    label=f"D$_{{{HH}}}$ - method", #({true_labels[which_run2]})",
                     color="red",
                     linestyle="None",
                 )
@@ -394,7 +403,7 @@ def plot_mhh(bins, mhh, plot_dir="plots", name="mhh"):
     ax.hist(
         mhh,
         bins,
-        label=f"mhh",
+        label="mhh",
         histtype="step",
         linewidth=1,
         density=True,
@@ -406,7 +415,7 @@ def plot_mhh(bins, mhh, plot_dir="plots", name="mhh"):
     hep.cms.label(
         year="2022",
         com="13.6",
-        label=f"Private Work",
+        label="Private Work",
         ax=ax,
     )
     plt.savefig(f"{plot_dir}/{name}.png", dpi=300, bbox_inches="tight")
@@ -433,8 +442,8 @@ def plot_histos_2d(mh_bins, higgs, label, name, plot_dir="plots"):
         "Normalized counts", loc="center", fontsize=10
     )
     # plot two lines at 125 GeV
-    ax.plot([mh_bins[0], mh_bins[-1]], [120, 120], color="black")
-    ax.plot([125, 125], [mh_bins[0], mh_bins[-1]], color="black")
+    ax.plot([mh_bins, mh_bins], [120, 120], color="black")
+    ax.plot([125, 125], [mh_bins, mh_bins], color="black")
     # draw a circle at 125 GeV or radius 5 GeV
     circle = plt.Circle((125, 120), 30, color="black", fill=False)
     ax.add_artist(circle)
@@ -480,7 +489,7 @@ def plot_diff_eff(
     labels_list = []
     for eff, unc_eff, label in zip(spanet, unc_spanet, list(spanet_dict.keys())):
         ax.errorbar(
-            0.5 * (mhh_bins[1:] + mhh_bins[:-1]),
+            0.5 * (mhh_bins + mhh_bins),
             eff,
             yerr=unc_eff,
             label=f"{names_dict[label] if label in names_dict else label}",
@@ -491,11 +500,10 @@ def plot_diff_eff(
         if check_names(label) in labels_list or not run2 or len(labels_list) > 0:
             continue
         which_run2 = (
-            # check_names(label) if ("data" in label or "klambda" in label) else 0 # TODO: correct this
-            -1
+            check_names(label) if ("data" in label or "klambda" in label) else 0
         )
         ax.errorbar(
-            0.5 * (mhh_bins[1:] + mhh_bins[:-1]),
+            0.5 * (mhh_bins + mhh_bins),
             run2[which_run2],
             yerr=unc_run2[which_run2],
             label=r"$D_{HH}$-method",
@@ -526,26 +534,26 @@ def plot_true_higgs(true_higgs_fully_matched, mh_bins, num, plot_dir="plots"):
     )
     ax.hist(
         true_higgs_fully_matched[0][:, num - 1].mass,
-        bins=mh_bins[0],
+        bins=mh_bins,
         histtype="step",
         label="True 4 jets",
         color="blue",
     )
     ax.hist(
         true_higgs_fully_matched[1][:, num - 1].mass,
-        bins=mh_bins[1],
+        bins=mh_bins,
         histtype="step",
         label="True 5 jets",
         color="red",
     )
-    hist_4 = np.histogram(true_higgs_fully_matched[0][:, num - 1].mass, bins=mh_bins[0])
-    hist_5 = np.histogram(true_higgs_fully_matched[1][:, num - 1].mass, bins=mh_bins[1])
+    hist_4 = np.histogram(true_higgs_fully_matched[0][:, num - 1].mass, bins=mh_bins)
+    hist_5 = np.histogram(true_higgs_fully_matched[1][:, num - 1].mass, bins=mh_bins)
 
     hist_4_norm = hist_4[0] / np.sum(hist_4[0])
     hist_5_norm = hist_5[0] / np.sum(hist_5[0])
 
     ax_ratio.plot(
-        mh_bins[0][:-1],
+        mh_bins[:-1],
         hist_5[0] / hist_4[0],
         label="5 jets / 4 jets",
         color="green",
@@ -553,7 +561,7 @@ def plot_true_higgs(true_higgs_fully_matched, mh_bins, num, plot_dir="plots"):
         marker=".",
     )
     ax_ratio.plot(
-        mh_bins[0][:-1],
+        mh_bins[:-1],
         hist_5_norm / hist_4_norm,
         label="5 jets / 4 jets (norm)",
         color="purple",
@@ -658,9 +666,9 @@ def separate_klambda(
             print("kl_array[mask]", kl_array[mask])
             spanet_separate_klambda.append(idx_spanet_allklambda[i][mask])
 
-    print(true_separate_klambda, len(true_separate_klambda))
-    print(spanet_separate_klambda, len(spanet_separate_klambda))
-    print(len(jet_infos_separate_klambda), len(jet_infos_separate_klambda[0]))
+   # print(true_separate_klambda, len(true_separate_klambda))
+   # print(spanet_separate_klambda, len(spanet_separate_klambda))
+   # print(len(jet_infos_separate_klambda), len(jet_infos_separate_klambda[0]))
 
     # keep only two decimal in the kl_values
     kl_values_true = np.round(kl_values_true, 2).tolist()
@@ -719,6 +727,7 @@ def plot_diff_eff_klambda(eff, kl_values, allkl_names, name, plot_dir="plots"):
     eff_split = np.split(np.array(eff), kl_values.count(kl_values[0]))
     fig, ax = plt.subplots(figsize=(6, 6))
     for i, (net_name, kls) in enumerate(zip(allkl_names, kl_values_split)):
+        print(f"net_name = {net_name}")
         ax.plot(
             kls,
             eff_split[i],
@@ -742,3 +751,28 @@ def plot_diff_eff_klambda(eff, kl_values, allkl_names, name, plot_dir="plots"):
     plt.savefig(f"{plot_dir}/{name}.pdf", dpi=300, bbox_inches="tight")
     plt.savefig(f"{plot_dir}/{name}.svg", dpi=300, bbox_inches="tight")
     plt.close()
+
+def add_fields(collection, fields=None, four_vec="PtEtaPhiMLorentzVector"):
+    if fields==None:
+        fields= list(collection.fields)
+    for field in ["pt", "eta", "phi", "mass"]:
+        if field not in fields:
+            fields.append(field)
+    if four_vec=="PtEtaPhiMLorentzVector":
+        fields_dict = {field: getattr(collection, field) for field in fields}
+        collection = ak.zip(
+            fields_dict,
+            with_name="PtEtaPhiMLorentzVector",
+        )
+    elif four_vec=="Momentum4D":
+        fields=["pt", "eta", "phi", "mass"]
+        fields_dict = {field: getattr(collection, field) for field in fields }
+        collection = ak.zip(
+            fields_dict,
+            with_name="Momentum4D",
+        )
+    else:
+        for field in fields:
+            collection = ak.with_field(collection, getattr(collection, field), field)
+
+    return collection
