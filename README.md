@@ -1,5 +1,5 @@
-# HH4b_SPANet
-Repository for development of a signal vs background classifier in the HH4b analysis based on SPANet.
+# HH4b_SPANe
+Repository for development of a signal vs background classifier in the HH4b analysis based on SPANet. Originally forked from https://github.com/mmarchegiani/ttHbb_SPANet.
 
 ## Running SPANet within the `cmsml` docker container
 
