@@ -29,8 +29,8 @@
 
     "skip_connections": true,
     "initial_embedding_skip_connections": true,    
-    "event_info_file": "/afs/cern.ch/user/t/tharte/public/Software/HH4b_SPANet/event_files/HH4b/hh4b_5jet_no_btag.yaml",
-    "training_file": "/eos/user/t/tharte/Analysis_Project/samplesets/loose_selection/output_JetGood_train.h5",
+    "event_info_file": "/afs/cern.ch/user/t/tharte/public/Software/HH4b_SPANet/event_files/HH4b/hh4b_5jet_btag.yaml",
+    "training_file": "/eos/user/t/tharte/Analysis_data/spanet_samples/loose_pt_mass_vary_03_17_all2022/preEE/output_JetGood_train.h5",
 
     "normalize_features": true,
     "limit_to_num_jets": 0,
@@ -42,7 +42,7 @@
     "dataset_limit": 1.0,
     "train_validation_split": 0.95,
     "batch_size": 2048,
-    "num_dataloader_workers": 4,
+    "num_dataloader_workers": 16,
     
     "mask_sequence_vectors": true,
     "combine_pair_loss": "min",
@@ -62,7 +62,7 @@
     "gradient_clip": 0.425,
     "dropout": 0.0059,
     
-    "epochs": 50,
+    "epochs": 300,
     "num_gpu": 1,
     "verbose_output": true
 }
