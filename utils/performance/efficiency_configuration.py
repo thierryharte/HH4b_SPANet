@@ -1,9 +1,9 @@
 
 
-spanet_dir = "/eos/user/t/tharte/Analysis_Project/predictions/"
+spanet_dir = "/eos/user/t/tharte/Analysis_data/predictions/"
 spanet_dir_matteo = "/eos/user/m/mmalucch/spanet_inputs/out_prediction_files/"
 
-true_dir_thierry = "/eos/user/t/tharte/Analysis_Project/samplesets"
+true_dir_thierry = "/eos/user/t/tharte/Analysis_data/spanet_samples/"
 true_dir_matteo = "/eos/user/m/mmalucch/spanet_inputs/out_prediction_files/true_files/"
 
 # uncomment the configurations that you want to use
@@ -14,75 +14,97 @@ print(
 )
 # uncomment the configurations that you want to use
 spanet_dict = {
-    # For baseline no btag:
-    "5_jets_pt_300e_allklambda_no_btag": f"{spanet_dir}spanet_hh4b_5jets_50_ptreg_loose_s100_no_btag.h5",  # THIS
-    # For baseline with btag:
-    "5_jets_pt_btag_300e_allklambda": f"{spanet_dir}spanet_hh4b_5jets_300_predict_s160_btag.h5",  # THIS
+    #### For baseline with btag ####
+    # "5_jets_pt_btag_300e_allklambda": f"{spanet_dir}spanet_hh4b_5jets_300_predict_s160_btag.h5",  # THIS
     # "5_jets_pt_btag_50e_allklambda": f"{spanet_dir}spanet_hh4b_5jets_50_predict_s155_btag.h5",  # THIS
     # Trained on SM
     #"5_jets_pt_SM_50e_allklambda": f"{spanet_dir}tight_eval/spanet_hh4b_5jets_50_predict_s100_SM.h5",  # THIS
 
-
-
-
-    # [0.1, 10] pt vary
+    #### [0.1, 10] pt vary ####
     #"5_jets_ptvary_loose_btag_300e_01_10_allklambda": f"{spanet_dir}spanet_hh4b_5jets_300_ptvary_01_10_loose_s100_btag.h5",  # THIS
     #"5_jets_ptvary_loose_btag_300e_01_10_allklambda_rerun": f"{spanet_dir}rerun/spanet_rerun_hh4b_5jets_300_ptvary_loose_s100_btag_01_10.h5",
 
-    # [0.3,1.7]
-    "5_jets_ptvary_loose_btag_300e_wide_allklambda": f"{spanet_dir}spanet_hh4b_5jets_300_ptvary_wide_loose_s100_btag.h5",  # THIS ## Chosen model
+    #### [0.3,1.7] ####
+    #"5_jets_ptvary_loose_btag_300e_wide_allklambda": f"{spanet_dir}spanet_hh4b_5jets_300_ptvary_wide_loose_s100_btag.h5",  # THIS ## Chosen model
     #"5_jets_ptvary_loose_btag_300e_wide_allklambda_SM": f"{spanet_dir}SM_train/spanet_hh4b_5jets_300_ptvary_wide_loose_s100_btag.h5",  # THIS
     #"5_jets_ptvary_loose_btag_300e_wide_allklambda_onlylog": f"{spanet_dir}spanet_hh4b_5jets_300_ptvary_wide_onlylog_loose_s100_btag.h5",  # THIS
     #"5_jets_ptvary_loose_btag_300e_03_17_allklambda_rerun": f"{spanet_dir}rerun/spanet_rerun_hh4b_data_5jets_300_ptvary_loose_s100_btag_03_17.h5",
 
-    # [0.5,1.5]
+    #### [0.5,1.5] ####
     #"5_jets_ptvary_loose_btag_300e_allklambda": f"{spanet_dir}spanet_hh4b_5jets_300_ptvary_loose_s50_btag.h5",  # THIS
 
-    # no pT
-    "5_jets_ptnone_btag_300e_allklambda": f"{spanet_dir}spanet_hh4b_5jets_300_ptnone_loose_s100_btag.h5",
-   
-    # no phi
-    "5_jets_ptreg_loose_btag_300e_allklambda_nophi": f"{spanet_dir}spanet_hh4b_5jets_300_ptreg_loose_s100_btag_nophi.h5",
-    "5_jets_ptvary_loose_btag_300e_01_10_allklambda_rerun_nophi": f"{spanet_dir}rerun/spanet_rerun_hh4b_data_5jets_300_ptvary_loose_s100_btag_01_10_nophi.h5",
+    # no pT/phi/btag
+    #"5_jets_ptnone_btag_300e_allklambda": f"{spanet_dir}spanet_hh4b_5jets_300_ptnone_loose_s100_btag.h5",
+    #"5_jets_pt_300e_allklambda_no_btag": f"{spanet_dir}spanet_hh4b_5jets_50_ptreg_loose_s100_no_btag.h5",  # THIS
+    #"5_jets_ptreg_loose_btag_300e_allklambda_nophi": f"{spanet_dir}spanet_hh4b_5jets_300_ptreg_loose_s100_btag_nophi.h5",
+    #"5_jets_ptvary_loose_btag_300e_01_10_allklambda_rerun_nophi": f"{spanet_dir}rerun/spanet_rerun_hh4b_data_5jets_300_ptvary_loose_s100_btag_01_10_nophi.h5",
 
-    # Tight selection
+    #### Tight selection ####
     # "5_jets_ptvary_tight_btag_300e_allklambda": f"{spanet_dir}spanet_hh4b_5jets_300_ptvary_tight_s100_btag.h5",  # THIS
     
-    # Matteo comparison (b-tag ordering)
+    #### Matteo comparison (b-tag ordering) ####
     # originating from: "/work/mmalucch/out_hh4b/out_spanet/output_JetGood_test.h5",  # HERE
     # "5_jets_ATLAS_ptreg_allklambda_train": f"{spanet_dir_matteo}out_spanet_prediction_5jets_lr1e4_noevkl_300e.h5",
     # "5_jets_ATLAS_ptreg_allklambda_eval": f"{spanet_dir_matteo}out_spanet_prediction_SMtraining_lr1e4_evkl.h5",
   # "5_jets_data_ATLAS_ptreg_5train_allklambda_noklinput_oldCuts_newCutsEval": f"{spanet_dir_matteo}spanet_prediction_oc_kl3p5_noklinp_data_nc.h5",
     #"5_jets_ATLAS_ptreg_allklambda_train_noklinput_newkl_oldCuts_newCutsEval": f"{spanet_dir_matteo}spanet_prediction_oc_kl3p5_noklinp_nc.h5",
     #
-    
-    #### DATA ####
+
+    ##### ERA preEE #####
+    f"5_jets_preEE_300e_allklambda_preEE_eval": f"{spanet_dir}/spanet_hh4b_preEE_5jets_100_pvary_loose_s300_eval_on_preEE.h5",
+    f"5_jets_postEE_300e_allklambda_preEE_eval": f"{spanet_dir}/spanet_hh4b_postEE_5jets_100_pvary_loose_s300_eval_on_preEE.h5",
+
+
+    ############################################## DATA ###########################################################
     # baseline with b-tag
-    "5_jets_pt_data_btag_300e": f"{spanet_dir}DATA/spanet_hh4b_data_5jets_300_predict_s160_btag.h5", ### DATA
+    #"5_jets_pt_data_btag_300e": f"{spanet_dir}DATA/spanet_hh4b_data_5jets_300_predict_s160_btag.h5", ### DATA
     # For baseline no btag:
-    "5_jets_pt_data_300e_allklambda_no_btag": f"{spanet_dir}DATA/spanet_hh4b_data_5jets_50_ptreg_loose_s100_no_btag.h5",  # THIS
+    #"5_jets_pt_data_300e_allklambda_no_btag": f"{spanet_dir}DATA/spanet_hh4b_data_5jets_50_ptreg_loose_s100_no_btag.h5",  # THIS
     
-    # [0.1,10]
+    #### [0.1,10] ####
     #"5_jets_pt_data_vary_loose_btag_300e_01_10": f"{spanet_dir}DATA/spanet_hh4b_data_5jets_300_ptvary_01_10_loose_s100_btag.h5",
     #"5_jets_pt_data_vary_loose_btag_300e_01_10_rerun": f"{spanet_dir}DATA/rerun/spanet_rerun_hh4b_data_5jets_300_ptvary_loose_s100_btag_01_10.h5",
 
-    # [0.3,1.7]
+    #### [0.3,1.7] ####
     #"5_jets_pt_data_vary_loose_btag_300e_wide": f"{spanet_dir}DATA/spanet_hh4b_data_5jets_300_ptvary_wide_loose_s100_btag.h5",
     ## normalizations:
     #"5_jets_pt_data_vary_loose_btag_300e_wide_onlylog": f"{spanet_dir}DATA/spanet_hh4b_data_5jets_300_ptvary_wide_onlylog_loose_s100_btag.h5",
     #"5_jets_pt_data_vary_loose_btag_300e_03_17_rerun": f"{spanet_dir}DATA/rerun/spanet_rerun_hh4b_data_5jets_300_ptvary_loose_s100_btag_03_17.h5",
     
-    # [0.5,1.5]
+    #### [0.5,1.5] ####
     #"5_jets_pt_data_vary_loose_btag_300e": f"{spanet_dir}DATA/spanet_hh4b_data_5jets_300_ptvary_loose_s50_btag.h5",
 
-    # no pT
-    "5_jets_pt_data_none_btag_300e": f"{spanet_dir}DATA/spanet_hh4b_data_5jets_300_ptnone_loose_s100_btag.h5", ### DATA
+    #### no pT ####
+    #"5_jets_pt_data_none_btag_300e": f"{spanet_dir}DATA/spanet_hh4b_data_5jets_300_ptnone_loose_s100_btag.h5", ### DATA
     
-    # no phi
-    "5_jets_pt_data_vary_loose_btag_300e_01_10_rerun_nophi": f"{spanet_dir}DATA/rerun/spanet_rerun_hh4b_data_5jets_300_ptvary_loose_s100_btag_01_10_nophi.h5",
-    "5_jets_pt_data_loose_btag_300e_nophi": f"{spanet_dir}DATA/spanet_hh4b_data_5jets_300_ptreg_loose_s100_btag_nophi.h5",
+    #### no phi ####
+    #"5_jets_pt_data_vary_loose_btag_300e_01_10_rerun_nophi": f"{spanet_dir}DATA/rerun/spanet_rerun_hh4b_data_5jets_300_ptvary_loose_s100_btag_01_10_nophi.h5",
+    #"5_jets_pt_data_loose_btag_300e_nophi": f"{spanet_dir}DATA/spanet_hh4b_data_5jets_300_ptreg_loose_s100_btag_nophi.h5",
 
+    ##### baseline ####
+    "5_jets_pt_data_btag_300e": f"{spanet_dir}DATA/spanet_hh4b_data_5jets_300_predict_s160_btag.h5", ### DATA
 
+    #### pt_vary ####
+    #"5_jets_pt_data_btag_300e": f"{spanet_dir}DATA/spanet_hh4b_data_5jets_300_predict_s160_btag.h5", ### DATA
+    #"5_jets_pt_data_vary_loose_btag_300e_01_10_rerun": f"{spanet_dir}DATA/rerun/spanet_rerun_hh4b_data_5jets_300_ptvary_loose_s100_btag_01_10.h5",
+    #"5_jets_pt_data_vary_loose_btag_300e_03_17_rerun": f"{spanet_dir}DATA/rerun/spanet_rerun_hh4b_data_5jets_300_ptvary_loose_s100_btag_03_17.h5",
+    #"5_jets_pt_data_vary_loose_btag_300e": f"{spanet_dir}DATA/spanet_hh4b_data_5jets_300_ptvary_loose_s50_btag.h5",
+
+    #### No pt/phi/btag ####
+    #"5_jets_pt_data_btag_300e": f"{spanet_dir}DATA/spanet_hh4b_data_5jets_300_predict_s160_btag.h5", ### DATA
+    #"5_jets_pt_data_300e_allklambda_no_btag": f"{spanet_dir}DATA/spanet_hh4b_data_5jets_50_ptreg_loose_s100_no_btag.h5",  # THIS
+    #"5_jets_pt_data_none_btag_300e": f"{spanet_dir}DATA/spanet_hh4b_data_5jets_300_ptnone_loose_s100_btag.h5", ### DATA
+    ##"5_jets_pt_data_vary_loose_btag_300e_01_10_rerun_nophi": f"{spanet_dir}DATA/rerun/spanet_rerun_hh4b_data_5jets_300_ptvary_loose_s100_btag_01_10_nophi.h5",
+    #"5_jets_pt_data_loose_btag_300e_nophi": f"{spanet_dir}DATA/spanet_hh4b_data_5jets_300_ptreg_loose_s100_btag_nophi.h5",
+
+    #### onlylog ####
+    #"5_jets_pt_data_btag_300e": f"{spanet_dir}DATA/spanet_hh4b_data_5jets_300_predict_s160_btag.h5", ### DATA
+    #"5_jets_pt_data_vary_loose_btag_300e_03_17_rerun": f"{spanet_dir}DATA/rerun/spanet_rerun_hh4b_data_5jets_300_ptvary_loose_s100_btag_03_17.h5",
+    #"5_jets_pt_data_vary_loose_btag_300e_wide_onlylog": f"{spanet_dir}DATA/spanet_hh4b_data_5jets_300_ptvary_wide_onlylog_loose_s100_btag.h5",
+    
+    ##### final_comp #####
+    #"5_jets_pt_data_btag_300e": f"{spanet_dir}DATA/spanet_hh4b_data_5jets_300_predict_s160_btag.h5", ### DATA
+    #"5_jets_pt_data_vary_loose_btag_300e_03_17_rerun": f"{spanet_dir}DATA/rerun/spanet_rerun_hh4b_data_5jets_300_ptvary_loose_s100_btag_03_17.h5",
 
   # "5_jets_pt_true_vary_loose_btag_allklambda": f"{spanet_dir}../samplesets/loose_selection_random_pt_mass/output_JetGood_train.h5",  # THIS
   # "5_jets_pt_true_vary_loose_btag_wide_allklambda": f"{spanet_dir}../samplesets/loose_selection_random_pt_mass_wide/output_JetGood_train.h5",  # THIS
@@ -150,10 +172,11 @@ true_dict = {
     "5_jets_pt_allklambda": f"{true_dir_thierry}/loose_selection/output_JetGood_test.h5",
     "4_jets_pt_allklambda": f"{true_dir_thierry}/loose_selection/output_JetGoodHiggs_test.h5",
     "5_jets_pt_data": f"{true_dir_thierry}/DATA_loose_cut/output_JetGood_test.h5",
-    "5_jets_pt_true_btag_allklambda": f"{spanet_dir}../samplesets/loose_selection/output_JetGood_train.h5",  # THIS
-    "5_jets_pt_true_vary_loose_btag_allklambda": f"{spanet_dir}../samplesets/loose_selection_random_pt_mass/output_JetGood_train.h5",  # THIS
-    "5_jets_pt_true_vary_loose_btag_wide_allklambda": f"{spanet_dir}../samplesets/loose_selection_random_pt_mass_wide/output_JetGood_train.h5",  # THIS
-    "5_jets_pt_true_vary_loose_btag_01_10_allklambda": f"{spanet_dir}../samplesets/loose_selection_random_pt_mass_01_10/output_JetGood_train.h5",  # THIS
+    "5_jets_pt_true_btag_allklambda": f"{spanet_dir}../spanet_samples/loose_selection/output_JetGood_train.h5",  # THIS
+    "5_jets_pt_true_vary_loose_btag_allklambda": f"{spanet_dir}../spanet_samples/loose_selection_random_pt_mass/output_JetGood_train.h5",  # THIS
+    "5_jets_pt_true_vary_loose_btag_wide_allklambda": f"{spanet_dir}../spanet_samples/loose_selection_random_pt_mass_wide/output_JetGood_train.h5",  # THIS
+    "5_jets_pt_true_vary_loose_btag_01_10_allklambda": f"{spanet_dir}../spanet_samples/loose_selection_random_pt_mass_01_10/output_JetGood_train.h5",  # THIS
+    "5_jets_pt_allklambda_preEE_eval": f"{true_dir_thierry}../spanet_samples/loose_all2022/preEE/output_JetGood_test.h5"
 }
 
 run2_dataset = "4_jets_allklambda_newkl_newCuts"  # "/work/mmalucch/out_hh4b/out_spanet/output_JetGood_test.h5",
@@ -167,7 +190,6 @@ names_dict = {
     "5_jets_pt_SM_50e_allklambda": "SPANet 5 jets, 5th jet pT ordered SM train",
     "5_jets_pt_btag_50e_allklambda": "SPANet 5 jets pt order with btag 50e",
     "5_jets_pt_btag_300e_allklambda": "SPANet 5 jets pt order with btag",
-    "5_jets_ptnone_btag_300e_allklambda": "SPANet 5 jets no pt with btag",
     "5_jets_ptreg_loose_btag_300e_allklambda_nophi": "btag no phi",
     "5_jets_ptvary_loose_btag_300e_wide_allklambda_SM": "SPANet 5 jets pt order, ptvary [0.3,1.7], loose, SM",
     "5_jets_ptvary_loose_btag_300e_wide_allklambda_onlylog": "SPANet 5 jets pt order, ptvary [0.3,1.7], loose, no normalization",
@@ -266,9 +288,10 @@ color_dict = {
     "5_jets_ptvary_loose_btag_300e_wide_allklambda_SM": "lime",
     "5_jets_ptvary_loose_btag_300e_wide_allklambda_onlylog": "deeppink",
     "5_jets_ptvary_loose_btag_300e_01_10_allklambda": "orange",
-    "5_jets_ptvary_loose_btag_300e_allklambda": "gold",
+    "5_jets_ptvary_loose_btag_300e_allklambda": "orange",
     "5_jets_pt_SM_50e_allklambda": "gold",
     "5_jets_ptnone_300e_allklambda": "cyan",
+    "5_jets_ptnone_btag_300e_allklambda": "orange",
     "5_jets_ptvary_tight_btag_300e_wide_allklambda": "cyan",
     "5_jets_ptvary_tight_btag_300e_allklambda": "darkcyan",
     "5_jets_pt_data_btag_300e_allklambda": "navy",
@@ -280,7 +303,10 @@ color_dict = {
    "5_jets_pt_data_vary_loose_btag_300e_01_10_rerun": "tan",
    "5_jets_pt_data_vary_loose_btag_300e_01_10_rerun_nophi": "magenta",
    "5_jets_pt_data_vary_loose_btag_300e_03_17_rerun": "darkgoldenrod",
+      "5_jets_pt_data_vary_loose_btag_300e": "orange",
     "5_jets_ptvary_loose_btag_300e_01_10_allklambda_rerun": "tan",
     "5_jets_ptvary_loose_btag_300e_01_10_allklambda_rerun_nophi": "magenta",
     "5_jets_ptvary_loose_btag_300e_03_17_allklambda_rerun": "darkgoldenrod",
+    "5_jets_preEE_300e_allklambda_preEE_eval": "royalblue"
+    "5_jets_postEE_300e_allklambda_preEE_eval": "orange"
 }

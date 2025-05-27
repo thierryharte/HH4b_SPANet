@@ -213,14 +213,21 @@ def best_reco_higgs(jet_collection, idx_collection):
 def plot_histos_1d(
     bins, true, run2, spanet, spanet_labels, true_labels, num, name="", plot_dir="plots"
 ):
-    if any(["data" in label for label in spanet_labels]) or not TRUE_PAIRING:
+    #We want to add a ratio plot with run2 ratios. Basically to see the difference between the SPANet and Dhh pairings.
+    compare_run2 = True
+    if compare_run2 and run2:
+        fig, (ax, ax_residuals) = plt.subplots(
+            figsize=(6, 6), nrows=2, sharex=True, gridspec_kw={"height_ratios": [3, 1]}
+        )
+    #Otherwise we would have baseline
+    elif any(["data" in label for label in spanet_labels]) or not TRUE_PAIRING:
         fig, ax = plt.subplots(
             figsize=(6, 6),
         )
         ax.set_xlabel(
             r"Leading $m_{H}$ [GeV]" if num == 1 else r"Subleading $m_{H}$ [GeV]"
         )
-
+    #This would be the normal ratio with comparison to true values
     else:
         fig, (ax, ax_residuals) = plt.subplots(
             figsize=(6, 6), nrows=2, sharex=True, gridspec_kw={"height_ratios": [3, 1]}
@@ -231,25 +238,35 @@ def plot_histos_1d(
     for sn, label in zip(spanet, spanet_labels):
         if label[-4:] != "_1.0" and "." in label[-3]:
             continue
+        #counts, edges = np.histogram(sn, bins=bins)
+        #total_width = max(sn)-min(sn)
+        #norm_counts = counts / (total_width * np.sum(counts))
+        #ax.bar(edges[:-1], norm_counts, width=np.diff(edges), align="edge", alpha=0.7)
         ax.hist(
             sn,
             bins,
             label=f"{names_dict[label] if label in names_dict else label}",
             histtype="step",
             linewidth=1,
-            density=True,
+            density=False,
+            weights=np.repeat(1.0/(len(sn)*np.diff(bins)[0]), len(sn)),
             color=color_dict[label] if label in color_dict else None,
         )
         if check_names(label) in labels_list:
             continue
         if "data" not in label and TRUE_PAIRING:  # and len(labels_list) == 0:
+            #counts, edges = np.histogram(true[check_names(label)], bins=bins)
+            #total_width = max(true[check_names(label)])-min(true[check_names(label)])
+            #norm_counts = counts / (total_width * np.sum(counts))
+            #ax.bar(edges[:-1], norm_counts, width=np.diff(edges), align="edge", alpha=0.7)
             ax.hist(
                 true[check_names(label)],
                 bins,
                 label=f"True ({true_labels[check_names(label)]})",
                 histtype="step",
                 linewidth=1,
-                density=True,
+                density=False,
+                weights=np.repeat(1.0/(len(true[check_names(label)]*np.diff(bins)[0]), len(true[check_names(label)]))),
                 color="black" if len(labels_list) == 0 else "purple",
             )
         if run2 and len(labels_list) == 0:
@@ -258,6 +275,10 @@ def plot_histos_1d(
             )
             print("plotting run2")
             print(which_run2)
+            #counts, edges = np.histogram(run2[which_run2], bins=bins)
+            #total_width = max(run2[which_run2])-min(run2[which_run2])
+            #norm_counts = counts / (total_width * np.sum(counts))
+            #ax.bar(edges[:-1], norm_counts, width=np.diff(edges), align="edge", alpha=0.7)
             ax.hist(
                 run2[which_run2],
                 bins,
@@ -265,21 +286,30 @@ def plot_histos_1d(
                 label="D$_{{{HH}}}$ - method", #+f"({true_labels[which_run2]})",
                 histtype="step",
                 linewidth=1,
-                density=True,
+                density=False,
+                weights=np.repeat(1.0/(len(run2[which_run2])*np.diff(bins)[0]), len(run2[which_run2])),
                 color="yellowgreen",
             )
         labels_list.append(check_names(label))
     ax.grid(linestyle=":")
+    # true_hist = [np.histogram(true[i], bins, weights=np.ones_like(true[i])/len(true[i])) for i in range(len(true))]
     true_hist = [np.histogram(true[i], bins) for i in range(len(true))]
+    true_norm = [len(i) for i in true]
     # print("true_hist", true_hist)
     run2_hist = (
+        # [np.histogram(run2[i], bins, weights=np.ones_like(run2[i])/len(run2[i])) for i in range(len(run2))] if run2 else []
         [np.histogram(run2[i], bins) for i in range(len(run2))] if run2 else []
     )
+    run2_norm = [len(i) for i in run2] if run2 else []
     spanet_hists = [
+        #np.histogram(spanet[i], bins, weights=np.ones_like(spanet[i]) / len(spanet[i]))
         np.histogram(spanet[i], bins)
         for i in range(len(spanet))
     ]
-    print("spanet_hists",spanet_hists)
+    spanet_norm = [len(i) for i in spanet]
+    print(run2_norm)
+    print(spanet_norm)
+    print("spanet_hists")
     print(len(spanet_hists))
     ax.set_ylim(
         0,
@@ -288,61 +318,113 @@ def plot_histos_1d(
                 spanet[0],
                 # true[check_names(spanet_labels[0])],
                 bins,
-                density=True,
+                density=False,
+                weights=np.repeat(1.0/(len(spanet[0])*np.diff(bins)[0]), len(spanet[0])),
             )[0]
         )
-        * (1.6 if "peak" not in name else 1.6),
+        * (1.8 if "peak" not in name else 1.6),
     )
+    labels_list = []
+    if compare_run2 and run2:
+        # Plot the residuals with respect to Run2
+        print(len(spanet_labels))
+        print(len(spanet_hists[0][0]))
+        print(len(spanet_hists[0][0]))
 
-    # plot the residuals respect to true
-    residuals_run2 = [
-        (r[0] / np.sum(r[0])) / (t[0] / np.sum(t[0]))
-        for r, t in zip(run2_hist, true_hist)
-    ]
-    print(len(spanet_labels))
-    print(len(spanet_hists[0][0]))
-    print(len(spanet_hists[0][0]))
-
-    residuals_spanet = [
-        (spanet_hists[i][0] / np.sum(spanet_hists[i][0]))
-        / (
-            true_hist[check_names(spanet_labels[i])][0]
-            / np.sum(true_hist[check_names(spanet_labels[i])][0])
-        )
-        for i in range(len(spanet_labels))
-    ]
-
-
-    residual_run2_err = (
-        [
-            np.sqrt(
-                (np.sqrt(r[0]) / t[0]) ** 2 + ((np.sqrt(t[0]) * r[0]) / t[0] ** 2) ** 2
+        res_spanet_run2 = [
+            (spanet_hists[i][0]/spanet_norm[i])
+            / (
+                run2_hist[which_run2][0] / run2_norm[which_run2]
             )
-            * (np.sum(t[0]) / np.sum(r[0]))
+            for i in range(len(spanet_labels))
+        ]
+        
+        err_spanet = [np.sqrt(spanet_hists[i][0])/spanet_norm[i] for i in range(len(spanet_hists))]
+        err_run2 = [np.sqrt(run2_hist[i][0])/run2_norm[i] for i in range(len(run2_hist))]
+        res_spanet_run2_err = [
+            np.sqrt(
+                (err_spanet[i] / (run2_hist[which_run2][0])/run2_norm[which_run2]) ** 2
+                + (
+                    (err_run2[which_run2] * (spanet_hists[i][0]/spanet_norm[i]))
+                    / (run2_hist[which_run2][0]/run2_norm[which_run2]) ** 2
+                )
+                ** 2
+            )
+            for i in range(len(spanet_hists))
+        ]
+        for sn, label, sn_err in zip(
+            res_spanet_run2, spanet_labels, res_spanet_run2_err
+        ):
+            ax_residuals.errorbar(
+                run2_hist[which_run2][1][:-1],
+                sn,
+                yerr=sn_err,
+                marker=".",
+                # markersize=1,
+                label=f"{names_dict[label]}" if label in names_dict else label,
+                linestyle="None",
+                color=color_dict[label] if label in color_dict else None,
+            )
+            if check_names(label) in labels_list:
+                continue
+            labels_list.append(check_names(label))
+
+        # plot zero line
+        ax_residuals.axhline(1, color="black", linewidth=1)
+        ax_residuals.set_xlabel(
+            r"Leading $m_{H}$ [GeV]" if num == 1 else r"Subleading $m_{H}$ [GeV]"
+        )
+        ax_residuals.set_ylabel("SPANet / $D_{HH}$")
+
+        ax_residuals.grid()
+    elif not any(["data" in label for label in spanet_labels]) and TRUE_PAIRING:
+    # plot the residuals respect to true
+        residuals_run2 = [
+            (r[0] / np.sum(r[0])) / (t[0] / np.sum(t[0]))
             for r, t in zip(run2_hist, true_hist)
         ]
-        if run2
-        else []
-    )
+        print(len(spanet_labels))
+        print(len(spanet_hists[0][0]))
+        print(len(spanet_hists[0][0]))
 
-    # residual_spanet_err = [
-    #     np.sqrt(sn[0]) / true_hist[check_names(label)][0]
-    #     for sn, label in zip(spanet_hists, spanet_labels)
-    # ]
-    residual_spanet_err = [
-        np.sqrt(
-            (np.sqrt(sn[0]) / true_hist[check_names(label)][0]) ** 2
-            + (
-                (np.sqrt(true_hist[check_names(label)][0]) * sn[0])
-                / true_hist[check_names(label)][0] ** 2
+        residuals_spanet = [
+            (spanet_hists[i][0] / np.sum(spanet_hists[i][0]))
+            / (
+                true_hist[check_names(spanet_labels[i])][0]
+                / np.sum(true_hist[check_names(spanet_labels[i])][0])
             )
-            ** 2
+            for i in range(len(spanet_labels))
+        ]
+
+
+        residual_run2_err = (
+            [
+                np.sqrt(
+                    (np.sqrt(r[0]) / t[0]) ** 2 + ((np.sqrt(t[0]) * r[0]) / t[0] ** 2) ** 2
+                )
+                * (np.sum(t[0]) / np.sum(r[0]))
+                for r, t in zip(run2_hist, true_hist)
+            ]
+            if run2
+            else []
         )
-        * (np.sum(true_hist[check_names(label)][0]) / np.sum(sn[0]))
-        for sn, label in zip(spanet_hists, spanet_labels)
-    ]
-    labels_list = []
-    if not any(["data" in label for label in spanet_labels]) and TRUE_PAIRING:
+
+      # residual_spanet_err = [
+      #     np.sqrt(sn[0]) / true_hist[check_names(label)][0]
+      #     for sn, label in zip(spanet_hists, spanet_labels)
+      # ]
+        residual_spanet_err = [
+            np.sqrt(
+                (np.sqrt(sn[0]) / true_hist[check_names(label)][0]) ** 2
+                + (
+                    (np.sqrt(true_hist[check_names(label)][0]) * sn[0])
+                    / true_hist[check_names(label)][0] ** 2
+                )
+                ** 2
+            )
+            * (np.sum(true_hist[check_names(label)][0]) / np.sum(sn[0]))
+            for sn, label in zip(spanet_hists, spanet_labels)
+        ]
 
         for sn, label, sn_err in zip(
             residuals_spanet, spanet_labels, residual_spanet_err
