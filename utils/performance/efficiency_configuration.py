@@ -15,7 +15,7 @@ print(
 # This is rather special
 # We need a run2 dataset. This is here defined over the spanet model. However, it only depends on the true file defined in the spanet dictionary. MIGHT HAVE TO BE IMPROVED.
 # The reason not to go directly with the true file is, that we are not reading out all the true files anymore...
-run2_dataset = "5_jets_postEE_300e_allklambda_preEE_eval"
+run2_dataset = "5_jets_ptvary_loose_btag_300e_03_17_allklambda_rerun"
 #run2_dataset = "5_jets_pt_btag_300e_allklambda"
 
 spanet_dict = {
@@ -69,16 +69,47 @@ spanet_dict = {
     #
 
     ##### ERA preEE #####
-    #"5_jets_preEE_300e_allklambda_preEE_eval": {
-    #    "file": f"{spanet_dir}/spanet_hh4b_preEE_5jets_100_pvary_loose_s300_eval_on_preEE.h5",
-    #    "true": "5_jets_pt_allklambda_preEE_eval",
-    #    "label": "pt Flattened preEE trained",
-    #    "color": "darkblue"},
+    "5_jets_preEE_300e_allklambda_preEE_eval": {
+        "file": f"{spanet_dir}/spanet_hh4b_preEE_5jets_100_pvary_loose_s300_eval_on_preEE.h5",
+        "true": "5_jets_pt_allklambda_preEE_eval",
+        "label": "pt Flattened preEE trained preEE eval",
+        "color": "skyblue"},
     "5_jets_postEE_300e_allklambda_preEE_eval": {
         "file": f"{spanet_dir}/spanet_hh4b_postEE_5jets_100_pvary_loose_s300_eval_on_preEE.h5",
         "true": "5_jets_pt_allklambda_preEE_eval",
-        "label": "pT Flatened postEE trained",
+        "label": "pT Flatened postEE trained preEE eval",
         "color": "royalblue"},
+    "5_jets_inclusive_300e_allklambda_preEE_eval": {
+        "file": f"{spanet_dir}/spanet_hh4b_inclusive_5jets_100_pvary_loose_s300_eval_on_preEE.h5",
+        "true": "5_jets_pt_allklambda_preEE_eval",
+        "label": "pT Flatened inclusive trained preEE eval",
+        "color": "darkblue"},
+    "5_jets_inclusive_rebalance_300e_allklambda_preEE_eval": {
+        "file": f"{spanet_dir}/spanet_hh4b_inclusive_rebalance_5jets_100_pvary_loose_s300_eval_on_preEE.h5",
+        "true": "5_jets_pt_allklambda_preEE_eval_weighted",
+        "label": "pT Flatened inclusive year balanced trained preEE eval",
+        "color": "purple"},
+    ####### ERA postEE ######
+    "5_jets_preEE_300e_allklambda_postEE_eval": {
+        "file": f"{spanet_dir}/spanet_hh4b_preEE_5jets_100_pvary_loose_s300_eval_on_postEE.h5",
+        "true": "5_jets_pt_allklambda_postEE_eval",
+        "label": "pt Flattened preEE trained postEE eval",
+        "color": "gold"},
+    "5_jets_ptvary_loose_btag_300e_03_17_allklambda_rerun": {
+        "file": f"{spanet_dir}rerun/spanet_rerun_hh4b_data_5jets_300_ptvary_loose_s100_btag_03_17.h5",
+        "true": "5_jets_pt_true_btag_allklambda",
+        "label": "pT Flattened postEE trained postEE eval",
+        "color": "orange"},
+    "5_jets_inclusive_300e_allklambda_postEE_eval": {
+        "file": f"{spanet_dir}/spanet_hh4b_inclusive_5jets_100_pvary_loose_s300_eval_on_postEE.h5",
+        "true": "5_jets_pt_allklambda_postEE_eval",
+        "label": "pT Flatened inclusive trained postEE eval",
+        "color": "darkorange"},
+    "5_jets_inclusive_rebalance_300e_allklambda_postEE_eval": {
+        "file": f"{spanet_dir}/spanet_hh4b_inclusive_rebalance_5jets_100_pvary_loose_s300_eval_on_postEE.h5",
+        "true": "5_jets_pt_allklambda_postEE_eval_weighted",
+        "label": "pT Flatened inclusive year balanced trained postEE eval",
+        "color": "deeppink"},
 
 
     ############################################## DATA ###########################################################
@@ -147,6 +178,7 @@ print(
     " if you add a new true file you have to update the efficiency_functions.check_names",
     " and add a new if statement in the function",
 )
+# The `klambda` parameter so far only determines, if there is different klambdas or not. The type if not `none` doesn't matter.
 true_dict = {
     "4 jets" : {"name": f"{true_dir_matteo}output_JetGoodHiggs_test.h5" , "klambda": "none"},
     "5 jets" : {"name": f"{true_dir_matteo}output_JetGood_test.h5" , "klambda": "none"},
@@ -174,4 +206,7 @@ true_dict = {
     "5_jets_pt_true_vary_loose_btag_wide_allklambda" : {"name": f"{spanet_dir}../spanet_samples/loose_selection_random_pt_mass_wide/output_JetGood_train.h5" , "klambda": "postEE"},  # THIS
     "5_jets_pt_true_vary_loose_btag_01_10_allklambda" : {"name": f"{spanet_dir}../spanet_samples/loose_selection_random_pt_mass_01_10/output_JetGood_train.h5" , "klambda": "postEE"},  # THIS
     "5_jets_pt_allklambda_preEE_eval" : {"name": f"{true_dir_thierry}../spanet_samples/loose_all2022/preEE/output_JetGood_test.h5" , "klambda": "preEE"},
+    "5_jets_pt_allklambda_postEE_eval" : {"name": f"{true_dir_thierry}../spanet_samples/loose_all2022/postEE/output_JetGood_test.h5" , "klambda": "preEE"},
+    "5_jets_pt_allklambda_preEE_eval_weighted" : {"name": f"{true_dir_thierry}../spanet_samples/loose_all2022/preEE/with_weights/output_JetGood_test.h5" , "klambda": "preEE"},
+    "5_jets_pt_allklambda_postEE_eval_weighted" : {"name": f"{true_dir_thierry}../spanet_samples/loose_all2022/postEE/with_weights/output_JetGood_test.h5" , "klambda": "preEE"},
 }
