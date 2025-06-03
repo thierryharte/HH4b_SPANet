@@ -6,7 +6,7 @@ from math import sqrt
 import os
 import argparse
 
-from efficiency_functions import separate_klambda, plot_diff_eff, plot_diff_eff_klambda, plot_histos_1d, plot_histos_2d, plot_mhh, reco_higgs, distance_pt_func, best_reco_higgs
+from efficiency_functions import separate_klambda, plot_diff_eff, plot_diff_eff_klambda, plot_histos_1d, plot_histos_2d, plot_mhh, reco_higgs, distance_pt_func, best_reco_higgs, calculate_efficiencies
 from efficiency_configuration import spanet_dict, true_dict, run2_dataset
 
 vector.register_numba()
@@ -376,14 +376,15 @@ for model_name, file_dict in spanet_dict.items():
         best_reco_higgs(j, idx)
         for j, idx in zip(jet_fully_matched, allrun2_idx_fully_matched)
     ]
-    true_higgs_fully_matched = [
-        best_reco_higgs(j, idx)
-        for j, idx in zip(jet_fully_matched, alltrue_idx_fully_matched)
-    ]
-    true_hh_fully_matched = [
-        true_h_matched[:, 0] + true_h_matched[:, 1]
-        for true_h_matched in true_higgs_fully_matched
-    ]
+    if not args.data:
+        true_higgs_fully_matched = [
+            best_reco_higgs(j, idx)
+            for j, idx in zip(jet_fully_matched, alltrue_idx_fully_matched)
+        ]
+        true_hh_fully_matched = [
+            true_h_matched[:, 0] + true_h_matched[:, 1]
+            for true_h_matched in true_higgs_fully_matched
+        ]
     # I need the differential efficiency for the
     # True pairing
     # Spanet pairing
@@ -391,59 +392,39 @@ for model_name, file_dict in spanet_dict.items():
     # All of these are just lists
     if not args.data:
         # Differential efficiency
-        diff_eff_run2 = []
-        unc_diff_eff_run2 = []
-        total_diff_eff_run2 = []
-        total_unc_diff_eff_run2 = []
-        diff_eff_spanet = []
-        unc_diff_eff_spanet = []
-        total_diff_eff_spanet = []
-        total_unc_diff_eff_spanet = []
+        eff_dict = {
+            "diff_eff_run2": [],
+            "unc_diff_eff_run2": [],
+            "total_diff_eff_run2": [],
+            "total_unc_diff_eff_run2": [],
+            "diff_eff_spanet": [],
+            "unc_diff_eff_spanet": [],
+            "total_diff_eff_spanet": [],
+            "total_unc_diff_eff_spanet": [],
+        }
 
         for true_hh, matched_spanet, matched_run2, mask_matched in zip(
                 true_hh_fully_matched, correctly_fully_matched_spanet, correctly_fully_matched_run2, mask_fully_matched
                 ):
-            temp_diff_eff_run2 = []
-            temp_unc_diff_eff_run2 = []
-            temp_total_diff_eff_run2 = []
-            temp_total_unc_diff_eff_run2 = []
-            temp_diff_eff_spanet = []
-            temp_unc_diff_eff_spanet = []
-            temp_total_diff_eff_spanet = []
-            temp_total_unc_diff_eff_spanet = []
+            temp = {k: [] for k in eff_dict.keys()}
             for i in range(1, len(mhh_bins)):
                 mask = (true_hh.mass > mhh_bins[i - 1]) & (true_hh.mass < mhh_bins[i])
-                eff_run2 = ak.sum(matched_run2[mask]) / ak.count(matched_run2[mask])
-                unc_eff_run2 = sqrt(eff_run2 * (1 - eff_run2) / ak.count(matched_run2[mask]))
 
-                frac_fully_matched = ak.sum(mask_matched[mask]) / len(mask_matched[mask])
-                total_eff_run2 = eff_run2 * frac_fully_matched
-                unc_total_eff_run2 = sqrt((total_eff_run2 * (1 - total_eff_run2)) / len(mask_matched[mask]))
+                eff_run2, unc_eff_run2, total_eff_run2, unc_total_eff_run2 calculate_efficiencies(matched_run2, mask, mask_matched)
+                eff_spanet, unc_eff_spanet, total_eff_spanet, unc_total_eff_spanet calculate_efficiencies(matched_spanet, mask, mask_matched)
 
-                eff_spanet = ak.sum(matched_spanet[mask]) / ak.count(matched_spanet[mask])
-                unc_eff_spanet = sqrt(eff_spanet * (1 - eff_spanet)/ ak.count(matched_spanet[mask]))
-                frac_fully_matched = ak.sum(mask_matched[mask]) / len(mask_matched[mask])
-                total_eff_spanet = eff_spanet * frac_fully_matched
-                unc_total_eff_spanet = sqrt((total_eff_spanet * (1 - total_eff_spanet)) / len(mask_matched[mask]))
-
-                temp_diff_eff_run2.append(eff_run2)
-                temp_unc_diff_eff_run2.append(unc_eff_run2)
-                temp_total_diff_eff_run2.append(total_eff_run2)
-                temp_total_unc_diff_eff_run2.append(unc_total_eff_run2)
-                temp_diff_eff_spanet.append(eff_spanet)
-                temp_unc_diff_eff_spanet.append(unc_eff_spanet)
-                temp_total_diff_eff_spanet.append(total_eff_spanet)
-                temp_total_unc_diff_eff_spanet.append(unc_total_eff_spanet)
+                temp["diff_eff_run2"].append(eff_run2)
+                temp["unc_diff_eff_run2"].append(unc_eff_run2)
+                temp["total_diff_eff_run2"].append(total_eff_run2)
+                temp["total_unc_diff_eff_run2"].append(unc_total_eff_run2)
+                temp["diff_eff_spanet"].append(eff_spanet)
+                temp["unc_diff_eff_spanet"].append(unc_eff_spanet)
+                temp["total_diff_eff_spanet"].append(total_eff_spanet)
+                temp["total_unc_diff_eff_spanet"].append(unc_total_eff_spanet)
             # not so nice, but here we are filling the results from the different lists into a new list.
             # Remember, we iterate here through: [inclusive, *[single kls])
-            diff_eff_run2.append(temp_diff_eff_run2)
-            unc_diff_eff_run2.append(temp_unc_diff_eff_run2)
-            total_diff_eff_run2.append(temp_total_diff_eff_run2)
-            total_unc_diff_eff_run2.append(temp_total_unc_diff_eff_run2)
-            diff_eff_spanet.append(temp_diff_eff_spanet)
-            unc_diff_eff_spanet.append(temp_unc_diff_eff_spanet)
-            total_diff_eff_spanet.append(temp_total_diff_eff_spanet)
-            total_unc_diff_eff_spanet.append(temp_total_unc_diff_eff_spanet)
+            for key in eff_dict.keys():
+                eff_data[key].append(temp[key])
 
 
 

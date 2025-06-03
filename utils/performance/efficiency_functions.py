@@ -101,6 +101,22 @@ def best_reco_higgs(jet_collection, idx_collection):
     higgs_candidates_unflatten_order = higgs_pair[higgs_candidates_unflatten_order_idx]
     return higgs_candidates_unflatten_order
 
+def calculate_efficiencies(matched, mask, mask_matched):
+    ''' This function is designed to determine the differencial efficiencies by mhh_bins.
+    Used to avoid repetition between run2 and spanet.
+    :param matched: the events passing a mask for being fully matched
+    :param mask: the mask determining the current bin
+    :param mask_matched: masking array for an event being fully matched (not very efficient...)
+
+    :return: efficiency, uncertainty of efficiency, total efficiency, uncertainty of total efficiency
+    '''
+    eff = ak.sum(matched[mask]) / ak.count(matched[mask])
+    unc_eff = sqrt(eff * (1 - eff) / ak.count(matched[mask]))
+    frac_fully_matched = ak.sum(mask_matched[mask]) / len(mask_matched[mask])
+    total_eff = eff * frac_fully_matched
+    unc_total_eff = sqrt((total_eff * (1 - total_eff)) / len(mask_matched[mask]))
+    return eff, unc_eff, total_eff, unc_total_eff
+
 
 def plot_histos_1d(
     bins, spanet, run2, true, labels, color, num, name="", plot_dir="plots"
