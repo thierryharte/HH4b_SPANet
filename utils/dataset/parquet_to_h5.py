@@ -53,6 +53,13 @@ parser.add_argument(
     help="Spanet training",
 )
 parser.add_argument(
+    "-w",
+    "--reweight",
+    action="store_true",
+    default=True,
+    help="Reweight the different regions to have same sum",
+)
+parser.add_argument(
     "-f",
     "--frac-train",
     type=float,
@@ -702,11 +709,11 @@ def create_inputs(file, jets, jet_4vector, max_num_jets, global_fifth_jet, event
     kl_ds = file.create_dataset(
         "INPUTS/Event/kl", np.shape(kl_array), dtype="float32", data=kl_array
     )
-
-    random_weights_array = ak.to_numpy(events.random_pt_weights)
-    random_weights_ds = file.create_dataset(
-        "INPUTS/Event/random_pt_weights", np.shape(random_weights_array), dtype="float32", data=random_weights_array
-    )
+    if "random_pt_weights" in events:
+        random_weights_array = ak.to_numpy(events.random_pt_weights)
+        random_weights_ds = file.create_dataset(
+            "INPUTS/Event/random_pt_weights", np.shape(random_weights_array), dtype="float32", data=random_weights_array
+        )
 
     if args.classification:
         weight_array = ak.to_numpy(events.weight)
@@ -1017,7 +1024,7 @@ def create_inputs(file, jets, jet_4vector, max_num_jets, global_fifth_jet, event
             "WEIGHTS/weight",
             np.shape(weight_array),
             dtype="float32",
-            data=ak.ones_like(weight_array,dtype=float)
+            data=weight_array,
         )
     # create new global variables for the fifth jet (if it exists) otherwise fill with PAD_VALUE
     if global_fifth_jet is not None:
@@ -1200,10 +1207,32 @@ def add_info_to_file(input_to_file):
 if __name__ == "__main__":
     main_dir = args.output if args.output else os.path.dirname(args.input[0])
     os.makedirs(main_dir, exist_ok=True)
+    
+    leninput = len(list(args.input))
+
     dfs = []
+    sum_gen_weights = []
     for filename in list(args.input):
-        dfs.append(ak.from_parquet(filename))
+        newdf = ak.from_parquet(filename)
+        print(newdf.type)
+        sum_gen_weights.append(sum(newdf.event.weight))
+        dfs.append(newdf)
         print(dfs[-1].event.sb)
+    
+    if args.reweight:
+        print("Found following sums for the event weights of the files")
+        for filename, sumweight in zip(list(args.input), sum_gen_weights):
+            print(f"{filename}: {sumweight}")
+
+        update_dfs = []
+        for df, weight in zip(dfs, sum_gen_weights):
+            #dividing all the weights by the sum of the weights. Then multiplying with ratio between largest and current sum_gen_weight
+            renorm_weight = max(sum_gen_weights)/weight
+            print(f"Renormalized weight: {renorm_weight}")
+            df = ak.with_field(df, ak.with_field(df.event, df.event.weight * renorm_weight, "weight"), "event")
+            print(df.event.weight)
+            update_dfs.append(df)
+        dfs = update_dfs
 
     df = ak.concatenate(dfs)
     print("df", df)

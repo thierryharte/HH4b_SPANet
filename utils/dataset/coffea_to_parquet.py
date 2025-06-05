@@ -387,14 +387,16 @@ for sample in samples:
                 ## Add the kl coefficient to the dataset
     # The kl coefficient is added to the dataset as a new feature.
     print(cs)
-    zipped_dict["event"] = ak.zip(
-        {"kl": kl_dataset, "sb": sb_dataset, "weight": cs["weight"].value},
-        with_name="Momentum4D",
-    )
-    zipped_dict["event"] = ak.zip(
-            {"kl": kl_dataset, "sb": sb_dataset, "weight": cs["weight"].value, "random_pt_weights": cs["events_random_pt_weights"].value},
-        with_name="Momentum4D",
-    )
+    try:
+        zipped_dict["event"] = ak.zip(
+                {"kl": kl_dataset, "sb": sb_dataset, "weight": cs["weight"].value, "random_pt_weights": cs["events_random_pt_weights"].value},
+            with_name="Momentum4D",
+        )
+    except:
+        zipped_dict["event"] = ak.zip(
+            {"kl": kl_dataset, "sb": sb_dataset, "weight": cs["weight"].value},
+            with_name="Momentum4D",
+        )
 
     if "GluGlutoHHto4B" not in samples and args.reduce :
         print("sample loop", samples)
