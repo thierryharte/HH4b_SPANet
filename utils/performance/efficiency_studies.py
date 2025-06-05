@@ -410,8 +410,8 @@ for model_name, file_dict in spanet_dict.items():
             for i in range(1, len(mhh_bins)):
                 mask = (true_hh.mass > mhh_bins[i - 1]) & (true_hh.mass < mhh_bins[i])
 
-                eff_run2, unc_eff_run2, total_eff_run2, unc_total_eff_run2 calculate_efficiencies(matched_run2, mask, mask_matched)
-                eff_spanet, unc_eff_spanet, total_eff_spanet, unc_total_eff_spanet calculate_efficiencies(matched_spanet, mask, mask_matched)
+                eff_run2, unc_eff_run2, total_eff_run2, unc_total_eff_run2 = calculate_efficiencies(matched_run2, mask, mask_matched)
+                eff_spanet, unc_eff_spanet, total_eff_spanet, unc_total_eff_spanet = calculate_efficiencies(matched_spanet, mask, mask_matched)
 
                 temp["diff_eff_run2"].append(eff_run2)
                 temp["unc_diff_eff_run2"].append(unc_eff_run2)
@@ -424,7 +424,7 @@ for model_name, file_dict in spanet_dict.items():
             # not so nice, but here we are filling the results from the different lists into a new list.
             # Remember, we iterate here through: [inclusive, *[single kls])
             for key in eff_dict.keys():
-                eff_data[key].append(temp[key])
+                eff_dict[key].append(temp[key])
 
 
 
@@ -443,14 +443,14 @@ for model_name, file_dict in spanet_dict.items():
                 "efficiencies_fully_matched_run2" : efficiency_fully_matched_run2,
                 "total_efficiencies_fully_matched_run2" : total_efficiency_fully_matched_run2,
                 # Parameters for the diff_eff plots
-                "diff_eff_run2": diff_eff_run2,
-                "unc_diff_eff_run2": unc_diff_eff_run2,
-                "total_diff_eff_run2": total_diff_eff_run2,
-                "total_unc_diff_eff_run2": total_unc_diff_eff_run2,
-                "diff_eff_spanet": diff_eff_spanet,
-                "unc_diff_eff_spanet": unc_diff_eff_spanet,
-                "total_diff_eff_spanet": total_diff_eff_spanet,
-                "total_unc_diff_eff_spanet": total_unc_diff_eff_spanet,
+                "diff_eff_run2": eff_dict["diff_eff_run2"],
+                "unc_diff_eff_run2": eff_dict["unc_diff_eff_run2"],
+                "total_diff_eff_run2": eff_dict["total_diff_eff_run2"],
+                "total_unc_diff_eff_run2": eff_dict["total_unc_diff_eff_run2"],
+                "diff_eff_spanet": eff_dict["diff_eff_spanet"],
+                "unc_diff_eff_spanet": eff_dict["unc_diff_eff_spanet"],
+                "total_diff_eff_spanet": eff_dict["total_diff_eff_spanet"],
+                "total_unc_diff_eff_spanet": eff_dict["total_unc_diff_eff_spanet"],
                 "true_hh_fully_matched":  true_hh_fully_matched,
                 "spanet_higgs_fully_matched": spanet_higgs_fully_matched,
                 "run2_higgs_fully_matched": run2_higgs_fully_matched,
