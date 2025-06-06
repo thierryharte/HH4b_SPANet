@@ -23,6 +23,7 @@ vector.register_numba()
 vector.register_awkward()
 import psutil
 from rich.progress import track
+import onnxruntime
 
 from prediction_selection import extract_predictions
 
@@ -111,11 +112,18 @@ parser.add_argument(
     default=False,
     help="Mask for signal region",
 )
+parser.add_argument(
+    "-r",
+    "--random_pt",
+    action="store_true",
+    default=False,
+    help="Applying a random weight to pT to reduce mass dependence",
+)
 
 args = parser.parse_args()
+print(args)
 
 if args.classification or args.signal:
-    import onnxruntime
 
     sess_opts = onnxruntime.SessionOptions()
     sess_opts.execution_mode = onnxruntime.ExecutionMode.ORT_PARALLEL
@@ -152,35 +160,6 @@ def create_groups(file):
     file.create_group("INPUTS")
 
     return file
-
-
-# four vector for only fully matched events
-def jet_four_vector_fully_matched(jet):
-    jet_prov_unflat = ak.unflatten(jet.prov, len(jet))
-    jet_pt_unflat = ak.unflatten(jet.pt, len(jet))
-    jet_eta_unflat = ak.unflatten(jet.eta, len(jet))
-    jet_phi_unflat = ak.unflatten(jet.phi, len(jet))
-    jet_mass_unflat = ak.unflatten(jet.mass, len(jet))
-    jet_btag_unflat = ak.unflatten(jet.btag, len(jet))
-
-    count_ones = ak.sum(jet_prov_unflat == 1, axis=1)
-    count_twos = ak.sum(jet_prov_unflat == 2, axis=1)
-
-    mask_fully_matched = (count_ones == 2) & (count_twos == 2)
-
-    jet_fully_matched = ak.zip(
-        {
-            "pt": jet_pt_unflat[mask_fully_matched],
-            "eta": jet_eta_unflat[mask_fully_matched],
-            "phi": jet_phi_unflat[mask_fully_matched],
-            "mass": jet_mass_unflat[mask_fully_matched],
-            "btag": jet_btag_unflat[mask_fully_matched],
-            "prov": jet_prov_unflat[mask_fully_matched],
-        },
-        with_name="Momentum4D",
-    )
-    print(jet_fully_matched)
-    return jet_fully_matched
 
 
 def get_awkward_array_shape(arr):
@@ -233,6 +212,9 @@ def reconstruct_higgs(jet_collection, idx_collection):
 def create_targets(file, particle, jets_prov, filename, max_num_jets):
     indices = ak.local_index(jets_prov)
     higgs_targets = {1: ["b1", "b2"], 2: ["b3", "b4"]}
+    
+    print("PREDICTIONS BEST")
+    print(jets_prov)
 
     for j in [1, 2]:
         if particle == f"h{j}":
@@ -268,6 +250,36 @@ def create_targets(file, particle, jets_prov, filename, max_num_jets):
                 data=index_b2,
             )
 
+# four vector for only fully matched events
+def jet_four_vector_fully_matched(jet):
+    jet_prov_unflat = jet.prov
+    jet_pt_unflat = jet.pt
+    jet_eta_unflat = jet.eta
+    jet_phi_unflat = jet.phi
+    jet_mass_unflat = jet.mass
+    jet_btag_unflat = jet.btag
+    
+    print(jet_prov_unflat)
+    count_ones = ak.sum(jet_prov_unflat == 1, axis=1)
+    count_twos = ak.sum(jet_prov_unflat == 2, axis=1)
+
+    mask_fully_matched = (count_ones == 2) & (count_twos == 2)
+
+    jet_fully_matched = ak.zip(
+        {
+            "pt": jet_pt_unflat[mask_fully_matched],
+            "eta": jet_eta_unflat[mask_fully_matched],
+            "phi": jet_phi_unflat[mask_fully_matched],
+            "mass": jet_mass_unflat[mask_fully_matched],
+            "btag": jet_btag_unflat[mask_fully_matched],
+            "prov": jet_prov_unflat[mask_fully_matched],
+        },
+        with_name="Momentum4D",
+    )
+    print(jet_fully_matched)
+    return jet_fully_matched
+
+
 
 def jet_four_vector(jets_list):
 
@@ -279,7 +291,7 @@ def jet_four_vector(jets_list):
     jet_phi_unflat = jets_list.phi
     jet_mass_unflat = jets_list.mass
     jet_btag_unflat = jets_list.btag
-
+    
     jet = ak.zip(
         {
             "pt": jet_pt_unflat,
@@ -450,9 +462,45 @@ def get_pairing_information(jets, file):
         second_best_pairing_probabilities_sum,
     )
 
+def add_fields(collection, fields=["pt", "eta", "phi", "mass"], four_vec=True):
+    if four_vec:
+        fields_dict = {field: getattr(collection, field) for field in fields}
+        collection = ak.zip(
+            fields_dict,
+            with_name="PtEtaPhiMLorentzVector",
+        )
+    else:
+        for field in fields:
+            collection = ak.with_field(collection, getattr(collection, field), field)
 
-def create_inputs(file, jets, jet_4vector, max_num_jets, global_fifth_jet, events):
+    return collection
 
+def reconstruct_higgs_from_provenance(jets):
+    print(jets.prov)
+    print(len(jets))
+    print(len(jets.prov))
+
+    jet_higgs1 = jets[jets.prov == 1]
+    jet_higgs2 = jets[jets.prov == 2]
+
+    jet_higgs1 = jet_higgs1[ak.argsort(jet_higgs1.pt, axis=1, ascending=False)]    
+    jet_higgs2 = jet_higgs2[ak.argsort(jet_higgs2.pt, axis=1, ascending=False)]    
+    print(jet_higgs1.prov)
+    print(jet_higgs2.prov)
+
+    higgs_lead = add_fields(jet_higgs1[:, 0] + jet_higgs1[:, 1])
+    higgs_sub = add_fields(jet_higgs2[:, 0] + jet_higgs2[:, 1])
+
+    jets_ordered = ak.with_name(
+        ak.concatenate([jet_higgs1[:, :2], jet_higgs2[:, :2]], axis=1),
+        name="PtEtaPhiMCandidate",
+    )
+
+    return higgs_lead, higgs_sub, jets_ordered
+
+
+def create_inputs(file, jets, jet_4vector, max_num_jets, global_fifth_jet, events, **kwargs):
+    print(events)
     if args.classification or args.signal:
         (
             difference,
@@ -478,6 +526,7 @@ def create_inputs(file, jets, jet_4vector, max_num_jets, global_fifth_jet, event
                 dtype="float32",
                 data=r_HH,
             )
+            #mask_sr = np.full(len(jets), True)
 
         else:
             mask_sr = np.full(len(jets), True)
@@ -503,16 +552,83 @@ def create_inputs(file, jets, jet_4vector, max_num_jets, global_fifth_jet, event
     events = events[mask_sr]
     print("len jets", len(jets))
 
-    # first you create the variable and then the dataset
-    ptPnetRegNeutrino_array = ak.to_numpy(
-        ak.fill_none(ak.pad_none(jets.pt, max_num_jets, clip=True), PAD_VALUE)
-    )
-    ptPnetRegNeutrino_ds = file.create_dataset(
-        "INPUTS/Jet/ptPnetRegNeutrino",
-        np.shape(ptPnetRegNeutrino_array),
-        dtype="float32",
-        data=ptPnetRegNeutrino_array,
-    )
+    if args.random_pt:
+        print("")
+        print("")
+        print("random pt on")
+        print("")
+        print("")
+        jet_4vector_full = jet_four_vector_fully_matched(jets)
+        ptPnetRegNeutrino_array_orig = ak.to_numpy(
+            ak.fill_none(ak.pad_none(kwargs["jet_pt_original"], max_num_jets, clip=True), PAD_VALUE)
+        )
+        ptPnetRegNeutrino_array = ak.to_numpy(
+            ak.fill_none(ak.pad_none(jets.pt, max_num_jets, clip=True), PAD_VALUE)
+        )
+        ptPnetRegNeutrino_orig_ds = file.create_dataset(
+            "INPUTS/Jet/ptPnetRegNeutrino_unweighted",
+            np.shape(ptPnetRegNeutrino_array_orig),
+            dtype="float32",
+            data=ptPnetRegNeutrino_array_orig,
+        )
+        ptPnetRegNeutrino_ds = file.create_dataset(
+            "INPUTS/Jet/ptPnetRegNeutrino",
+            np.shape(ptPnetRegNeutrino_array),
+            dtype="float32",
+            data=ptPnetRegNeutrino_array,
+        )
+        rdm_ds = file.create_dataset(
+            "INPUTS/Event/random_pt_weight",
+            np.shape(kwargs["random_weights"]),
+            dtype="float32",
+            data=kwargs["random_weights"],
+        )
+        higgs_leading, higgs_subleading, _ = reconstruct_higgs_from_provenance(jet_4vector_full)
+        
+        for higgs, name in zip([higgs_leading, higgs_subleading], ["HiggsLeading", "HiggsSubLeading"]):
+            higgs_pt = higgs.pt
+            higgs_pt_ds = file.create_dataset(
+                f"INPUTS/{name}/pt",
+                np.shape(higgs_pt),
+                dtype="float32",
+                data=higgs_pt,
+            )
+
+            higgs_eta = higgs.eta
+            higgs_eta_ds = file.create_dataset(
+                f"INPUTS/{name}/eta",
+                np.shape(higgs_eta),
+                dtype="float32",
+                data=higgs_eta,
+            )
+
+            higgs_phi = higgs.phi
+            higgs_phi_ds = file.create_dataset(
+                f"INPUTS/{name}/phi",
+                np.shape(higgs_phi),
+                dtype="float32",
+                data=higgs_phi,
+            )
+
+            higgs_mass = higgs.mass
+            higgs_mass_ds = file.create_dataset(
+                f"INPUTS/{name}/mass",
+                np.shape(higgs_mass),
+                dtype="float32",
+                data=higgs_mass,
+            )
+
+    else:
+        # first you create the variable and then the dataset
+        ptPnetRegNeutrino_array = ak.to_numpy(
+            ak.fill_none(ak.pad_none(jets.pt, max_num_jets, clip=True), PAD_VALUE)
+        )
+        ptPnetRegNeutrino_ds = file.create_dataset(
+            "INPUTS/Jet/ptPnetRegNeutrino",
+            np.shape(ptPnetRegNeutrino_array),
+            dtype="float32",
+            data=ptPnetRegNeutrino_array,
+        )
 
     mask = ~(ptPnetRegNeutrino_array == PAD_VALUE)
     mask_ds = file.create_dataset(
@@ -554,7 +670,6 @@ def create_inputs(file, jets, jet_4vector, max_num_jets, global_fifth_jet, event
     btag_ds = file.create_dataset(
         "INPUTS/Jet/btag", np.shape(btag), dtype="float32", data=btag
     )
-
     btag_wp_array_ak = ak.fill_none(
         ak.pad_none(
             ak.where(btag > btag_wp[0], 1, 0)
@@ -586,6 +701,11 @@ def create_inputs(file, jets, jet_4vector, max_num_jets, global_fifth_jet, event
     kl_array = ak.to_numpy(events.kl)
     kl_ds = file.create_dataset(
         "INPUTS/Event/kl", np.shape(kl_array), dtype="float32", data=kl_array
+    )
+
+    random_weights_array = ak.to_numpy(events.random_pt_weights)
+    random_weights_ds = file.create_dataset(
+        "INPUTS/Event/random_pt_weights", np.shape(random_weights_array), dtype="float32", data=random_weights_array
     )
 
     if args.classification:
@@ -656,6 +776,7 @@ def create_inputs(file, jets, jet_4vector, max_num_jets, global_fifth_jet, event
             data=dR_max,
         )
 
+    if args.classification or args.signal:
         # print("higgs_1", higgs_1)
         # print("higgs_2", higgs_2)
         print("Higgs Leading", HiggsLeading)
@@ -889,7 +1010,15 @@ def create_inputs(file, jets, jet_4vector, max_num_jets, global_fifth_jet, event
             dtype="float32",
             data=difference,
         )
-
+    
+    else:
+        weight_array = ak.to_numpy(events.weight)
+        weight_ds = file.create_dataset(
+            "WEIGHTS/weight",
+            np.shape(weight_array),
+            dtype="float32",
+            data=ak.ones_like(weight_array,dtype=float)
+        )
     # create new global variables for the fifth jet (if it exists) otherwise fill with PAD_VALUE
     if global_fifth_jet is not None:
         global_fifth_jet = global_fifth_jet[mask_sr]
@@ -916,9 +1045,9 @@ def create_inputs(file, jets, jet_4vector, max_num_jets, global_fifth_jet, event
         )
 
         phi_array_5 = ak.to_numpy(
-            ak.fill_none(ak.pad_none(global_fifth_jet.phi, 5, clip=True), PAD_VALUE)[
-                :, 4
-            ]
+            ak.fill_none(ak.pad_none(global_fifth_jet.phi, 5, clip=True), 
+                PAD_VALUE,
+            )[:, 4]
         )
         phi_ds_5 = file.create_dataset(
             "INPUTS/FifthJet/phi",
@@ -1022,23 +1151,42 @@ def add_info_to_file(input_to_file):
         # jets_list[1] is the list of jets for jet good ( so contains a fifth jet) for the test dataset
         global_fifth_jet = jets_list[1]
 
-    jet_4vector = jet_four_vector(jets)
+    if args.random_pt:
+        random_weights = ak.Array(np.random.rand((len(jets)))+0.5)
+        jet_pt_original = jets.pt
+        jets["pt"] = jets.pt*random_weights
+        # jets["mass"] = jets.mass*random_weights
+    
+        jet_4vector = jet_four_vector(jets)
+        mask_sr = create_inputs(
+            file_out,
+            jets,
+            jet_4vector,
+            max_num_jets_list[k],
+            global_fifth_jet,
+            events_list[k],
+            random_weights = random_weights,
+            jet_pt_original = jet_pt_original,
+        )
+    
+    else:
+        jet_4vector = jet_four_vector(jets)
+        mask_sr = create_inputs(
+            file_out,
+            jets,
+            jet_4vector,
+            max_num_jets_list[k],
+            global_fifth_jet,
+            events_list[k],
+        )
 
     # evaluate the model for the events
-    # predictions_best,  best_pairing_probabilities_sum , second_best_pairing_probabilities_sum= get_pairing_information(jets,file_out)
+    #predictions_best,  best_pairing_probabilities_sum , second_best_pairing_probabilities_sum= get_pairing_information(jets,file_out)
 
-    # print("best", predictions_best)
-    # print("bes sum", best_pairing_probabilities_sum)
-    # print("second best", second_best_pairing_probabilities_sum)
+    #print("best", predictions_best)
+    #print("bes sum", best_pairing_probabilities_sum)
+    #print("second best", second_best_pairing_probabilities_sum)
 
-    mask_sr = create_inputs(
-        file_out,
-        jets,
-        jet_4vector,
-        max_num_jets_list[k],
-        global_fifth_jet,
-        events_list[k],
-    )
     create_targets(
         file_out, "h1", jets.prov[mask_sr], file_dict[k], max_num_jets_list[k]
     )

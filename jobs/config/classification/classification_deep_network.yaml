@@ -1,5 +1,5 @@
-path: /afs/cern.ch/user/r/ramellar/HH4b_SPANet
+path: /afs/cern.ch/user/t/tharte/public/Software/HH4b_SPANet
 model: classification
-job_flavour: longlunch
+job_flavour: testmatch
 ngpu: 1
 ncpu: 3

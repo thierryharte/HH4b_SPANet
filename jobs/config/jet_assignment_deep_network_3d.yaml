@@ -1,4 +1,4 @@
-path: /afs/cern.ch/user/r/ramellar/HH4b_SPANet
+path: /afs/cern.ch/user/t/tharte/public/Software/HH4b_SPANet
 model: jet_assignment
 job_flavour: testmatch
 ngpu: 1
