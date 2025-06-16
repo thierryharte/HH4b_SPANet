@@ -56,7 +56,7 @@ parser.add_argument(
     "-w",
     "--reweight",
     action="store_true",
-    default=True,
+    default=False,
     help="Reweight the different regions to have same sum",
 )
 parser.add_argument(
@@ -671,9 +671,28 @@ def create_inputs(file, jets, jet_4vector, max_num_jets, global_fifth_jet, event
         "INPUTS/Jet/eta", np.shape(eta_array), dtype="float32", data=eta_array
     )
 
+    ## Adding variations of b-tags ##
     btag = ak.to_numpy(
         ak.fill_none(ak.pad_none(jets.btag, max_num_jets, clip=True), PAD_VALUE)
     )
+    num_events = btag.shape[0]
+    btag12 = np.stack([btag[:, 0], btag[:, 1], *[np.full(num_events, 0)] * (max_num_jets - 2)], axis=1)
+    bratio_sum_1 = btag[:, 0] / (btag[:, 0] + btag[:, 1])
+    bratio_sum_2 = btag[:, 1] / (btag[:, 0] + btag[:, 1])
+    bratio_sum_3 = btag[:, 2] / (btag[:, 2] + btag[:, 3])
+    bratio_sum_4 = btag[:, 3] / (btag[:, 2] + btag[:, 3])
+    # JetGoodHiggs will only have 4 jets...
+    if max_num_jets > 4:
+        bratio_sum_5 = btag[:, 4] / (btag[:, 2] + btag[:, 3])
+        btag12_bratio = np.stack([btag[:, 0], btag[:, 1], bratio_sum_3, bratio_sum_4, bratio_sum_5, *[np.full(num_events, PAD_VALUE)] * (max_num_jets - 5)], axis=1)
+        bratio_all = np.stack([bratio_sum_1, bratio_sum_2, bratio_sum_3, bratio_sum_4, bratio_sum_5, *[np.full(num_events, PAD_VALUE)] * (max_num_jets - 5)], axis=1)
+    else:
+        btag12_bratio = np.stack([btag[:, 0], btag[:, 1], bratio_sum_3, bratio_sum_4, *[np.full(num_events, PAD_VALUE)] * (max_num_jets - 4)], axis=1)
+        bratio_all = np.stack([bratio_sum_1, bratio_sum_2, bratio_sum_3, bratio_sum_4, *[np.full(num_events, PAD_VALUE)] * (max_num_jets - 4)], axis=1)
+
+    file.create_dataset("INPUTS/Jet/btag12_bratio", data=btag12_bratio, dtype="float32")
+    file.create_dataset("INPUTS/Jet/btag12", data=btag12, dtype="float32")
+    file.create_dataset("INPUTS/Jet/bratio_all", data=bratio_all, dtype="float32")
     btag_ds = file.create_dataset(
         "INPUTS/Jet/btag", np.shape(btag), dtype="float32", data=btag
     )
@@ -708,6 +727,14 @@ def create_inputs(file, jets, jet_4vector, max_num_jets, global_fifth_jet, event
     kl_array = ak.to_numpy(events.kl)
     kl_ds = file.create_dataset(
         "INPUTS/Event/kl", np.shape(kl_array), dtype="float32", data=kl_array
+    )
+    is_preEE_array = ak.to_numpy(events.is_preEE)
+    is_postEE_array = ak.to_numpy(events.is_postEE)
+    preEE_ds = file.create_dataset(
+        "INPUTS/Event/is_preEE", np.shape(is_preEE_array), dtype="float32", data=is_preEE_array
+    )
+    postEE_ds = file.create_dataset(
+        "INPUTS/Event/is_postEE", np.shape(is_postEE_array), dtype="float32", data=is_postEE_array
     )
     if "random_pt_weights" in events:
         random_weights_array = ak.to_numpy(events.random_pt_weights)
@@ -1216,8 +1243,15 @@ if __name__ == "__main__":
         newdf = ak.from_parquet(filename)
         print(newdf.type)
         sum_gen_weights.append(sum(newdf.event.weight))
+        if "spanet" in filename:
+            newdf = ak.with_field(newdf, ak.with_field(newdf.event, ak.ones_like(newdf.event.weight), "is_postEE"), "event")
+            newdf = ak.with_field(newdf, ak.with_field(newdf.event, ak.zeros_like(newdf.event.weight), "is_preEE"), "event")
+        else:
+            newdf = ak.with_field(newdf, ak.with_field(newdf.event, ak.zeros_like(newdf.event.weight), "is_postEE"), "event")
+            newdf = ak.with_field(newdf, ak.with_field(newdf.event, ak.ones_like(newdf.event.weight), "is_preEE"), "event")
         dfs.append(newdf)
         print(dfs[-1].event.sb)
+
     
     if args.reweight:
         print("Found following sums for the event weights of the files")
