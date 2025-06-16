@@ -8,31 +8,21 @@
 
 
 import awkward as ak
-import numba
 import numpy as np
-import pandas as pd
 import os
 import h5py
 import vector
 import argparse
-from multiprocessing import Pool
-import functools
-import sys
+import onnxruntime
+from prediction_selection import extract_predictions
 
 vector.register_numba()
 vector.register_awkward()
-import psutil
-from rich.progress import track
-import onnxruntime
-
-from prediction_selection import extract_predictions
-
 
 # pass arguments to run the code
 # to use them do: args.name of the arg
 # the input file will be a parquet file that we access by doing filename = f"{args.input}"
 # df = ak.from_parquet(filename) : this is an awkard lisr
-
 
 PAD_VALUE = 9999
 NUMBER_JETS_SPANET = 5
@@ -219,7 +209,7 @@ def reconstruct_higgs(jet_collection, idx_collection):
 def create_targets(file, particle, jets_prov, filename, max_num_jets):
     indices = ak.local_index(jets_prov)
     higgs_targets = {1: ["b1", "b2"], 2: ["b3", "b4"]}
-    
+
     print("PREDICTIONS BEST")
     print(jets_prov)
 
@@ -257,6 +247,7 @@ def create_targets(file, particle, jets_prov, filename, max_num_jets):
                 data=index_b2,
             )
 
+
 # four vector for only fully matched events
 def jet_four_vector_fully_matched(jet):
     jet_prov_unflat = jet.prov
@@ -265,7 +256,7 @@ def jet_four_vector_fully_matched(jet):
     jet_phi_unflat = jet.phi
     jet_mass_unflat = jet.mass
     jet_btag_unflat = jet.btag
-    
+
     print(jet_prov_unflat)
     count_ones = ak.sum(jet_prov_unflat == 1, axis=1)
     count_twos = ak.sum(jet_prov_unflat == 2, axis=1)
@@ -287,10 +278,8 @@ def jet_four_vector_fully_matched(jet):
     return jet_fully_matched
 
 
-
 def jet_four_vector(jets_list):
 
-    jet_4vector = []
     # k, jets_list = input_to_file
     jet_prov_unflat = jets_list.prov
     jet_pt_unflat = jets_list.pt
@@ -298,7 +287,7 @@ def jet_four_vector(jets_list):
     jet_phi_unflat = jets_list.phi
     jet_mass_unflat = jets_list.mass
     jet_btag_unflat = jets_list.btag
-    
+
     jet = ak.zip(
         {
             "pt": jet_pt_unflat,
@@ -469,6 +458,7 @@ def get_pairing_information(jets, file):
         second_best_pairing_probabilities_sum,
     )
 
+
 def add_fields(collection, fields=["pt", "eta", "phi", "mass"], four_vec=True):
     if four_vec:
         fields_dict = {field: getattr(collection, field) for field in fields}
@@ -482,6 +472,7 @@ def add_fields(collection, fields=["pt", "eta", "phi", "mass"], four_vec=True):
 
     return collection
 
+
 def reconstruct_higgs_from_provenance(jets):
     print(jets.prov)
     print(len(jets))
@@ -490,8 +481,8 @@ def reconstruct_higgs_from_provenance(jets):
     jet_higgs1 = jets[jets.prov == 1]
     jet_higgs2 = jets[jets.prov == 2]
 
-    jet_higgs1 = jet_higgs1[ak.argsort(jet_higgs1.pt, axis=1, ascending=False)]    
-    jet_higgs2 = jet_higgs2[ak.argsort(jet_higgs2.pt, axis=1, ascending=False)]    
+    jet_higgs1 = jet_higgs1[ak.argsort(jet_higgs1.pt, axis=1, ascending=False)]
+    jet_higgs2 = jet_higgs2[ak.argsort(jet_higgs2.pt, axis=1, ascending=False)]
     print(jet_higgs1.prov)
     print(jet_higgs2.prov)
 
@@ -506,7 +497,9 @@ def reconstruct_higgs_from_provenance(jets):
     return higgs_lead, higgs_sub, jets_ordered
 
 
-def create_inputs(file, jets, jet_4vector, max_num_jets, global_fifth_jet, events, **kwargs):
+def create_inputs(
+    file, jets, jet_4vector, max_num_jets, global_fifth_jet, events, **kwargs
+):
     print(events)
     if args.classification or args.signal:
         (
@@ -527,13 +520,13 @@ def create_inputs(file, jets, jet_4vector, max_num_jets, global_fifth_jet, event
             )
             mask_sr = ak.to_numpy(r_HH < 30)
             r_HH = r_HH[mask_sr]
-            r_HH_ds = file.create_dataset(
+            file.create_dataset(
                 "INPUTS/Event/r_HH",
                 np.shape(r_HH),
                 dtype="float32",
                 data=r_HH,
             )
-            #mask_sr = np.full(len(jets), True)
+            # mask_sr = np.full(len(jets), True)
 
         else:
             mask_sr = np.full(len(jets), True)
@@ -567,12 +560,15 @@ def create_inputs(file, jets, jet_4vector, max_num_jets, global_fifth_jet, event
         print("")
         jet_4vector_full = jet_four_vector_fully_matched(jets)
         ptPnetRegNeutrino_array_orig = ak.to_numpy(
-            ak.fill_none(ak.pad_none(kwargs["jet_pt_original"], max_num_jets, clip=True), PAD_VALUE)
+            ak.fill_none(
+                ak.pad_none(kwargs["jet_pt_original"], max_num_jets, clip=True),
+                PAD_VALUE,
+            )
         )
         ptPnetRegNeutrino_array = ak.to_numpy(
             ak.fill_none(ak.pad_none(jets.pt, max_num_jets, clip=True), PAD_VALUE)
         )
-        ptPnetRegNeutrino_orig_ds = file.create_dataset(
+        file.create_dataset(
             "INPUTS/Jet/ptPnetRegNeutrino_unweighted",
             np.shape(ptPnetRegNeutrino_array_orig),
             dtype="float32",
@@ -584,17 +580,21 @@ def create_inputs(file, jets, jet_4vector, max_num_jets, global_fifth_jet, event
             dtype="float32",
             data=ptPnetRegNeutrino_array,
         )
-        rdm_ds = file.create_dataset(
+        file.create_dataset(
             "INPUTS/Event/random_pt_weight",
             np.shape(kwargs["random_weights"]),
             dtype="float32",
             data=kwargs["random_weights"],
         )
-        higgs_leading, higgs_subleading, _ = reconstruct_higgs_from_provenance(jet_4vector_full)
-        
-        for higgs, name in zip([higgs_leading, higgs_subleading], ["HiggsLeading", "HiggsSubLeading"]):
+        higgs_leading, higgs_subleading, _ = reconstruct_higgs_from_provenance(
+            jet_4vector_full
+        )
+
+        for higgs, name in zip(
+            [higgs_leading, higgs_subleading], ["HiggsLeading", "HiggsSubLeading"]
+        ):
             higgs_pt = higgs.pt
-            higgs_pt_ds = file.create_dataset(
+            file.create_dataset(
                 f"INPUTS/{name}/pt",
                 np.shape(higgs_pt),
                 dtype="float32",
@@ -602,7 +602,7 @@ def create_inputs(file, jets, jet_4vector, max_num_jets, global_fifth_jet, event
             )
 
             higgs_eta = higgs.eta
-            higgs_eta_ds = file.create_dataset(
+            file.create_dataset(
                 f"INPUTS/{name}/eta",
                 np.shape(higgs_eta),
                 dtype="float32",
@@ -610,7 +610,7 @@ def create_inputs(file, jets, jet_4vector, max_num_jets, global_fifth_jet, event
             )
 
             higgs_phi = higgs.phi
-            higgs_phi_ds = file.create_dataset(
+            file.create_dataset(
                 f"INPUTS/{name}/phi",
                 np.shape(higgs_phi),
                 dtype="float32",
@@ -618,7 +618,7 @@ def create_inputs(file, jets, jet_4vector, max_num_jets, global_fifth_jet, event
             )
 
             higgs_mass = higgs.mass
-            higgs_mass_ds = file.create_dataset(
+            file.create_dataset(
                 f"INPUTS/{name}/mass",
                 np.shape(higgs_mass),
                 dtype="float32",
@@ -630,7 +630,7 @@ def create_inputs(file, jets, jet_4vector, max_num_jets, global_fifth_jet, event
         ptPnetRegNeutrino_array = ak.to_numpy(
             ak.fill_none(ak.pad_none(jets.pt, max_num_jets, clip=True), PAD_VALUE)
         )
-        ptPnetRegNeutrino_ds = file.create_dataset(
+        file.create_dataset(
             "INPUTS/Jet/ptPnetRegNeutrino",
             np.shape(ptPnetRegNeutrino_array),
             dtype="float32",
@@ -638,14 +638,12 @@ def create_inputs(file, jets, jet_4vector, max_num_jets, global_fifth_jet, event
         )
 
     mask = ~(ptPnetRegNeutrino_array == PAD_VALUE)
-    mask_ds = file.create_dataset(
-        "INPUTS/Jet/MASK", np.shape(mask), dtype="bool", data=mask
-    )
+    file.create_dataset("INPUTS/Jet/MASK", np.shape(mask), dtype="bool", data=mask)
 
     phi_array = ak.to_numpy(
         ak.fill_none(ak.pad_none(jets.phi, max_num_jets, clip=True), PAD_VALUE)
     )
-    phi_ds = file.create_dataset(
+    file.create_dataset(
         "INPUTS/Jet/phi", np.shape(phi_array), dtype="float32", data=phi_array
     )
     # compute the cos and sin of phi
@@ -653,21 +651,21 @@ def create_inputs(file, jets, jet_4vector, max_num_jets, global_fifth_jet, event
         ak.fill_none(ak.pad_none(np.cos(jets.phi), max_num_jets, clip=True), PAD_VALUE)
     )
 
-    cos_phi_ds = file.create_dataset(
+    file.create_dataset(
         "INPUTS/Jet/cosPhi", np.shape(cos_phi), dtype="float32", data=cos_phi
     )
 
     sin_phi = ak.to_numpy(
         ak.fill_none(ak.pad_none(np.sin(jets.phi), max_num_jets, clip=True), PAD_VALUE)
     )
-    sin_phi_ds = file.create_dataset(
+    file.create_dataset(
         "INPUTS/Jet/sinPhi", np.shape(sin_phi), dtype="float32", data=sin_phi
     )
 
     eta_array = ak.to_numpy(
         ak.fill_none(ak.pad_none(jets.eta, max_num_jets, clip=True), PAD_VALUE)
     )
-    eta_ds = file.create_dataset(
+    file.create_dataset(
         "INPUTS/Jet/eta", np.shape(eta_array), dtype="float32", data=eta_array
     )
 
@@ -676,7 +674,9 @@ def create_inputs(file, jets, jet_4vector, max_num_jets, global_fifth_jet, event
         ak.fill_none(ak.pad_none(jets.btag, max_num_jets, clip=True), PAD_VALUE)
     )
     num_events = btag.shape[0]
-    btag12 = np.stack([btag[:, 0], btag[:, 1], *[np.full(num_events, 0)] * (max_num_jets - 2)], axis=1)
+    btag12 = np.stack(
+        [btag[:, 0], btag[:, 1], *[np.full(num_events, 0)] * (max_num_jets - 2)], axis=1
+    )
     bratio_sum_1 = btag[:, 0] / (btag[:, 0] + btag[:, 1])
     bratio_sum_2 = btag[:, 1] / (btag[:, 0] + btag[:, 1])
     bratio_sum_3 = btag[:, 2] / (btag[:, 2] + btag[:, 3])
@@ -684,18 +684,54 @@ def create_inputs(file, jets, jet_4vector, max_num_jets, global_fifth_jet, event
     # JetGoodHiggs will only have 4 jets...
     if max_num_jets > 4:
         bratio_sum_5 = btag[:, 4] / (btag[:, 2] + btag[:, 3])
-        btag12_bratio = np.stack([btag[:, 0], btag[:, 1], bratio_sum_3, bratio_sum_4, bratio_sum_5, *[np.full(num_events, PAD_VALUE)] * (max_num_jets - 5)], axis=1)
-        bratio_all = np.stack([bratio_sum_1, bratio_sum_2, bratio_sum_3, bratio_sum_4, bratio_sum_5, *[np.full(num_events, PAD_VALUE)] * (max_num_jets - 5)], axis=1)
+        btag12_bratio = np.stack(
+            [
+                btag[:, 0],
+                btag[:, 1],
+                bratio_sum_3,
+                bratio_sum_4,
+                bratio_sum_5,
+                *[np.full(num_events, PAD_VALUE)] * (max_num_jets - 5),
+            ],
+            axis=1,
+        )
+        bratio_all = np.stack(
+            [
+                bratio_sum_1,
+                bratio_sum_2,
+                bratio_sum_3,
+                bratio_sum_4,
+                bratio_sum_5,
+                *[np.full(num_events, PAD_VALUE)] * (max_num_jets - 5),
+            ],
+            axis=1,
+        )
     else:
-        btag12_bratio = np.stack([btag[:, 0], btag[:, 1], bratio_sum_3, bratio_sum_4, *[np.full(num_events, PAD_VALUE)] * (max_num_jets - 4)], axis=1)
-        bratio_all = np.stack([bratio_sum_1, bratio_sum_2, bratio_sum_3, bratio_sum_4, *[np.full(num_events, PAD_VALUE)] * (max_num_jets - 4)], axis=1)
+        btag12_bratio = np.stack(
+            [
+                btag[:, 0],
+                btag[:, 1],
+                bratio_sum_3,
+                bratio_sum_4,
+                *[np.full(num_events, PAD_VALUE)] * (max_num_jets - 4),
+            ],
+            axis=1,
+        )
+        bratio_all = np.stack(
+            [
+                bratio_sum_1,
+                bratio_sum_2,
+                bratio_sum_3,
+                bratio_sum_4,
+                *[np.full(num_events, PAD_VALUE)] * (max_num_jets - 4),
+            ],
+            axis=1,
+        )
 
     file.create_dataset("INPUTS/Jet/btag12_bratio", data=btag12_bratio, dtype="float32")
     file.create_dataset("INPUTS/Jet/btag12", data=btag12, dtype="float32")
     file.create_dataset("INPUTS/Jet/bratio_all", data=bratio_all, dtype="float32")
-    btag_ds = file.create_dataset(
-        "INPUTS/Jet/btag", np.shape(btag), dtype="float32", data=btag
-    )
+    file.create_dataset("INPUTS/Jet/btag", np.shape(btag), dtype="float32", data=btag)
     btag_wp_array_ak = ak.fill_none(
         ak.pad_none(
             ak.where(btag > btag_wp[0], 1, 0)
@@ -710,7 +746,7 @@ def create_inputs(file, jets, jet_4vector, max_num_jets, global_fifth_jet, event
         ak.where(btag == PAD_VALUE, PAD_VALUE, btag_wp_array_ak)
     )
 
-    btag_wp_ds = file.create_dataset(
+    file.create_dataset(
         "INPUTS/Jet/btag_wp_bit",
         np.shape(btag_wp_array),
         dtype="int64",
@@ -720,26 +756,35 @@ def create_inputs(file, jets, jet_4vector, max_num_jets, global_fifth_jet, event
     mass_array = ak.to_numpy(
         ak.fill_none(ak.pad_none(jets.mass, max_num_jets, clip=True), PAD_VALUE)
     )
-    mass_ds = file.create_dataset(
+    file.create_dataset(
         "INPUTS/Jet/mass", np.shape(mass_array), dtype="float32", data=mass_array
     )
 
     kl_array = ak.to_numpy(events.kl)
-    kl_ds = file.create_dataset(
+    file.create_dataset(
         "INPUTS/Event/kl", np.shape(kl_array), dtype="float32", data=kl_array
     )
     is_preEE_array = ak.to_numpy(events.is_preEE)
     is_postEE_array = ak.to_numpy(events.is_postEE)
-    preEE_ds = file.create_dataset(
-        "INPUTS/Event/is_preEE", np.shape(is_preEE_array), dtype="float32", data=is_preEE_array
+    file.create_dataset(
+        "INPUTS/Event/is_preEE",
+        np.shape(is_preEE_array),
+        dtype="float32",
+        data=is_preEE_array,
     )
-    postEE_ds = file.create_dataset(
-        "INPUTS/Event/is_postEE", np.shape(is_postEE_array), dtype="float32", data=is_postEE_array
+    file.create_dataset(
+        "INPUTS/Event/is_postEE",
+        np.shape(is_postEE_array),
+        dtype="float32",
+        data=is_postEE_array,
     )
     if "random_pt_weights" in events:
         random_weights_array = ak.to_numpy(events.random_pt_weights)
-        random_weights_ds = file.create_dataset(
-            "INPUTS/Event/random_pt_weights", np.shape(random_weights_array), dtype="float32", data=random_weights_array
+        file.create_dataset(
+            "INPUTS/Event/random_pt_weights",
+            np.shape(random_weights_array),
+            dtype="float32",
+            data=random_weights_array,
         )
 
     if args.classification:
@@ -752,7 +797,7 @@ def create_inputs(file, jets, jet_4vector, max_num_jets, global_fifth_jet, event
         )
 
         sb_array = ak.to_numpy(events.sb)
-        sb_ds = file.create_dataset(
+        file.create_dataset(
             "CLASSIFICATIONS/EVENT/signal",
             np.shape(sb_array),
             dtype="int64",
@@ -765,7 +810,7 @@ def create_inputs(file, jets, jet_4vector, max_num_jets, global_fifth_jet, event
 
         ht_array = ak.sum(jet_4vector.pt, axis=1)
         print("ht_array", ht_array)
-        ht_ds = file.create_dataset(
+        file.create_dataset(
             "INPUTS/Event/HT",
             np.shape(ht_array),
             dtype="int64",
@@ -796,14 +841,14 @@ def create_inputs(file, jets, jet_4vector, max_num_jets, global_fifth_jet, event
 
         print("dR_max", dR_max)
 
-        dR_min_ds = file.create_dataset(
+        file.create_dataset(
             "INPUTS/Event/dR_min",
             np.shape(dR_min),
             dtype="float32",
             data=dR_min,
         )
 
-        dR_max_ds = file.create_dataset(
+        file.create_dataset(
             "INPUTS/Event/dR_max",
             np.shape(dR_max),
             dtype="float32",
@@ -816,7 +861,7 @@ def create_inputs(file, jets, jet_4vector, max_num_jets, global_fifth_jet, event
         print("Higgs Leading", HiggsLeading)
 
         HiggsLeading_pt = HiggsLeading.pt
-        HiggsLeading_pt_ds = file.create_dataset(
+        file.create_dataset(
             "INPUTS/HiggsLeading/pt",
             np.shape(HiggsLeading_pt),
             dtype="float32",
@@ -824,7 +869,7 @@ def create_inputs(file, jets, jet_4vector, max_num_jets, global_fifth_jet, event
         )
 
         HiggsLeading_eta = HiggsLeading.eta
-        HiggsLeading_eta_ds = file.create_dataset(
+        file.create_dataset(
             "INPUTS/HiggsLeading/eta",
             np.shape(HiggsLeading_eta),
             dtype="float32",
@@ -832,7 +877,7 @@ def create_inputs(file, jets, jet_4vector, max_num_jets, global_fifth_jet, event
         )
 
         HiggsLeading_phi = HiggsLeading.phi
-        HiggsLeading_phi_ds = file.create_dataset(
+        file.create_dataset(
             "INPUTS/HiggsLeading/phi",
             np.shape(HiggsLeading_phi),
             dtype="float32",
@@ -840,7 +885,7 @@ def create_inputs(file, jets, jet_4vector, max_num_jets, global_fifth_jet, event
         )
 
         HiggsLeading_mass = HiggsLeading.mass
-        HiggsLeading_mass_ds = file.create_dataset(
+        file.create_dataset(
             "INPUTS/HiggsLeading/mass",
             np.shape(HiggsLeading_mass),
             dtype="float32",
@@ -848,7 +893,7 @@ def create_inputs(file, jets, jet_4vector, max_num_jets, global_fifth_jet, event
         )
 
         HiggsLeading_costheta = abs(np.cos(HiggsLeading.theta))
-        HiggsLeading_costheta_ds = file.create_dataset(
+        file.create_dataset(
             "INPUTS/HiggsLeading/cos_theta",
             np.shape(HiggsLeading_costheta),
             dtype="float32",
@@ -883,7 +928,7 @@ def create_inputs(file, jets, jet_4vector, max_num_jets, global_fifth_jet, event
         print("HiggsLeading_dR", HiggsLeading_dR)
 
         # HiggsLeading_dR= jet_4vector[:,pairing_predictions_ordered[:, 0, 0]].deltaR(jet_4vector[:,pairing_predictions_ordered[:, 0, 1]])
-        HiggsLeading_dR_ds = file.create_dataset(
+        file.create_dataset(
             "INPUTS/HiggsLeading/dR",
             np.shape(HiggsLeading_dR),
             dtype="float32",
@@ -891,7 +936,7 @@ def create_inputs(file, jets, jet_4vector, max_num_jets, global_fifth_jet, event
         )
 
         HiggsSubLeading_pt = HiggsSubLeading.pt
-        HiggsSubLeading_pt_ds = file.create_dataset(
+        file.create_dataset(
             "INPUTS/HiggsSubLeading/pt",
             np.shape(HiggsSubLeading_pt),
             dtype="float32",
@@ -899,7 +944,7 @@ def create_inputs(file, jets, jet_4vector, max_num_jets, global_fifth_jet, event
         )
 
         HiggsSubLeading_eta = HiggsSubLeading.eta
-        HiggsSubLeading_eta_ds = file.create_dataset(
+        file.create_dataset(
             "INPUTS/HiggsSubLeading/eta",
             np.shape(HiggsSubLeading_eta),
             dtype="float32",
@@ -907,7 +952,7 @@ def create_inputs(file, jets, jet_4vector, max_num_jets, global_fifth_jet, event
         )
 
         HiggsSubLeading_phi = HiggsSubLeading.phi
-        HiggsSubLeading_phi_ds = file.create_dataset(
+        file.create_dataset(
             "INPUTS/HiggsSubLeading/phi",
             np.shape(HiggsSubLeading_phi),
             dtype="float32",
@@ -915,7 +960,7 @@ def create_inputs(file, jets, jet_4vector, max_num_jets, global_fifth_jet, event
         )
 
         HiggsSubLeading_mass = HiggsSubLeading.mass
-        HiggsSubLeading_mass_ds = file.create_dataset(
+        file.create_dataset(
             "INPUTS/HiggsSubLeading/mass",
             np.shape(HiggsSubLeading_mass),
             dtype="float32",
@@ -923,7 +968,7 @@ def create_inputs(file, jets, jet_4vector, max_num_jets, global_fifth_jet, event
         )
 
         HiggsSubLeading_costheta = abs(np.cos(HiggsSubLeading.theta))
-        HiggsSubLeading_costheta_ds = file.create_dataset(
+        file.create_dataset(
             "INPUTS/HiggsSubLeading/cos_theta",
             np.shape(HiggsSubLeading_costheta),
             dtype="float32",
@@ -943,7 +988,7 @@ def create_inputs(file, jets, jet_4vector, max_num_jets, global_fifth_jet, event
         print("HiggsSubLeading_dR", HiggsSubLeading_dR)
 
         # HiggsSubLeading_dR= jet_4vector[:,pairing_predictions_ordered[:, 1, 0]].deltaR(jet_4vector[:,pairing_predictions_ordered[:, 1, 1]])
-        HiggsSubLeading_dR_ds = file.create_dataset(
+        file.create_dataset(
             "INPUTS/HiggsSubLeading/dR",
             np.shape(HiggsSubLeading_dR),
             dtype="float32",
@@ -953,7 +998,7 @@ def create_inputs(file, jets, jet_4vector, max_num_jets, global_fifth_jet, event
         HH = HiggsLeading + HiggsSubLeading
 
         HH_pt = HH.pt
-        HH_pt_ds = file.create_dataset(
+        file.create_dataset(
             "INPUTS/HH/pt",
             np.shape(HH_pt),
             dtype="float32",
@@ -961,7 +1006,7 @@ def create_inputs(file, jets, jet_4vector, max_num_jets, global_fifth_jet, event
         )
 
         HH_eta = HH.eta
-        HH_eta_ds = file.create_dataset(
+        file.create_dataset(
             "INPUTS/HH/eta",
             np.shape(HH_eta),
             dtype="float32",
@@ -969,7 +1014,7 @@ def create_inputs(file, jets, jet_4vector, max_num_jets, global_fifth_jet, event
         )
 
         HH_phi = HH.phi
-        HH_phi_ds = file.create_dataset(
+        file.create_dataset(
             "INPUTS/HH/phi",
             np.shape(HH_phi),
             dtype="float32",
@@ -977,7 +1022,7 @@ def create_inputs(file, jets, jet_4vector, max_num_jets, global_fifth_jet, event
         )
 
         HH_mass = HH.mass
-        HH_mass_ds = file.create_dataset(
+        file.create_dataset(
             "INPUTS/HH/mass",
             np.shape(HH_mass),
             dtype="float32",
@@ -985,7 +1030,7 @@ def create_inputs(file, jets, jet_4vector, max_num_jets, global_fifth_jet, event
         )
 
         HH_dR = HiggsLeading.deltaR(HiggsSubLeading)
-        HH_dR_ds = file.create_dataset(
+        file.create_dataset(
             "INPUTS/HH/dR",
             np.shape(HH_dR),
             dtype="float32",
@@ -993,7 +1038,7 @@ def create_inputs(file, jets, jet_4vector, max_num_jets, global_fifth_jet, event
         )
 
         HH_cos = abs(np.cos(HH.theta))
-        HH_cos_ds = file.create_dataset(
+        file.create_dataset(
             "INPUTS/HH/cos_theta_star",
             np.shape(HH_cos),
             dtype="float32",
@@ -1001,7 +1046,7 @@ def create_inputs(file, jets, jet_4vector, max_num_jets, global_fifth_jet, event
         )
 
         HH_dEta = abs(HiggsLeading.eta - HiggsSubLeading.eta)
-        HH_dEta_ds = file.create_dataset(
+        file.create_dataset(
             "INPUTS/HH/dEta",
             np.shape(HH_dEta),
             dtype="float32",
@@ -1009,7 +1054,7 @@ def create_inputs(file, jets, jet_4vector, max_num_jets, global_fifth_jet, event
         )
 
         HH_dPhi = HiggsLeading.deltaphi(HiggsSubLeading)
-        HH_dPhi_ds = file.create_dataset(
+        file.create_dataset(
             "INPUTS/HH/dPhi",
             np.shape(HH_dPhi),
             dtype="float32",
@@ -1022,14 +1067,14 @@ def create_inputs(file, jets, jet_4vector, max_num_jets, global_fifth_jet, event
             second_best_pairing_probabilities_sum
         )
 
-        best_pairing_probabilities_sum_ds = file.create_dataset(
+        file.create_dataset(
             "INPUTS/Event/Best_pairing_probabilities_sum",
             np.shape(best_pairing_probabilities_sum),
             dtype="float32",
             data=best_pairing_probabilities_sum,
         )
 
-        second_best_pairing_probabilities_sum_ds = file.create_dataset(
+        file.create_dataset(
             "INPUTS/Event/Second_best_pairing_probabilities",
             np.shape(second_best_pairing_probabilities_sum),
             dtype="float32",
@@ -1038,16 +1083,16 @@ def create_inputs(file, jets, jet_4vector, max_num_jets, global_fifth_jet, event
 
         difference = ak.to_numpy(difference)
 
-        difference_ds = file.create_dataset(
+        file.create_dataset(
             "INPUTS/Event/Probability_difference",
             np.shape(difference),
             dtype="float32",
             data=difference,
         )
-    
+
     else:
         weight_array = ak.to_numpy(events.weight)
-        weight_ds = file.create_dataset(
+        file.create_dataset(
             "WEIGHTS/weight",
             np.shape(weight_array),
             dtype="float32",
@@ -1061,7 +1106,7 @@ def create_inputs(file, jets, jet_4vector, max_num_jets, global_fifth_jet, event
                 :, 4
             ]
         )
-        pt_ds_5 = file.create_dataset(
+        file.create_dataset(
             "INPUTS/FifthJet/pt", np.shape(pt_array_5), dtype="float32", data=pt_array_5
         )
 
@@ -1071,7 +1116,7 @@ def create_inputs(file, jets, jet_4vector, max_num_jets, global_fifth_jet, event
                 PAD_VALUE,
             )[:, 4]
         )
-        ptPnetRegNeutrino_ds_5 = file.create_dataset(
+        file.create_dataset(
             "INPUTS/FifthJet/ptPnetRegNeutrino",
             np.shape(ptPnetRegNeutrino_array_5),
             dtype="float32",
@@ -1079,11 +1124,12 @@ def create_inputs(file, jets, jet_4vector, max_num_jets, global_fifth_jet, event
         )
 
         phi_array_5 = ak.to_numpy(
-            ak.fill_none(ak.pad_none(global_fifth_jet.phi, 5, clip=True), 
+            ak.fill_none(
+                ak.pad_none(global_fifth_jet.phi, 5, clip=True),
                 PAD_VALUE,
             )[:, 4]
         )
-        phi_ds_5 = file.create_dataset(
+        file.create_dataset(
             "INPUTS/FifthJet/phi",
             np.shape(phi_array_5),
             dtype="float32",
@@ -1096,7 +1142,7 @@ def create_inputs(file, jets, jet_4vector, max_num_jets, global_fifth_jet, event
                 PAD_VALUE,
             )[:, 4]
         )
-        cos_phi_ds_5 = file.create_dataset(
+        file.create_dataset(
             "INPUTS/FifthJet/cosPhi",
             np.shape(cos_phi_5),
             dtype="float32",
@@ -1109,7 +1155,7 @@ def create_inputs(file, jets, jet_4vector, max_num_jets, global_fifth_jet, event
                 PAD_VALUE,
             )[:, 4]
         )
-        sin_phi_ds_5 = file.create_dataset(
+        file.create_dataset(
             "INPUTS/FifthJet/sinPhi",
             np.shape(sin_phi_5),
             dtype="float32",
@@ -1121,7 +1167,7 @@ def create_inputs(file, jets, jet_4vector, max_num_jets, global_fifth_jet, event
                 :, 4
             ]
         )
-        eta_ds_5 = file.create_dataset(
+        file.create_dataset(
             "INPUTS/FifthJet/eta",
             np.shape(eta_array_5),
             dtype="float32",
@@ -1133,7 +1179,7 @@ def create_inputs(file, jets, jet_4vector, max_num_jets, global_fifth_jet, event
                 :, 4
             ]
         )
-        btag_ds_5 = file.create_dataset(
+        file.create_dataset(
             "INPUTS/FifthJet/btag", np.shape(btag_5), dtype="float32", data=btag_5
         )
 
@@ -1149,7 +1195,7 @@ def create_inputs(file, jets, jet_4vector, max_num_jets, global_fifth_jet, event
                 PAD_VALUE,
             )[:, 4]
         )
-        btag_wp_ds_5 = file.create_dataset(
+        file.create_dataset(
             "INPUTS/FifthJet/btag_wp_bit",
             np.shape(btag_wp_array_5),
             dtype="int64",
@@ -1161,7 +1207,7 @@ def create_inputs(file, jets, jet_4vector, max_num_jets, global_fifth_jet, event
                 :, 4
             ]
         )
-        mass_ds_5 = file.create_dataset(
+        file.create_dataset(
             "INPUTS/FifthJet/mass",
             np.shape(mass_array_5),
             dtype="float32",
@@ -1186,11 +1232,11 @@ def add_info_to_file(input_to_file):
         global_fifth_jet = jets_list[1]
 
     if args.random_pt:
-        random_weights = ak.Array(np.random.rand((len(jets)))+0.5)
+        random_weights = ak.Array(np.random.rand((len(jets))) + 0.5)
         jet_pt_original = jets.pt
-        jets["pt"] = jets.pt*random_weights
+        jets["pt"] = jets.pt * random_weights
         # jets["mass"] = jets.mass*random_weights
-    
+
         jet_4vector = jet_four_vector(jets)
         mask_sr = create_inputs(
             file_out,
@@ -1199,10 +1245,10 @@ def add_info_to_file(input_to_file):
             max_num_jets_list[k],
             global_fifth_jet,
             events_list[k],
-            random_weights = random_weights,
-            jet_pt_original = jet_pt_original,
+            random_weights=random_weights,
+            jet_pt_original=jet_pt_original,
         )
-    
+
     else:
         jet_4vector = jet_four_vector(jets)
         mask_sr = create_inputs(
@@ -1215,11 +1261,11 @@ def add_info_to_file(input_to_file):
         )
 
     # evaluate the model for the events
-    #predictions_best,  best_pairing_probabilities_sum , second_best_pairing_probabilities_sum= get_pairing_information(jets,file_out)
+    # predictions_best,  best_pairing_probabilities_sum , second_best_pairing_probabilities_sum= get_pairing_information(jets,file_out)
 
-    #print("best", predictions_best)
-    #print("bes sum", best_pairing_probabilities_sum)
-    #print("second best", second_best_pairing_probabilities_sum)
+    # print("best", predictions_best)
+    # print("bes sum", best_pairing_probabilities_sum)
+    # print("second best", second_best_pairing_probabilities_sum)
 
     create_targets(
         file_out, "h1", jets.prov[mask_sr], file_dict[k], max_num_jets_list[k]
@@ -1234,7 +1280,7 @@ def add_info_to_file(input_to_file):
 if __name__ == "__main__":
     main_dir = args.output if args.output else os.path.dirname(args.input[0])
     os.makedirs(main_dir, exist_ok=True)
-    
+
     leninput = len(list(args.input))
 
     dfs = []
@@ -1244,15 +1290,38 @@ if __name__ == "__main__":
         print(newdf.type)
         sum_gen_weights.append(sum(newdf.event.weight))
         if "spanet" in filename:
-            newdf = ak.with_field(newdf, ak.with_field(newdf.event, ak.ones_like(newdf.event.weight), "is_postEE"), "event")
-            newdf = ak.with_field(newdf, ak.with_field(newdf.event, ak.zeros_like(newdf.event.weight), "is_preEE"), "event")
+            newdf = ak.with_field(
+                newdf,
+                ak.with_field(
+                    newdf.event, ak.ones_like(newdf.event.weight), "is_postEE"
+                ),
+                "event",
+            )
+            newdf = ak.with_field(
+                newdf,
+                ak.with_field(
+                    newdf.event, ak.zeros_like(newdf.event.weight), "is_preEE"
+                ),
+                "event",
+            )
         else:
-            newdf = ak.with_field(newdf, ak.with_field(newdf.event, ak.zeros_like(newdf.event.weight), "is_postEE"), "event")
-            newdf = ak.with_field(newdf, ak.with_field(newdf.event, ak.ones_like(newdf.event.weight), "is_preEE"), "event")
+            newdf = ak.with_field(
+                newdf,
+                ak.with_field(
+                    newdf.event, ak.zeros_like(newdf.event.weight), "is_postEE"
+                ),
+                "event",
+            )
+            newdf = ak.with_field(
+                newdf,
+                ak.with_field(
+                    newdf.event, ak.ones_like(newdf.event.weight), "is_preEE"
+                ),
+                "event",
+            )
         dfs.append(newdf)
         print(dfs[-1].event.sb)
 
-    
     if args.reweight:
         print("Found following sums for the event weights of the files")
         for filename, sumweight in zip(list(args.input), sum_gen_weights):
@@ -1260,10 +1329,14 @@ if __name__ == "__main__":
 
         update_dfs = []
         for df, weight in zip(dfs, sum_gen_weights):
-            #dividing all the weights by the sum of the weights. Then multiplying with ratio between largest and current sum_gen_weight
-            renorm_weight = max(sum_gen_weights)/weight
+            # dividing all the weights by the sum of the weights. Then multiplying with ratio between largest and current sum_gen_weight
+            renorm_weight = max(sum_gen_weights) / weight
             print(f"Renormalized weight: {renorm_weight}")
-            df = ak.with_field(df, ak.with_field(df.event, df.event.weight * renorm_weight, "weight"), "event")
+            df = ak.with_field(
+                df,
+                ak.with_field(df.event, df.event.weight * renorm_weight, "weight"),
+                "event",
+            )
             print(df.event.weight)
             update_dfs.append(df)
         dfs = update_dfs
