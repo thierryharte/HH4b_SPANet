@@ -146,10 +146,6 @@ if args.classification or args.signal:
     input_shape = [input.shape for input in session.get_inputs()]
     output_shape = [output.shape for output in session.get_outputs()]
 
-# low, medium and tight WP
-btag_wp = [0.0499, 0.2605, 0.6915]
-
-
 # set the names of the groups in the h5 out file (used in add_info_to_file)
 def create_groups(file):
     file.create_group("TARGETS/h1")  # higgs 1 -> b1 b2
@@ -256,6 +252,7 @@ def jet_four_vector_fully_matched(jet):
     jet_phi_unflat = jet.phi
     jet_mass_unflat = jet.mass
     jet_btag_unflat = jet.btag
+    jet_btag_wp_unflat = jet.btag_wp
 
     print(jet_prov_unflat)
     count_ones = ak.sum(jet_prov_unflat == 1, axis=1)
@@ -270,6 +267,7 @@ def jet_four_vector_fully_matched(jet):
             "phi": jet_phi_unflat[mask_fully_matched],
             "mass": jet_mass_unflat[mask_fully_matched],
             "btag": jet_btag_unflat[mask_fully_matched],
+            "btag_wp": jet_btag_wp_unflat[mask_fully_matched],
             "prov": jet_prov_unflat[mask_fully_matched],
         },
         with_name="Momentum4D",
@@ -287,6 +285,7 @@ def jet_four_vector(jets_list):
     jet_phi_unflat = jets_list.phi
     jet_mass_unflat = jets_list.mass
     jet_btag_unflat = jets_list.btag
+    jet_btag_wp_unflat = jets_list.btag_wp
 
     jet = ak.zip(
         {
@@ -295,6 +294,7 @@ def jet_four_vector(jets_list):
             "phi": jet_phi_unflat,
             "mass": jet_mass_unflat,
             "btag": jet_btag_unflat,
+            "btag_wp": jet_btag_wp_unflat,
             "prov": jet_prov_unflat,
         },
         with_name="Momentum4D",
@@ -334,9 +334,15 @@ def get_pairing_information(jets, file):
 
     btag = btag_array.astype("float32")
 
+    btag_wp_array = ak.to_numpy(
+        ak.fill_none(ak.pad_none(jets.btag_wp, NUMBER_JETS_SPANET, clip=True), PAD_VALUE)
+    )
+
+    btag_wp = btag_wp_array.astype("int64")
+
     mask = ~(phi_array == PAD_VALUE)
     # we have the inputs in which we will evaluate our model
-    inputs = np.stack((ptPnetRegNeutrino, eta, phi, btag), axis=-1)
+    inputs = np.stack((ptPnetRegNeutrino, eta, phi, btag, btag_wp), axis=-1)
     # inputs_complete = {input_name[0]: inputs, input_name[1]: mask}
     # print(inputs.shape)
     # print(mask.shape)
@@ -749,8 +755,14 @@ def create_inputs(
     file.create_dataset(
         "INPUTS/Jet/btag_wp_bit",
         np.shape(btag_wp_array),
+    btag_wp = ak.to_numpy(
+        ak.fill_none(ak.pad_none(jets.btag_wp, max_num_jets, clip=True), PAD_VALUE)
+    )
+    btag_wp_ds = file.create_dataset(
+        "INPUTS/Jet/btag_wp",
+        np.shape(btag_wp),
         dtype="int64",
-        data=btag_wp_array,
+        data=btag_wp,
     )
 
     mass_array = ak.to_numpy(
@@ -1182,24 +1194,13 @@ def create_inputs(
         file.create_dataset(
             "INPUTS/FifthJet/btag", np.shape(btag_5), dtype="float32", data=btag_5
         )
-
-        btag_wp_array_5 = ak.to_numpy(
-            ak.fill_none(
-                ak.pad_none(
-                    ak.where(global_fifth_jet.btag > btag_wp[0], 1, 0)
-                    + ak.where(global_fifth_jet.btag > btag_wp[1], 1, 0)
-                    + ak.where(global_fifth_jet.btag > btag_wp[2], 1, 0),
-                    5,
-                    clip=True,
-                ),
-                PAD_VALUE,
-            )[:, 4]
+        btag_wp_5 = ak.to_numpy(
+            ak.fill_none(ak.pad_none(global_fifth_jet.btag_wp, 5, clip=True), PAD_VALUE)[
+                :, 4
+            ]
         )
-        file.create_dataset(
-            "INPUTS/FifthJet/btag_wp_bit",
-            np.shape(btag_wp_array_5),
-            dtype="int64",
-            data=btag_wp_array_5,
+        btag_wp_ds_5 = file.create_dataset(
+            "INPUTS/FifthJet/btag_wp", np.shape(btag_wp_5), dtype="int64", data=btag_wp_5
         )
 
         mass_array_5 = ak.to_numpy(

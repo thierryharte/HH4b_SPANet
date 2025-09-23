@@ -112,6 +112,7 @@ features = {
             "phi": "phi",
             "mass": "mass",
             "btag": "btagPNetB",
+            "btag_wp": "btagPNetB_wp",
             # "ptPnetRegNeutrino": "ptPnetRegNeutrino",
         },
         "JetGoodHiggs": {
@@ -120,6 +121,7 @@ features = {
             "phi": "phi",
             "mass": "mass",
             "btag": "btagPNetB",
+            "btag_wp": "btagPNetB_wp",
             # "ptPnetRegNeutrino": "ptPnetRegNeutrino",
         },
         "JetGoodHiggsMatched": {
@@ -128,6 +130,7 @@ features = {
             "phi": "phi",
             "mass": "mass",
             "btag": "btagPNetB",
+            "btag_wp": "btagPNetB_wp",
             # "ptPnetRegNeutrino": "ptPnetRegNeutrino",
             "prov": "provenance",
             # "pdgId" : "pdgId",
@@ -139,6 +142,7 @@ features = {
             "phi": "phi",
             "mass": "mass",
             "btag": "btagPNetB",
+            "btag_wp": "btagPNetB_wp",
             # "ptPnetRegNeutrino": "ptPnetRegNeutrino",
             "prov": "provenance",
             # "pdgId" : "pdgId",
