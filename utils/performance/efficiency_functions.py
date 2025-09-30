@@ -5,6 +5,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import mplhep as hep
 import matplotlib as mpl
+import awkward
 
 vector.register_awkward()
 vector.register_numba()
@@ -125,11 +126,11 @@ def plot_histos_1d(
     values = spanet
     spanet_labels = labels
     spanet_color = color
-    if any(run2):
+    if isinstance(run2, awkward.highlevel.Array):
         values.append(run2)
         labels.append(r"$D_{HH}$-method")
         color.append("yellowgreen")
-    if any(true): #Meaning, if we have a "true" dataset
+    if isinstance(true, awkward.highlevel.Array): #Meaning, if we have a "true" dataset
         values.append(true)
         labels.append("True pairing")
         color.append("black")
@@ -171,10 +172,10 @@ def plot_histos_1d(
             color=color,
         )
     ax.grid(linestyle=":")
-    if any(true):
+    if isinstance(true, awkward.highlevel.Array):
         true_hist = np.histogram(true, bins)
         true_norm = len(true)
-    if any(run2):
+    if isinstance(run2, awkward.highlevel.Array):
         run2_hist = np.histogram(run2, bins)
         run2_norm = len(run2)
     spanet_hists = [
@@ -566,13 +567,13 @@ def separate_klambda(
     # keep only two decimal in the kl_values
     kl_values = np.round(kl_values, 2)
 
-    print("true_kl_idx_list", true_kl_idx_list)
-    print("true_kl_idx_list len", len(true_kl_idx_list))
-    print("spanet_kl_idx_list", spanet_kl_idx_list)
-    print("spanet_kl_idx_list len", len(spanet_kl_idx_list))
-    print("kl_values", kl_unique_true)
-    print("jet_infos_separate_klambda", jet_infos_separate_klambda)
-    print("jet_infos_separate_klambda len", len(jet_infos_separate_klambda))
+    # print("true_kl_idx_list", true_kl_idx_list)
+    # print("true_kl_idx_list len", len(true_kl_idx_list))
+    # print("spanet_kl_idx_list", spanet_kl_idx_list)
+    # print("spanet_kl_idx_list len", len(spanet_kl_idx_list))
+    # print("kl_values", kl_unique_true)
+    # print("jet_infos_separate_klambda", jet_infos_separate_klambda)
+    # print("jet_infos_separate_klambda len", len(jet_infos_separate_klambda))
 
     return (
         true_kl_idx_list,

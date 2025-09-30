@@ -1,13 +1,23 @@
-import awkward as ak
-import numpy as np
-import h5py
-import vector
-from math import sqrt
-import os
 import argparse
+import os
 
-from efficiency_functions import separate_klambda, plot_diff_eff, plot_diff_eff_klambda, plot_histos_1d, plot_histos_2d, plot_mhh, reco_higgs, distance_pt_func, best_reco_higgs, calculate_efficiencies
-from efficiency_configuration import spanet_dict, true_dict, run2_dataset
+import awkward as ak
+import h5py
+import numpy as np
+import vector
+
+from efficiency_configuration import run2_dataset, spanet_dict, true_dict
+from efficiency_functions import (
+    best_reco_higgs,
+    calculate_efficiencies,
+    distance_pt_func,
+    plot_diff_eff,
+    plot_diff_eff_klambda,
+    plot_histos_1d,
+    plot_mhh,
+    reco_higgs,
+    separate_klambda,
+)
 
 vector.register_numba()
 vector.register_awkward()
@@ -45,10 +55,10 @@ if args.data:
 else:
     spanet_dict = {k: v for k, v in spanet_dict.items() if "data" not in k}
 
-print(spanet_dict)
+# print(spanet_dict)
 
-mh_bins = np.linspace(0,300,150)
-mh_bins_peak = np.linspace(100,140,20)
+mh_bins = np.linspace(0, 300, 150)
+mh_bins_peak = np.linspace(100, 140, 20)
 mh_bins_2d = (
     [np.linspace(50, 200, 80) for _ in range(3)]
     + [np.linspace(50, 200, 40) for _ in range(6)]
@@ -84,6 +94,28 @@ for model_name, file_dict in spanet_dict.items():
     idx_b2_spanet_pred = spanetfile["TARGETS"]["h1"]["b2"][()]
     idx_b3_spanet_pred = spanetfile["TARGETS"]["h2"]["b3"][()]
     idx_b4_spanet_pred = spanetfile["TARGETS"]["h2"]["b4"][()]
+
+    def check_double_assignment_vectorized(idx_b1, idx_b2, idx_b3, idx_b4, label):
+        # Stack indices for each event: shape (N_events, 4)
+        idx_all = np.stack([idx_b1, idx_b2, idx_b3, idx_b4], axis=1)
+        # Mask for valid indices
+        valid_mask = idx_all >= 0
+        # Set invalid indices to a large negative number so they don't interfere
+        idx_all_valid = np.where(valid_mask, idx_all, -9999)
+        # For each event, sort the indices
+        idx_sorted = np.sort(idx_all_valid, axis=1)
+        # Compare adjacent indices for equality (double assignment)
+        double_assigned = np.any((idx_sorted[:, 1:] == idx_sorted[:, :-1]) & (idx_sorted[:, 1:] >= 0), axis=1)
+        n_double = np.sum(double_assigned)
+        if n_double > 0:
+            rows = np.where(double_assigned)[0]
+            print(f"WARNING: {n_double} events in {label} have double-assigned jets!")
+            print(f"Rows with double assignments: {rows}")
+        else:
+            print(f"OK: No double-assigned jets found in {label}.")
+
+    check_double_assignment_vectorized(idx_b1_true, idx_b2_true, idx_b3_true, idx_b4_true, "true")
+    check_double_assignment_vectorized(idx_b1_spanet_pred, idx_b2_spanet_pred, idx_b3_spanet_pred, idx_b4_spanet_pred, "spanet_pred")
 
     idx_h1_true = ak.concatenate(
             (
@@ -137,7 +169,7 @@ for model_name, file_dict in spanet_dict.items():
     jet_mass = truefile["INPUTS"]["Jet"]["mass"][()]
 
     jet_infos = [jet_ptPNetRegNeutrino, jet_eta, jet_phi, jet_mass]
-    
+
     # These lists are to be expanded. Didn't think of a better way than to copy them here already
     # if not klambda, the two lists stay equal.
     alltrue_idx = [idx_true]
@@ -157,13 +189,13 @@ for model_name, file_dict in spanet_dict.items():
             truefile, spanetfile, idx_true, idx_spanet_pred, true_dict, spanet_dict
         )
 
-        #I got now indexes for true and spanet and different kl.
-        #For this, I will add them to a list. If no kl is there, I will just make it a list of one element
+        # I got now indexes for true and spanet and different kl.
+        # For this, I will add them to a list. If no kl is there, I will just make it a list of one element
         alltrue_idx.extend(true_kl_idx_list)
         allspanet_idx.extend(spanet_kl_idx_list)
         alljetinfos.extend(jet_infos_separate_klambda)
         all_name_list.extend(kl_values)
-   
+
     # Fully matched events
     mask_fully_matched = [ak.all(ak.all(idx >= 0, axis=-1), axis=-1) for idx in alltrue_idx]
     alltrue_idx_fully_matched = [idx[mask] for idx, mask in zip(alltrue_idx, mask_fully_matched)]
@@ -178,9 +210,9 @@ for model_name, file_dict in spanet_dict.items():
 
     if not args.data:
         correctly_fully_matched_spanet = [
-            (   ak.all(true[:, 0] == spanet[:, 0], axis=1)
+            (ak.all(true[:, 0] == spanet[:, 0], axis=1)
               | ak.all(true[:, 0] == spanet[:, 1], axis=1))
-            & ( ak.all(true[:, 1] == spanet[:, 0], axis=1)
+            & (ak.all(true[:, 1] == spanet[:, 0], axis=1)
               | ak.all(true[:, 1] == spanet[:, 1], axis=1))
             for true, spanet in zip(alltrue_idx_fully_matched, allspanet_idx_fully_matched)
         ]
@@ -222,9 +254,9 @@ for model_name, file_dict in spanet_dict.items():
         idx_spanet_partially_matched_1h = [idx[mask] for idx, mask in zip(allspanet_idx, mask_1h)]
 
         correctly_partially_matched_spanet = [
-            (   ak.all(true[:, 0] == spanet[:, 0], axis=1)
+            (ak.all(true[:, 0] == spanet[:, 0], axis=1)
               | ak.all(true[:, 0] == spanet[:, 1], axis=1))
-            & ( ak.all(true[:, 1] == spanet[:, 0], axis=1)
+            & (ak.all(true[:, 1] == spanet[:, 0], axis=1)
               | ak.all(true[:, 1] == spanet[:, 1], axis=1))
             for true, spanet in zip(idx_true_partially_matched_1h, idx_spanet_partially_matched_1h)
         ]
@@ -260,7 +292,7 @@ for model_name, file_dict in spanet_dict.items():
         for label, frac in zip([file_dict["true"]] + kl_values.tolist(), frac_unmatched):
             print(f"Fraction of unmatched events for {label}: {frac:.3f}")
 
-    #### The next part is for Run2 algorithm ####
+    # The next part is for Run2 algorithm ####
 
     # create a LorentzVector for the jets
     jet = [
@@ -276,90 +308,90 @@ for model_name, file_dict in spanet_dict.items():
         for jet_i in alljetinfos
     ]
 
-    print("len(jet)", len(jet), len(jet[0]))
+    # print("len(jet)", len(jet), len(jet[0]))
 
-    # implement the Run 2 pairing algorithm
-    # TODO: extend to 5 jets cases (more comb idx)
-    comb_idx = [[(0, 1), (2, 3)], [(0, 2), (1, 3)], [(0, 3), (1, 2)]]
+    if model_name == run2_dataset:
 
-    higgs_candidates_unflatten_order = [reco_higgs(j, comb_idx) for j in jet]
-    distance = [
-        distance_pt_func(
-            higgs,
-            1.04,
-        )[0]
-        for higgs in higgs_candidates_unflatten_order
-    ]
-    max_pt = [
-        distance_pt_func(
-            higgs,
-            1.04,
-        )[1]
-        for higgs in higgs_candidates_unflatten_order
-    ]
-    dist_order_idx = [ak.argsort(d, axis=1, ascending=True) for d in distance]
-    dist_order = [ak.sort(d, axis=1, ascending=True) for d in distance]
+        # implement the Run 2 pairing algorithm
+        # TODO: extend to 5 jets cases (more comb idx)
+        comb_idx = [[(0, 1), (2, 3)], [(0, 2), (1, 3)], [(0, 3), (1, 2)]]
 
-    pt_order_idx = [ak.argsort(pt, axis=1, ascending=False) for pt in max_pt]
-    # if the distance between the two best candidates is less than 30, we do not consider the event
-    min_idx = [
-        ak.where(d[:, 1] - d[:, 0] > 30, d_idx[:, 0], pt_idx[:, 0])
-        for d, d_idx, pt_idx in zip(dist_order, dist_order_idx, pt_order_idx)
-    ]
-
-    comb_idx = [
-        np.tile(comb_idx, (len(m), 1, 1, 1)) for m in min_idx
-    ]
-    min_idx = [m for m in min_idx]
-    # given the min_idx, select the correct combination corresponding to the index
-    comb_idx_min = [
-        comb[np.arange(len(m)), m] for comb, m in zip(comb_idx, min_idx)
-    ]
-
-    allrun2_idx_fully_matched = [
-        ak.Array(comb)[m]
-        for comb, m in zip(comb_idx_min, mask_fully_matched)
-    ]
-
-    if not args.data:
-        # compute efficiencies for fully matched events for Run 2 pairing
-        correctly_fully_matched_run2 = [
-            (   ak.all(true[:, 0] == run2[:, 0], axis=1)
-              | ak.all(true[:, 0] == run2[:, 1], axis=1))
-            & ( ak.all(true[:, 1] == run2[:, 0], axis=1)
-              | ak.all(true[:, 1] == run2[:, 1], axis=1))
-            for true, run2 in zip(
-                alltrue_idx_fully_matched, allrun2_idx_fully_matched
-            )
+        higgs_candidates_unflatten_order = [reco_higgs(j, comb_idx) for j in jet]
+        distance = [
+            distance_pt_func(
+                higgs,
+                1.04,
+            )[0]
+            for higgs in higgs_candidates_unflatten_order
         ]
-        
-        # Calculating run2 efficiencies
-        efficiency_fully_matched_run2 = [
-            ak.sum(corr) / len(corr) for corr in correctly_fully_matched_run2
+        max_pt = [
+            distance_pt_func(
+                higgs,
+                1.04,
+            )[1]
+            for higgs in higgs_candidates_unflatten_order
         ]
-        frac_fully_matched = [
-            ak.sum(m) / len(m) for m in mask_fully_matched
-        ]
-        total_efficiency_fully_matched_run2 = [
-            eff * frac
-            for eff, frac in zip(frac_fully_matched, efficiency_fully_matched_run2)
-        ]
-        print("\n")
-        for label, frac in zip([file_dict["true"]] + kl_values.tolist(), frac_fully_matched):
-            print(f"Fraction of fully matched events for {label}: {frac:.3f}")
+        dist_order_idx = [ak.argsort(d, axis=1, ascending=True) for d in distance]
+        dist_order = [ak.sort(d, axis=1, ascending=True) for d in distance]
 
-        print("\n")
-        for label, eff in zip(all_name_list, efficiency_fully_matched_run2):
-            print(f"Efficiency fully matched  for Run 2 {label}: {eff:.3f}")
+        pt_order_idx = [ak.argsort(pt, axis=1, ascending=False) for pt in max_pt]
+        # if the distance between the two best candidates is less than 30, we do not consider the event
+        min_idx = [
+            ak.where(d[:, 1] - d[:, 0] > 30, d_idx[:, 0], pt_idx[:, 0])
+            for d, d_idx, pt_idx in zip(dist_order, dist_order_idx, pt_order_idx)
+        ]
 
-        print("\n")
-        for name, toteff in zip(all_name_list, total_efficiency_fully_matched_run2):
-            print(
-                "Total efficiency fully matched for Run 2 {}: {:.3f}".format(
-                    name,
-                    toteff,
+        comb_idx = [
+            np.tile(comb_idx, (len(m), 1, 1, 1)) for m in min_idx
+        ]
+        # given the min_idx, select the correct combination corresponding to the index
+        comb_idx_min = [
+            comb[np.arange(len(m)), m] for comb, m in zip(comb_idx, min_idx)
+        ]
+        allrun2_idx_fully_matched = [
+            ak.Array(comb)[m]
+            for comb, m in zip(comb_idx_min, mask_fully_matched)
+        ]
+
+        if not args.data:
+            # compute efficiencies for fully matched events for Run 2 pairing
+            correctly_fully_matched_run2 = [
+                (ak.all(true[:, 0] == run2[:, 0], axis=1)
+                  | ak.all(true[:, 0] == run2[:, 1], axis=1))
+                & (ak.all(true[:, 1] == run2[:, 0], axis=1)
+                  | ak.all(true[:, 1] == run2[:, 1], axis=1))
+                for true, run2 in zip(
+                    alltrue_idx_fully_matched, allrun2_idx_fully_matched
                 )
-            )
+            ]
+
+            # Calculating run2 efficiencies
+            efficiency_fully_matched_run2 = [
+                ak.sum(corr) / len(corr) for corr in correctly_fully_matched_run2
+            ]
+            frac_fully_matched = [
+                ak.sum(m) / len(m) for m in mask_fully_matched
+            ]
+            total_efficiency_fully_matched_run2 = [
+                eff * frac
+                for eff, frac in zip(frac_fully_matched, efficiency_fully_matched_run2)
+            ]
+            print("\n")
+            for label, frac in zip([file_dict["true"]] + kl_values.tolist(), frac_fully_matched):
+                print(f"Fraction of fully matched events for {label}: {frac:.3f}")
+
+            print("\n")
+            for label, eff in zip(all_name_list, efficiency_fully_matched_run2):
+                print(f"Efficiency fully matched  for Run 2 {label}: {eff:.3f}")
+
+            print("\n")
+            for name, toteff in zip(all_name_list, total_efficiency_fully_matched_run2):
+                print(
+                    "Total efficiency fully matched for Run 2 {}: {:.3f}".format(
+                        name,
+                        toteff,
+                    )
+                )
 
     # Reconstruct the Higgs boson candidates with the efficiency_fully_matched_run2 = (
     # of the jets considering the true pairings, the spanet pairings
@@ -372,10 +404,14 @@ for model_name, file_dict in spanet_dict.items():
         best_reco_higgs(j, spanet_idx)
         for j, spanet_idx in zip(jet_fully_matched, allspanet_idx_fully_matched)
     ]
-    run2_higgs_fully_matched = [
-        best_reco_higgs(j, idx)
-        for j, idx in zip(jet_fully_matched, allrun2_idx_fully_matched)
-    ]
+    if model_name == run2_dataset:
+        run2_higgs_fully_matched = [
+            best_reco_higgs(j, idx)
+            for j, idx in zip(jet_fully_matched, allrun2_idx_fully_matched)
+        ]
+    else:
+        run2_higgs_fully_matched = spanet_higgs_fully_matched  # Just to keep the structure like it was before
+        correctly_fully_matched_run2 = correctly_fully_matched_spanet
     if not args.data:
         true_higgs_fully_matched = [
             best_reco_higgs(j, idx)
@@ -410,63 +446,76 @@ for model_name, file_dict in spanet_dict.items():
             for i in range(1, len(mhh_bins)):
                 mask = (true_hh.mass > mhh_bins[i - 1]) & (true_hh.mass < mhh_bins[i])
 
-                eff_run2, unc_eff_run2, total_eff_run2, unc_total_eff_run2 = calculate_efficiencies(matched_run2, mask, mask_matched)
                 eff_spanet, unc_eff_spanet, total_eff_spanet, unc_total_eff_spanet = calculate_efficiencies(matched_spanet, mask, mask_matched)
 
-                temp["diff_eff_run2"].append(eff_run2)
-                temp["unc_diff_eff_run2"].append(unc_eff_run2)
-                temp["total_diff_eff_run2"].append(total_eff_run2)
-                temp["total_unc_diff_eff_run2"].append(unc_total_eff_run2)
                 temp["diff_eff_spanet"].append(eff_spanet)
                 temp["unc_diff_eff_spanet"].append(unc_eff_spanet)
                 temp["total_diff_eff_spanet"].append(total_eff_spanet)
                 temp["total_unc_diff_eff_spanet"].append(unc_total_eff_spanet)
+                if model_name == run2_dataset:
+                    eff_run2, unc_eff_run2, total_eff_run2, unc_total_eff_run2 = calculate_efficiencies(matched_run2, mask, mask_matched)
+                    temp["diff_eff_run2"].append(eff_run2)
+                    temp["unc_diff_eff_run2"].append(unc_eff_run2)
+                    temp["total_diff_eff_run2"].append(total_eff_run2)
+                    temp["total_unc_diff_eff_run2"].append(unc_total_eff_run2)
+                    
             # not so nice, but here we are filling the results from the different lists into a new list.
             # Remember, we iterate here through: [inclusive, *[single kls])
             for key in eff_dict.keys():
                 eff_dict[key].append(temp[key])
 
+    # Iteration over the different datasets over ####
 
-
-    #### Iteration over the different datasets over ####
-
-    df_collection[model_name] = {
-            "file_dict" : file_dict,
-            "kl_values" : kl_values
-            }
+    if args.klambda and truefile_klambda != "none":
+        df_collection[model_name] = {
+                "file_dict": file_dict,
+                "kl_values": kl_values,
+                "spanet_higgs_fully_matched": spanet_higgs_fully_matched,
+                }
+    else:
+        df_collection[model_name] = {
+                "file_dict": file_dict,
+                "spanet_higgs_fully_matched": spanet_higgs_fully_matched,
+                }
     if not args.data:
         df_collection[model_name] = df_collection[model_name] | {
-                "efficiencies_fully_matched" : efficiencies_fully_matched,
-                "total_efficiencies_fully_matched" : total_efficiencies_fully_matched,
+                "efficiencies_fully_matched": efficiencies_fully_matched,
+                "total_efficiencies_fully_matched": total_efficiencies_fully_matched,
                 # Currently of all the spanet models, a run2 is created. We can improve this to only have one run2 model
                 # The model to run is defined in the efficiendy_calibrations
-                "efficiencies_fully_matched_run2" : efficiency_fully_matched_run2,
-                "total_efficiencies_fully_matched_run2" : total_efficiency_fully_matched_run2,
-                # Parameters for the diff_eff plots
-                "diff_eff_run2": eff_dict["diff_eff_run2"],
-                "unc_diff_eff_run2": eff_dict["unc_diff_eff_run2"],
-                "total_diff_eff_run2": eff_dict["total_diff_eff_run2"],
-                "total_unc_diff_eff_run2": eff_dict["total_unc_diff_eff_run2"],
                 "diff_eff_spanet": eff_dict["diff_eff_spanet"],
                 "unc_diff_eff_spanet": eff_dict["unc_diff_eff_spanet"],
                 "total_diff_eff_spanet": eff_dict["total_diff_eff_spanet"],
                 "total_unc_diff_eff_spanet": eff_dict["total_unc_diff_eff_spanet"],
                 "true_hh_fully_matched":  true_hh_fully_matched,
-                "spanet_higgs_fully_matched": spanet_higgs_fully_matched,
-                "run2_higgs_fully_matched": run2_higgs_fully_matched,
                 "true_higgs_fully_matched": true_higgs_fully_matched,
                 }
+    if model_name == run2_dataset:
+        df_collection[model_name] = df_collection[model_name] | {
+            "run2_higgs_fully_matched": run2_higgs_fully_matched
+            }
+        if not args.data:
+            df_collection[model_name] = df_collection[model_name] | {
+                    "efficiencies_fully_matched_run2": efficiency_fully_matched_run2,
+                    "total_efficiencies_fully_matched_run2": total_efficiency_fully_matched_run2,
+                    # Parameters for the diff_eff plots
+                    "diff_eff_run2": eff_dict["diff_eff_run2"],
+                    "unc_diff_eff_run2": eff_dict["unc_diff_eff_run2"],
+                    "total_diff_eff_run2": eff_dict["total_diff_eff_run2"],
+                    "total_unc_diff_eff_run2": eff_dict["total_unc_diff_eff_run2"],
+                    }
 
 
-## Plotting begins here
+
+# Plotting begins here
         # not data
+r2_model = df_collection[run2_dataset]
 if not args.data:
     print("\n")
     print("Plotting efficiencies fully matched for all klambda values")
     # We are adding the run2 of the chosen element (defined in efficiency_calibrations) as last element
     print("All datasets: ", df_collection.keys())
     print("Run2 set: ", run2_dataset)
-    r2_model = df_collection[run2_dataset]
     print(df_collection[run2_dataset].keys())
     plot_diff_eff_klambda(
         [model["efficiencies_fully_matched"][1:] for model in df_collection.values()] + [r2_model["efficiencies_fully_matched_run2"][1:]],
@@ -518,9 +567,9 @@ for bins, name in zip([mh_bins, mh_bins_peak], ["", "_peak"]):
     for number in [1, 2]:
         plot_histos_1d(
             bins,
-            [model["spanet_higgs_fully_matched"][0][:, number - 1].mass for model in df_collection.values()], #spanet values
-            r2_model["run2_higgs_fully_matched"][0][:, number - 1].mass, #run2 values
-            r2_model["true_higgs_fully_matched"][0][:, number - 1].mass if not args.data else None, #true values
+            [model["spanet_higgs_fully_matched"][0][:, number - 1].mass for model in df_collection.values()],  # spanet values
+            r2_model["run2_higgs_fully_matched"][0][:, number - 1].mass,  # run2 values
+            r2_model["true_higgs_fully_matched"][0][:, number - 1].mass if not args.data else None,  # true values
             [model["file_dict"]["label"] for model in df_collection.values()],
             [model["file_dict"]["color"] for model in df_collection.values()],
             number,
