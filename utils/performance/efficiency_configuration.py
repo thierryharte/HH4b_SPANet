@@ -4,7 +4,12 @@ There are two dictionaries; one is a dictionary showing the actual datasets and 
 """
 import logging
 
-logger = logging.getLogger()
+logger = logging.getLogger(__name__)
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s | %(levelname)s | %(funcName)s | %(message)s",
+    datefmt="%d-%b-%y %H-%M-%S",
+)
 
 spanet_dir = '/eos/user/t/tharte/Analysis_data/predictions/'
 spanet_dir_matteo = '/eos/user/m/mmalucch/spanet_inputs/out_prediction_files/'
@@ -13,19 +18,9 @@ true_dir_thierry = '/eos/user/t/tharte/Analysis_data/spanet_samples/'
 true_dir_matteo = '/eos/user/m/mmalucch/spanet_inputs/out_prediction_files/true_files/'
 
 # uncomment the configurations that you want to use
-logger.warn(
-    'WARNING: the naming has to follow the convetions in \n efficiency_functions.check_names function in order to work properly \n associating the spanet predicted files with the true files'
-)
-# This is rather special
-# We need a run2 dataset. This is here defined over the spanet model. However, it only depends on the true file defined in the spanet dictionary. MIGHT HAVE TO BE IMPROVED.
-# The reason not to go directly with the true file is, that we are not reading out all the true files anymore...
-# run2_dataset = '5_jets_ptvary_loose_btag_300e_03_17_allklambda_rerun'
-# run2_dataset = '5_jets_pt_btag_300e_allklambda'
-# run2_dataset = '5_jets_pt_data_btag_300e'
-# run2_dataset = '4_jets_allklambda_newkl_newCuts'
-# run2_dataset = '5_jets_pt_btag_wp_300e_allklambda'
-run2_dataset = '5_jets_pt_data_btag_wp_300e'
-# run2_dataset = '5_jets_ptvary_loose_btag_300e_03_17_allklambda_btag12'
+
+run2_dataset_MC = '5_jets_pt_true_wp_allklambda'
+run2_dataset_DATA = '5_jets_pt_true_wp_DATA'
 
 spanet_dict = {
     #     '4_jets_allklambda_newkl_newCuts': {
@@ -324,10 +319,6 @@ spanet_dict = {
 
 # true_dir = '/eos/home-r/ramellar/out_prediction_files/true_files/'
 # true_dir = '/afs/cern.ch/user/m/mmalucch/public/out_prediction_files/true_files/'
-
-logger.warn(
-    'WARNING: do not comment the items of this dictionary \n if you add a new true file you have to update the efficiency_functions.check_names \n and add a new if statement in the function'
-)
 # The `klambda` parameter so far only determines, if there is different klambdas or not. The type if not `none` doesn't matter.
 true_dict = {
     '4 jets': {'name': f'{true_dir_matteo}output_JetGoodHiggs_test.h5', 'klambda': 'none'},
