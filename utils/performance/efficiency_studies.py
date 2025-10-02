@@ -411,7 +411,8 @@ for model_name, file_dict in spanet_dict.items():
         ]
     else:
         run2_higgs_fully_matched = spanet_higgs_fully_matched  # Just to keep the structure like it was before
-        correctly_fully_matched_run2 = correctly_fully_matched_spanet
+        if not args.data:
+            correctly_fully_matched_run2 = correctly_fully_matched_spanet
     if not args.data:
         true_higgs_fully_matched = [
             best_reco_higgs(j, idx)

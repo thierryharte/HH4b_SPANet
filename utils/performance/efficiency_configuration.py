@@ -24,7 +24,7 @@ logger.warn(
 # run2_dataset = '5_jets_pt_data_btag_300e'
 # run2_dataset = '4_jets_allklambda_newkl_newCuts'
 # run2_dataset = '5_jets_pt_btag_wp_300e_allklambda'
-run2_dataset = '5_jets_pt_btag_wp_300e_allklambda'
+run2_dataset = '5_jets_pt_data_btag_wp_300e'
 # run2_dataset = '5_jets_ptvary_loose_btag_300e_03_17_allklambda_btag12'
 
 spanet_dict = {
@@ -258,11 +258,11 @@ spanet_dict = {
        'true': '5_jets_pt_true_wp_DATA',
        'label': 'SPANet btag 3 WP - Flattened pt [0.3,1.7]',
        'color': 'coral'},
-   # '5_jets_pt_data_vary_btag_1wp_300e': {
-   #     'file': f'{spanet_dir}spanet_hh4b_5jets_300_ptvary_loose_s100_btag_1wp_DATA_postEE.h5',
-   #     'true': '5_jets_pt_true_wp_DATA',
-   #     'label': 'SPANet btag 1 WP - Flattened pt [0.3,1.7]',
-   #     'color': 'rosybrown'},
+   '5_jets_pt_data_vary_btag_1wp_300e': {
+       'file': f'{spanet_dir}spanet_hh4b_5jets_300_ptvary_loose_s100_btag_1wp_DATA_postEE.h5',
+       'true': '5_jets_pt_true_wp_DATA',
+       'label': 'SPANet btag 1 WP - Flattened pt [0.3,1.7]',
+       'color': 'rosybrown'},
 
 
     # --- [0.1,10] ---
