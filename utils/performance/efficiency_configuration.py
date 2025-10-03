@@ -19,7 +19,7 @@ true_dir_matteo = '/eos/user/m/mmalucch/spanet_inputs/out_prediction_files/true_
 
 # uncomment the configurations that you want to use
 
-run2_dataset_MC = '5_jets_pt_true_wp_allklambda'
+run2_dataset_MC = '4_jets_allklambda_newkl_newCuts'
 run2_dataset_DATA = '5_jets_pt_true_wp_DATA'
 
 spanet_dict = {
@@ -64,8 +64,13 @@ spanet_dict = {
     '5_jets_pt_btag_wp_300e_allklambda': {
         'file': f'{spanet_dir}spanet_hh4b_5jets_300_ptreg_loose_s100_btag_wp.h5',
         'true': '5_jets_pt_true_wp_allklambda',
-        'label': 'SPANet btag WP',
+        'label': 'SPANet btag 5 WP',
         'color': 'royalblue'},
+    '5_jets_pt_btag_3wp_300e_allklambda': {
+        'file': f'{spanet_dir}spanet_hh4b_5jets_300_ptreg_loose_s100_btag_3wp.h5',
+        'true': '5_jets_pt_true_wp_allklambda',
+        'label': 'SPANet btag 3 WP',
+        'color': 'skyblue'},
     '5_jets_ptvary_loose_btag_300e_03_17_allklambda_rerun': {
         'file': f'{spanet_dir}rerun/spanet_rerun_hh4b_data_5jets_300_ptvary_loose_s100_btag_03_17_eval_on_btagWP.h5',
         'true': '5_jets_pt_true_wp_allklambda',
@@ -233,12 +238,12 @@ spanet_dict = {
        'true': '5_jets_pt_true_wp_DATA',
        'label': 'SPANet btag 5 WP full postEE',
        'color': 'royalblue'},
-   # '5_jets_pt_data_btag_3wp_300e': {  # Does not yet exist
-   #     'file': f'{spanet_dir}spanet_hh4b_5jets_300_ptreg_loose_s100_btag_3wp_DATA_postEE.h5',
-   #     'true': '5_jets_pt_true_wp_DATA',
-   #     'label': 'SPANet btag 3 WP full postEE',
-   #     'color': 'skyblue'},
-    '5_jets_pt_data_vary_loose_btag_300e_03_17_allklambda_rerun': {
+   '5_jets_pt_data_btag_3wp_300e': {
+       'file': f'{spanet_dir}spanet_hh4b_5jets_300_ptreg_loose_s100_btag_3wp_DATA_postEE.h5',
+       'true': '5_jets_pt_true_wp_DATA',
+       'label': 'SPANet btag 3 WP full postEE',
+       'color': 'skyblue'},
+   '5_jets_pt_data_vary_loose_btag_300e_03_17_allklambda_rerun': {
         'file': f'{spanet_dir}rerun/spanet_rerun_hh4b_data_5jets_300_ptvary_loose_s100_btag_03_17_eval_on_btagWP_DATA_postEE.h5',
        'true': '5_jets_pt_true_wp_DATA',
         'label': 'SPANet - Flattened pt [0.3,1.7]',
