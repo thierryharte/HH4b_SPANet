@@ -32,7 +32,7 @@ For the script to run the efficiency evaluation plots, a different environment i
 This repo does not have a direct way to install. An example of such an environement is here. It might be more useful to start a new environment and just add the missing packages until the respective script runs. A better list is to be created.:
 <details>
     <summary>Installed packages (more than required)</summary>
-    ```
+    
     absl-py==2.1.0
     aiohappyeyeballs==2.4.3
     aiohttp==3.10.10
@@ -386,7 +386,7 @@ This repo does not have a direct way to install. An example of such an environem
     yappi==1.3.6
     yarl==1.15.3
     zipp==3.20.2
-    ```
+    
 </details>
 
 The next time the user enters in the apptainer the virtual environment needs to be activated.
