@@ -112,6 +112,7 @@ features = {
             "phi": "phi",
             "mass": "mass",
             "btag": "btagPNetB",
+            "btag_wp": "btagPNetB_wp",
             # "ptPnetRegNeutrino": "ptPnetRegNeutrino",
         },
         "JetGoodHiggs": {
@@ -120,6 +121,7 @@ features = {
             "phi": "phi",
             "mass": "mass",
             "btag": "btagPNetB",
+            "btag_wp": "btagPNetB_wp",
             # "ptPnetRegNeutrino": "ptPnetRegNeutrino",
         },
         "JetGoodHiggsMatched": {
@@ -128,6 +130,7 @@ features = {
             "phi": "phi",
             "mass": "mass",
             "btag": "btagPNetB",
+            "btag_wp": "btagPNetB_wp",
             # "ptPnetRegNeutrino": "ptPnetRegNeutrino",
             "prov": "provenance",
             # "pdgId" : "pdgId",
@@ -139,6 +142,7 @@ features = {
             "phi": "phi",
             "mass": "mass",
             "btag": "btagPNetB",
+            "btag_wp": "btagPNetB_wp",
             # "ptPnetRegNeutrino": "ptPnetRegNeutrino",
             "prov": "provenance",
             # "pdgId" : "pdgId",
@@ -387,14 +391,16 @@ for sample in samples:
                 ## Add the kl coefficient to the dataset
     # The kl coefficient is added to the dataset as a new feature.
     print(cs)
-    zipped_dict["event"] = ak.zip(
-        {"kl": kl_dataset, "sb": sb_dataset, "weight": cs["weight"].value},
-        with_name="Momentum4D",
-    )
-    zipped_dict["event"] = ak.zip(
-            {"kl": kl_dataset, "sb": sb_dataset, "weight": cs["weight"].value, "random_pt_weights": cs["events_random_pt_weights"].value},
-        with_name="Momentum4D",
-    )
+    try:
+        zipped_dict["event"] = ak.zip(
+                {"kl": kl_dataset, "sb": sb_dataset, "weight": cs["weight"].value, "random_pt_weights": cs["events_random_pt_weights"].value},
+            with_name="Momentum4D",
+        )
+    except:
+        zipped_dict["event"] = ak.zip(
+            {"kl": kl_dataset, "sb": sb_dataset, "weight": cs["weight"].value},
+            with_name="Momentum4D",
+        )
 
     if "GluGlutoHHto4B" not in samples and args.reduce :
         print("sample loop", samples)

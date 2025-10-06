@@ -1,10 +1,20 @@
+import logging
 from math import sqrt
+
+import awkward
 import awkward as ak
-import vector
-import numpy as np
+import matplotlib as mpl
 import matplotlib.pyplot as plt
 import mplhep as hep
-import matplotlib as mpl
+import numpy as np
+import vector
+
+logger = logging.getLogger(__name__)
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s | %(levelname)s | %(funcName)s | %(message)s",
+    datefmt="%d-%b-%y %H-%M-%S",
+)
 
 vector.register_awkward()
 vector.register_numba()
@@ -12,6 +22,92 @@ vector.register_numba()
 from efficiency_configuration import *
 
 TRUE_PAIRING = False
+
+
+def check_double_assignment_vectorized(idx_b1, idx_b2, idx_b3, idx_b4, label):
+    # Stack indices for each event: shape (N_events, 4)
+    idx_all = np.stack([idx_b1, idx_b2, idx_b3, idx_b4], axis=1)
+    # Mask for valid indices
+    valid_mask = idx_all >= 0
+    # Set invalid indices to a large negative number so they don't interfere
+    idx_all_valid = np.where(valid_mask, idx_all, -9999)
+    # For each event, sort the indices
+    idx_sorted = np.sort(idx_all_valid, axis=1)
+    # Compare adjacent indices for equality (double assignment)
+    double_assigned = np.any((idx_sorted[:, 1:] == idx_sorted[:, :-1]) & (idx_sorted[:, 1:] >= 0), axis=1)
+    n_double = np.sum(double_assigned)
+    if n_double > 0:
+        rows = np.where(double_assigned)[0]
+        logger.info(f"WARNING: {n_double} events in {label} have double-assigned jets!")
+        logger.info(f"Rows with double assignments: {rows}")
+    else:
+        logger.info(f"OK: No double-assigned jets found in {label}.")
+
+
+def load_jets_and_pairing(samplefile, label):
+    idx_b1 = samplefile["TARGETS"]["h1"]["b1"][()]
+    idx_b2 = samplefile["TARGETS"]["h1"]["b2"][()]
+    idx_b3 = samplefile["TARGETS"]["h2"]["b3"][()]
+    idx_b4 = samplefile["TARGETS"]["h2"]["b4"][()]
+    check_double_assignment_vectorized(idx_b1, idx_b2, idx_b3, idx_b4, label)
+    idx_h1 = ak.concatenate(
+            (
+                ak.unflatten(idx_b1, ak.ones_like(idx_b1)),
+                ak.unflatten(idx_b2, ak.ones_like(idx_b2)),
+            ),
+            axis=1,
+        )
+    idx_h2 = ak.concatenate(
+            (
+                ak.unflatten(idx_b3, ak.ones_like(idx_b3)),
+                ak.unflatten(idx_b4, ak.ones_like(idx_b4)),
+            ),
+            axis=1,
+        )
+    idx = ak.concatenate(
+            (
+                ak.unflatten(idx_h1, ak.ones_like(idx_h1[:, 0])),
+                ak.unflatten(idx_h2, ak.ones_like(idx_h2[:, 0])),
+            ),
+            axis=1,
+        )
+    return idx
+
+
+def calculate_efficiencies(true_idx, model_idx, mask, truename, kl_values, all_names, label):
+    matching_eval_model = [
+        (ak.all(true[:, 0] == spanet[:, 0], axis=1)
+          | ak.all(true[:, 0] == spanet[:, 1], axis=1))
+        & (ak.all(true[:, 1] == spanet[:, 0], axis=1)
+          | ak.all(true[:, 1] == spanet[:, 1], axis=1))
+        for true, spanet in zip(true_idx, model_idx)
+    ]
+
+    # compute efficiencies for events
+    model_eff = [
+        ak.sum(matching_eval_ds) / len(matching_eval_ds)
+        for matching_eval_ds in matching_eval_model
+    ]
+    logger.info(f"matching_{label}_model: {[len(c) for c in matching_eval_model]}")
+    fraction = [ak.sum(m) / len(m) for m in mask]
+    total_model_eff = [
+        eff * frac
+        for frac, eff in zip(fraction, model_eff)
+    ]
+    # Printing the values
+    logger.info("\n")
+    for lab, frac in zip([truename] + kl_values.tolist(), fraction):
+        logger.info(f"Fraction of {label} events for {lab}: {frac:.3f}")
+
+    logger.info("\n")
+    for lab, eff in zip(all_names, model_eff):
+        logger.info(f"Efficiency {label} for {lab}: {eff:.3f}")
+    logger.info("\n")
+
+    for name, toteff in zip(all_names, total_model_eff):
+        logger.info(f"Total efficiency {label} for {name}: {toteff:.3f}")
+    return fraction, model_eff, total_model_eff, matching_eval_model
+
 
 def distance_pt_func(higgs_pair, k):
     if len(higgs_pair[0, 0]) == 0:
@@ -101,15 +197,16 @@ def best_reco_higgs(jet_collection, idx_collection):
     higgs_candidates_unflatten_order = higgs_pair[higgs_candidates_unflatten_order_idx]
     return higgs_candidates_unflatten_order
 
-def calculate_efficiencies(matched, mask, mask_matched):
-    ''' This function is designed to determine the differencial efficiencies by mhh_bins.
+
+def calculate_diff_efficiencies(matched, mask, mask_matched):
+    """This function is designed to determine the differencial efficiencies by mhh_bins.
     Used to avoid repetition between run2 and spanet.
     :param matched: the events passing a mask for being fully matched
     :param mask: the mask determining the current bin
     :param mask_matched: masking array for an event being fully matched (not very efficient...)
 
     :return: efficiency, uncertainty of efficiency, total efficiency, uncertainty of total efficiency
-    '''
+    """
     eff = ak.sum(matched[mask]) / ak.count(matched[mask])
     unc_eff = sqrt(eff * (1 - eff) / ak.count(matched[mask]))
     frac_fully_matched = ak.sum(mask_matched[mask]) / len(mask_matched[mask])
@@ -121,33 +218,33 @@ def calculate_efficiencies(matched, mask, mask_matched):
 def plot_histos_1d(
     bins, spanet, run2, true, labels, color, num, name="", plot_dir="plots"
 ):
-    #First create a big list with also the run2 and true values:
+    # First create a big list with also the run2 and true values:
     values = spanet
     spanet_labels = labels
     spanet_color = color
-    if any(run2):
+    if isinstance(run2, awkward.highlevel.Array):
         values.append(run2)
         labels.append(r"$D_{HH}$-method")
         color.append("yellowgreen")
-    if any(true): #Meaning, if we have a "true" dataset
+    if isinstance(true, awkward.highlevel.Array):  # Meaning, if we have a "true" dataset
         values.append(true)
         labels.append("True pairing")
         color.append("black")
 
-    #We want to add a ratio plot with run2 ratios. Basically to see the difference between the SPANet and Dhh pairings.
+    # We want to add a ratio plot with run2 ratios. Basically to see the difference between the SPANet and Dhh pairings.
     compare_run2 = True
     if compare_run2 and any(run2):
         fig, (ax, ax_residuals) = plt.subplots(figsize=(6, 6), nrows=2, sharex=True, gridspec_kw={"height_ratios": [3, 1]})
         ax_residuals.set_xlabel(
             r"Leading $m_{H}$ [GeV]" if num == 1 else r"Subleading $m_{H}$ [GeV]"
         )
-    #This would be the normal ratio with comparison to true values
+    # This would be the normal ratio with comparison to true values
     elif any(true):
         fig, (ax, ax_residuals) = plt.subplots(figsize=(6, 6), nrows=2, sharex=True, gridspec_kw={"height_ratios": [3, 1]})
         ax_residuals.set_xlabel(
             r"Leading $m_{H}$ [GeV]" if num == 1 else r"Subleading $m_{H}$ [GeV]"
         )
-    #Otherwise we would have baseline
+    # Otherwise we would have baseline
     else:
         fig, ax = plt.subplots(figsize=(6, 6))
         ax.set_xlabel(
@@ -156,10 +253,10 @@ def plot_histos_1d(
     ax.set_ylabel("Normalized events")
 
     for sn, label, color in zip(values, labels, color):
-        #counts, edges = np.histogram(sn, bins=bins)
-        #total_width = max(sn)-min(sn)
-        #norm_counts = counts / (total_width * np.sum(counts))
-        #ax.bar(edges[:-1], norm_counts, width=np.diff(edges), align="edge", alpha=0.7)
+        # counts, edges = np.histogram(sn, bins=bins)
+        # total_width = max(sn)-min(sn)
+        # norm_counts = counts / (total_width * np.sum(counts))
+        # ax.bar(edges[:-1], norm_counts, width=np.diff(edges), align="edge", alpha=0.7)
         ax.hist(
             sn,
             bins,
@@ -167,18 +264,18 @@ def plot_histos_1d(
             histtype="step",
             linewidth=1,
             density=False,
-            weights=np.repeat(1.0/(len(sn)*np.diff(bins)[0]), len(sn)),
+            weights=np.repeat(1.0 / (len(sn) * np.diff(bins)[0]), len(sn)),
             color=color,
         )
     ax.grid(linestyle=":")
-    if any(true):
+    if isinstance(true, awkward.highlevel.Array):
         true_hist = np.histogram(true, bins)
         true_norm = len(true)
-    if any(run2):
+    if isinstance(run2, awkward.highlevel.Array):
         run2_hist = np.histogram(run2, bins)
         run2_norm = len(run2)
     spanet_hists = [
-        #np.histogram(spanet[i], bins, weights=np.ones_like(spanet[i]) / len(spanet[i]))
+        # np.histogram(spanet[i], bins, weights=np.ones_like(spanet[i]) / len(spanet[i]))
         np.histogram(span, bins)
         for span in spanet
     ]
@@ -190,7 +287,7 @@ def plot_histos_1d(
                 spanet[0],
                 bins,
                 density=False,
-                weights=np.repeat(1.0/(len(spanet[0])*np.diff(bins)[0]), len(spanet[0])),
+                weights=np.repeat(1.0 / (len(spanet[0]) * np.diff(bins)[0]), len(spanet[0])),
             )[0]
         )
         * (1.8 if "peak" not in name else 1.6),
@@ -198,16 +295,16 @@ def plot_histos_1d(
     if compare_run2 and any(run2):
         # Plot the residuals with respect to Run2
         res_spanet_run2 = [
-            (histo[0]/norm) / (run2_hist[0] / run2_norm)
+            (histo[0] / norm) / (run2_hist[0] / run2_norm)
             for histo, norm in zip(spanet_hists, spanet_norm)
         ]
-        
-        err_spanet = [np.sqrt(histo[0])/norm for histo, norm in zip(spanet_hists, spanet_norm)]
-        err_run2 = np.sqrt(run2_hist[0])/run2_norm
+
+        err_spanet = [np.sqrt(histo[0]) / norm for histo, norm in zip(spanet_hists, spanet_norm)]
+        err_run2 = np.sqrt(run2_hist[0]) / run2_norm
         res_spanet_run2_err = [
             np.sqrt(
-                (err / (run2_hist[0])/run2_norm) ** 2
-                + ((err_run2 * (histo[0]/norm))/ (run2_hist[0]/run2_norm) ** 2)** 2
+                (err / (run2_hist[0]) / run2_norm) ** 2
+                + ((err_run2 * (histo[0] / norm)) / (run2_hist[0] / run2_norm) ** 2) ** 2
             )
             for histo, norm, err in zip(spanet_hists, spanet_norm, err_spanet)
         ]
@@ -231,17 +328,17 @@ def plot_histos_1d(
 
         ax_residuals.grid()
 
-    #### Currently not implemented ####
+    # Currently not implemented ####
 
-    #elif true: # meaning true pairing file
+    # elif true: # meaning true pairing file
     #    # plot the residuals respect to true
     #    residuals_run2 = [
     #        (r[0] / np.sum(r[0])) / (t[0] / np.sum(t[0]))
     #        for r, t in zip(run2_hist, true_hist)
     #    ]
-    #    print(len(spanet_labels))
-    #    print(len(spanet_hists[0][0]))
-    #    print(len(spanet_hists[0][0]))
+    #    logger.info(len(spanet_labels))
+    #    logger.info(len(spanet_hists[0][0]))
+    #    logger.info(len(spanet_hists[0][0]))
 
     #    residuals_spanet = [
     #        (spanet_hists[i][0] / np.sum(spanet_hists[i][0]))
@@ -251,7 +348,6 @@ def plot_histos_1d(
     #        )
     #        for i in range(len(spanet_labels))
     #    ]
-
 
     #    residual_run2_err = (
     #        [
@@ -326,7 +422,7 @@ def plot_histos_1d(
     hep.cms.label(
         year="2022",
         com="13.6",
-        label=f"Private Work",
+        label="Private Work",
         ax=ax,
         data=True
     )
@@ -395,7 +491,7 @@ def plot_histos_2d(mh_bins, higgs, label, name, plot_dir="plots"):
     hep.cms.label(
         year="2022",
         com="13.6",
-        label=f"Private Work",
+        label="Private Work",
         ax=ax,
         data=True
     )
@@ -440,7 +536,7 @@ def plot_diff_eff(
     hep.cms.label(
         year="2022",
         com="13.6",
-        label=f"Private Work",
+        label="Private Work",
         ax=ax,
     )
     plt.savefig(f"{plot_dir}/{file_name}.png", dpi=300, bbox_inches="tight")
@@ -496,7 +592,7 @@ def plot_true_higgs(true_higgs_fully_matched, mh_bins, num, plot_dir="plots"):
     hep.cms.label(
         year="2022",
         com="13.6",
-        label=f"Private Work",
+        label="Private Work",
         ax=ax,
     )
 
@@ -514,19 +610,13 @@ def plot_true_higgs(true_higgs_fully_matched, mh_bins, num, plot_dir="plots"):
 
 
 def separate_klambda(
-    df_true, df_spanet_pred, idx_true, idx_spanet_pred, true_dict, spanet_dict
+    jet_infos, df_true, df_spanet_pred, idx_true, idx_spanet_pred
 ):
-    # load jet information
-    jet_ptPNetRegNeutrino =  df_true["INPUTS"]["Jet"]["ptPnetRegNeutrino"][()]
-    jet_eta = df_true["INPUTS"]["Jet"]["eta"][()]
-    jet_phi = df_true["INPUTS"]["Jet"]["phi"][()]
-    jet_mass = df_true["INPUTS"]["Jet"]["mass"][()]
-    jet_infos = [jet_ptPNetRegNeutrino, jet_eta, jet_phi, jet_mass]
-    print("jet_infos", len(jet_infos), len(jet_infos[0]))
+    logger.info(f"jet_infos {len(jet_infos)}, {len(jet_infos[0])}")
 
     kl_array_true = df_true["INPUTS"]["Event"]["kl"][()]
     kl_array_spanet = df_spanet_pred["INPUTS"]["Event"]["kl"][()]
-    print("kl_arrays", kl_array_spanet)
+    logger.info(f"kl_arrays {kl_array_spanet}")
 
     # for each kl_array, separate the array based on the kl value
     # and create a list of arrays with the same kl value
@@ -534,7 +624,6 @@ def separate_klambda(
     # spanet_separate_klambda = []
 
     kl_unique_true = np.unique(kl_array_true)
-    kl_unique_spanet = np.unique(kl_array_spanet)
 
     # Filling two dictionaries with the events of the respective kl values
     # One for the true one and one for the spanet one
@@ -544,9 +633,9 @@ def separate_klambda(
     kl_values = []
     for kl in kl_unique_true:
         mask = kl_array_true == kl
-        print("mask", mask)
-        print("kl_array_true[mask]", kl_array_true[mask])
-        print("kl", kl)
+        logger.info(f"mask {mask}")
+        logger.info(f"kl_array_true[mask] {kl_array_true[mask]}")
+        logger.info(f"kl {kl}")
         true_kl_idx_list.append(idx_true[mask])
         kl_values.append(kl)
         temp_jet = []
@@ -554,25 +643,29 @@ def separate_klambda(
             temp_jet.append(jet_info[mask])
         jet_infos_separate_klambda.append(temp_jet)
 
-    spanet_kl_idx_list = []
-    for kl in kl_unique_spanet:
-        mask = kl_array_spanet == kl
-        print("mask", mask)
-        print("kl_array_spanet[mask]", kl_array_spanet[mask])
-        print("kl", kl)
-        spanet_kl_idx_list.append(idx_spanet_pred[mask])
-        assert kl in kl_values
+    if idx_spanet_pred is not None:
+        kl_unique_spanet = np.unique(kl_array_spanet)
+        spanet_kl_idx_list = []
+        for kl in kl_unique_spanet:
+            mask = kl_array_spanet == kl
+            logger.info(f"mask {mask}")
+            logger.info(f"kl_array_spanet[mask] {kl_array_spanet[mask]}")
+            logger.info(f"kl {kl}")
+            spanet_kl_idx_list.append(idx_spanet_pred[mask])
+            assert kl in kl_values
+    else:
+        spanet_kl_idx_list = None
 
     # keep only two decimal in the kl_values
     kl_values = np.round(kl_values, 2)
 
-    print("true_kl_idx_list", true_kl_idx_list)
-    print("true_kl_idx_list len", len(true_kl_idx_list))
-    print("spanet_kl_idx_list", spanet_kl_idx_list)
-    print("spanet_kl_idx_list len", len(spanet_kl_idx_list))
-    print("kl_values", kl_unique_true)
-    print("jet_infos_separate_klambda", jet_infos_separate_klambda)
-    print("jet_infos_separate_klambda len", len(jet_infos_separate_klambda))
+    # logger.info("true_kl_idx_list", true_kl_idx_list)
+    # logger.info("true_kl_idx_list len", len(true_kl_idx_list))
+    # logger.info("spanet_kl_idx_list", spanet_kl_idx_list)
+    # logger.info("spanet_kl_idx_list len", len(spanet_kl_idx_list))
+    # logger.info("kl_values", kl_unique_true)
+    # logger.info("jet_infos_separate_klambda", jet_infos_separate_klambda)
+    # logger.info("jet_infos_separate_klambda len", len(jet_infos_separate_klambda))
 
     return (
         true_kl_idx_list,
@@ -602,7 +695,7 @@ def plot_diff_eff_klambda(effs, kl_values, labels, color, name, plot_dir="plots"
     hep.cms.label(
         year="2022",
         com="13.6",
-        label=f"Private Work",
+        label="Private Work",
         ax=ax,
     )
     plt.savefig(f"{plot_dir}/{name}.png", dpi=300, bbox_inches="tight")
@@ -610,21 +703,22 @@ def plot_diff_eff_klambda(effs, kl_values, labels, color, name, plot_dir="plots"
     plt.savefig(f"{plot_dir}/{name}.svg", dpi=300, bbox_inches="tight")
     plt.close()
 
+
 def add_fields(collection, fields=None, four_vec="PtEtaPhiMLorentzVector"):
-    if fields==None:
-        fields= list(collection.fields)
+    if fields == None:
+        fields = list(collection.fields)
     for field in ["pt", "eta", "phi", "mass"]:
         if field not in fields:
             fields.append(field)
-    if four_vec=="PtEtaPhiMLorentzVector":
+    if four_vec == "PtEtaPhiMLorentzVector":
         fields_dict = {field: getattr(collection, field) for field in fields}
         collection = ak.zip(
             fields_dict,
             with_name="PtEtaPhiMLorentzVector",
         )
-    elif four_vec=="Momentum4D":
-        fields=["pt", "eta", "phi", "mass"]
-        fields_dict = {field: getattr(collection, field) for field in fields }
+    elif four_vec == "Momentum4D":
+        fields = ["pt", "eta", "phi", "mass"]
+        fields_dict = {field: getattr(collection, field) for field in fields}
         collection = ak.zip(
             fields_dict,
             with_name="Momentum4D",

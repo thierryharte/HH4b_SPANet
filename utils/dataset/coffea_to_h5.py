@@ -25,7 +25,8 @@ parser.add_argument(
 parser.add_argument(
     "--sample",
     type=str,
-    default="GluGlutoHHto4B_spanet",
+    default="GluGlutoHHto4B",
+    nargs="+",
     help="Sample name",
 )
 parser.add_argument(
@@ -42,6 +43,13 @@ parser.add_argument(
     default=False,
     help="Applying a random weight to pT to reduce mass dependence",
 )
+parser.add_argument(
+    "-p2h",
+    "--only-parquet-to-h5",
+    action="store_true",
+    default=False,
+    help="Only run parquet to h5 (used, when parquet files are already available).",
+)
 args = parser.parse_args()
 
 if args.random_pt:
@@ -57,11 +65,14 @@ script_dir = os.path.dirname(os.path.realpath(__file__))
 coffea_to_parquet = f"python3 {script_dir}/coffea_to_parquet.py -i {args.input} -o {os.path.dirname(args.input)} -c {args.cat}"
 #subprocess.run(coffea_to_parquet, shell=True)
 
-parquet_to_h5 = f"python3 {script_dir}/parquet_to_h5.py -i {os.path.dirname(args.input)}/{args.sample}_{args.cat}.parquet -o {out_dir} -f {args.frac_train} {'--no-shuffle' if args.no_shuffle else ''} {random_pt_parameter}"
+parquet_to_h5 = f"python3 {script_dir}/parquet_to_h5.py -i {os.path.dirname(args.input)}/{args.sample}*.parquet -o {out_dir} -f {args.frac_train} {'--no-shuffle' if args.no_shuffle else ''}"
 #subprocess.run(parquet_to_h5, shell=True)
 
 print(coffea_to_parquet)
 print(parquet_to_h5)
-total_command=f"{coffea_to_parquet} && echo 'First part done' && {parquet_to_h5}"
-#total_command=f"{parquet_to_h5}"
+if not args.only_parquet_to_h5:
+    total_command=f"{coffea_to_parquet} && echo 'First part done' && {parquet_to_h5}"
+else:
+    total_command=f"{parquet_to_h5}"
+#total_command=f"{coffea_to_parquet}"
 subprocess.run(total_command, shell=True)
