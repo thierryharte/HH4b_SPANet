@@ -15,7 +15,7 @@ All the common packages for machine learning applications are now available in a
 We can proceed by installing `SPANet` in a virtual environment inside this Docker container:
 ```bash
 # Clone locally the SPANet repository
-git clone git@github.com:Alexanders101/SPANet.git
+git clone git@github.com:matteomalucchi/SPANet.git
 cd SPANet
 
 # Create a local virtual environment using the packages defined in the apptainer image
