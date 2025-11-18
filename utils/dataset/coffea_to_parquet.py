@@ -80,6 +80,7 @@ if not os.path.exists(main_dir):
 
 df = load(args.input)
 
+print(df["cutflow"].keys())
 if not args.cat in df["cutflow"].keys():
     raise ValueError(f"Event category `{args.cat}` not found in the input file.")
 
@@ -242,7 +243,7 @@ for sample in samples:
 
     dataset_lenght = [
         len(
-            df["columns"][sample][dataset][args.cat][
+            df["columns"][sample][dataset][args.cat]["nominal"][
                 f"{list(features_dict.keys())[0]}_N"
             ].value
         )
@@ -255,9 +256,9 @@ for sample in samples:
     # Since the array `weight` is filled on the fly with the weight associated with the event, it does not take into account the overall scaling by the sum of genweights (`sum_genweights`).
     # In order to correct for this, we have to scale by hand the `weight` array dividing by the sum of genweights.
     for dataset in datasets:
-        #print(df["columns"][sample][dataset][args.cat]["JetGoodHiggsMatched_provenance"])
-        if "weight" in df["columns"][sample][dataset][args.cat].keys():
-            weight = df["columns"][sample][dataset][args.cat]["weight"].value
+        #print(df["columns"][sample][dataset][args.cat]["nominal"]["JetGoodHiggsMatched_provenance"])
+        if "weight" in df["columns"][sample][dataset][args.cat]["nominal"].keys():
+            weight = df["columns"][sample][dataset][args.cat]["nominal"]["weight"].value
             #print("weights", weight)
             #print("norma_xsec keys",norm_xsec.keys())
             for x in norm_xsec.keys():
@@ -270,10 +271,13 @@ for sample in samples:
                 else:
                     norm_factor = 1.0
 
-            weight_new = column_accumulator(
-                weight / df["sum_genweights"][dataset] / norm_factor
-            )
-            df["columns"][sample][dataset][args.cat]["weight"] = weight_new
+            if df["sum_genweights"].get(dataset, None):
+                weight_new = column_accumulator(
+                    weight / df["sum_genweights"][dataset] / norm_factor
+                )
+            else:
+                weight_new = column_accumulator(weight)
+            df["columns"][sample][dataset][args.cat]["nominal"]["weight"] = weight_new
             print("weight_new",weight_new)
             plt.hist(weight_new.value, np.logspace(-9,-3,60))
             plt.yscale("log")
@@ -287,14 +291,14 @@ for sample in samples:
                 / dataset_lenght[list(datasets).index(dataset)]
             )
         #print("\n dataset", dataset)
-        #print("weights", df["columns"][sample][dataset][args.cat]["weight"])
+        #print("weights", df["columns"][sample][dataset][args.cat]["nominal"]["weight"])
 
     print("\nSamples colums:" , df["columns"].keys())
     print("Dataset columns: ", df["columns"][sample].keys())
     print("Category columns: ", df["columns"][sample][dataset].keys())
     ## Accumulate ntuples from different data-taking eras
     # In order to enlarge our training sample, we merge ntuples coming from different data-taking eras.
-    cs = accumulate([df["columns"][sample][dataset][args.cat] for dataset in datasets])
+    cs = accumulate([df["columns"][sample][dataset][args.cat]["nominal"] for dataset in datasets])
     print(cs["JetGoodHiggsMatched_provenance"])
 
     kl_list = [-999.0] * len(datasets)
