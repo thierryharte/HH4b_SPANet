@@ -253,6 +253,7 @@ def jet_four_vector_fully_matched(jet):
     jet_mass_unflat = jet.mass
     jet_btag_unflat = jet.btag
     jet_btag_wp_unflat = jet.btag_wp
+    jet_btag_3wp_unflat = ak.where(jet.btag_wp > 2.5, 2, jet.btag_wp)
 
     print(jet_prov_unflat)
     count_ones = ak.sum(jet_prov_unflat == 1, axis=1)
@@ -268,6 +269,7 @@ def jet_four_vector_fully_matched(jet):
             "mass": jet_mass_unflat[mask_fully_matched],
             "btag": jet_btag_unflat[mask_fully_matched],
             "btag_wp": jet_btag_wp_unflat[mask_fully_matched],
+            "btag_3wp": jet_btag_3wp_unflat[mask_fully_matched],
             "prov": jet_prov_unflat[mask_fully_matched],
         },
         with_name="Momentum4D",
@@ -286,6 +288,7 @@ def jet_four_vector(jets_list):
     jet_mass_unflat = jets_list.mass
     jet_btag_unflat = jets_list.btag
     jet_btag_wp_unflat = jets_list.btag_wp
+    jet_btag_3wp_unflat = ak.where(jets_list.btag_wp > 2.5, 2, jets_list.btag_wp)
 
     jet = ak.zip(
         {
@@ -295,6 +298,7 @@ def jet_four_vector(jets_list):
             "mass": jet_mass_unflat,
             "btag": jet_btag_unflat,
             "btag_wp": jet_btag_wp_unflat,
+            "btag_3wp": jet_btag_3wp_unflat,
             "prov": jet_prov_unflat,
         },
         with_name="Momentum4D",
@@ -339,6 +343,12 @@ def get_pairing_information(jets, file):
     )
 
     btag_wp = btag_wp_array.astype("int64")
+
+    btag_3wp_array = ak.to_numpy(
+        ak.fill_none(ak.pad_none(ak.where(jets.btag_wp > 2.5, 2, jets.btag_wp), NUMBER_JETS_SPANET, clip=True), PAD_VALUE)
+    )
+
+    btag_3wp = btag_3wp_array.astype("int64")
 
     mask = ~(phi_array == PAD_VALUE)
     # we have the inputs in which we will evaluate our model
@@ -738,23 +748,6 @@ def create_inputs(
     file.create_dataset("INPUTS/Jet/btag12", data=btag12, dtype="float32")
     file.create_dataset("INPUTS/Jet/bratio_all", data=bratio_all, dtype="float32")
     file.create_dataset("INPUTS/Jet/btag", np.shape(btag), dtype="float32", data=btag)
-    btag_wp_array_ak = ak.fill_none(
-        ak.pad_none(
-            ak.where(btag > btag_wp[0], 1, 0)
-            + ak.where(btag > btag_wp[1], 1, 0)
-            + ak.where(btag > btag_wp[2], 1, 0),
-            max_num_jets,
-            clip=True,
-        ),
-        PAD_VALUE,
-    )
-    btag_wp_array = ak.to_numpy(
-        ak.where(btag == PAD_VALUE, PAD_VALUE, btag_wp_array_ak)
-    )
-
-    file.create_dataset(
-        "INPUTS/Jet/btag_wp_bit",
-        np.shape(btag_wp_array),
     btag_wp = ak.to_numpy(
         ak.fill_none(ak.pad_none(jets.btag_wp, max_num_jets, clip=True), PAD_VALUE)
     )
@@ -764,6 +757,55 @@ def create_inputs(
         dtype="int64",
         data=btag_wp,
     )
+    btag_3wp = ak.to_numpy(
+            ak.fill_none(ak.pad_none(ak.where(jets.btag_wp > 3.5, 3, jets.btag_wp), max_num_jets, clip=True), PAD_VALUE)
+    )
+    btag_3wp_ds = file.create_dataset(
+        "INPUTS/Jet/btag_3wp",
+        np.shape(btag_3wp),
+        dtype="int64",
+        data=btag_3wp,
+    )
+
+    btag_1wp = ak.to_numpy(
+        ak.fill_none(ak.pad_none(ak.where(jets.btag_wp > 0, 0, jets.btag_wp), max_num_jets, clip=True), PAD_VALUE)
+    )
+    btag_1wp_ds = file.create_dataset(
+        "INPUTS/Jet/btag_1wp",
+        np.shape(btag_1wp),
+        dtype="int64",
+        data=btag_1wp,
+    )
+    bwp_diff_1 = btag_wp[:, 0] - btag_wp[:, 1]
+    bwp_diff_2 = btag_wp[:, 1] - btag_wp[:, 0]
+    bwp_diff_3 = btag_wp[:, 2] - btag_wp[:, 3]
+    bwp_diff_4 = btag_wp[:, 3] - btag_wp[:, 2]
+    # JetGoodHiggs will only have 4 jets...
+    if max_num_jets > 4:
+        bwp_diff_5 = np.where(btag_wp[:, 4] == 9999, btag_wp[:, 4], btag_wp[:, 4] - btag_wp[:, 3])
+        btag_wp_diff = np.stack(
+            [
+                bwp_diff_1,
+                bwp_diff_2,
+                bwp_diff_3,
+                bwp_diff_4,
+                bwp_diff_5,
+                *[np.full(num_events, PAD_VALUE)] * (max_num_jets - 5),
+            ],
+            axis=1,
+        )
+    else:
+        btag_wp_diff = np.stack(
+            [
+                bwp_diff_1,
+                bwp_diff_2,
+                bwp_diff_3,
+                bwp_diff_4,
+                *[np.full(num_events, PAD_VALUE)] * (max_num_jets - 4),
+            ],
+            axis=1,
+        )
+    file.create_dataset("INPUTS/Jet/btag_wp_diff", data=btag_wp_diff, dtype="float32")
 
     mass_array = ak.to_numpy(
         ak.fill_none(ak.pad_none(jets.mass, max_num_jets, clip=True), PAD_VALUE)
