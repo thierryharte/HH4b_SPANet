@@ -374,7 +374,7 @@ for sample in samples:
             )
             print("masked_arrays: ", masked_arrays)
             print("zipped_values:", zipped_dict[matched_collection].pt)
-            zipped_dict[matched_collection] = masked_arrays
+            # zipped_dict[matched_collection] = masked_arrays
             print(ak.count_nonzero(zipped_dict["JetGoodHiggsMatched"]["prov"]))
             # Add the matched flag and the provenance to the matched jets
             if collection == "JetGoodHiggs" or collection == "JetGood":
