@@ -143,25 +143,26 @@ for model_name, file_dict in spanet_dict.items():
 
     if not args.data:
         # Performing the matching
-        frac_fully_matched, efficiencies_fully_matched, total_efficiencies_fully_matched, matching_eval_spanet = calculate_efficiencies(alltrue_idx_fully_matched, allspanet_idx_fully_matched, mask_fully_matched, file_dict["true"], kl_values, all_name_list, "fully matched")
+        frac_fully_matched, efficiencies_fully_matched, total_efficiencies_fully_matched, unc_eff_fully_matched, unc_total_eff_fully_matched, matching_eval_spanet = calculate_efficiencies(alltrue_idx_fully_matched, allspanet_idx_fully_matched, mask_fully_matched, file_dict["true"], kl_values, all_name_list, "fully matched")
 
-        # do the same for partially matched events (only one higgs is matched)
-        mask_1h = [
-            ak.sum(ak.any(idx == -1, axis=-1) == 1, axis=-1) == 1 for idx in alltrue_idx
-        ]
-        idx_true_partially_matched_1h = [idx[mask] for idx, mask in zip(alltrue_idx, mask_1h)]
-        idx_spanet_partially_matched_1h = [idx[mask] for idx, mask in zip(allspanet_idx, mask_1h)]
+        # Omitting calculation of partially matched for now
+        # # do the same for partially matched events (only one higgs is matched)
+        # mask_1h = [
+        #     ak.sum(ak.any(idx == -1, axis=-1) == 1, axis=-1) == 1 for idx in alltrue_idx
+        # ]
+        # idx_true_partially_matched_1h = [idx[mask] for idx, mask in zip(alltrue_idx, mask_1h)]
+        # idx_spanet_partially_matched_1h = [idx[mask] for idx, mask in zip(allspanet_idx, mask_1h)]
 
-        frac_partially_matched_1h, efficiencies_partially_matched_spanet, total_efficiencies_partially_matched_spanet, matching_eval_spanet_partial = calculate_efficiencies(idx_true_partially_matched_1h, idx_spanet_partially_matched_1h, mask_1h, file_dict["true"], kl_values, all_name_list, "partially matched")
+        # frac_partially_matched_1h, efficiencies_partially_matched_spanet, total_efficiencies_partially_matched_spanet, unc_eff_partially_matched, unc_total_eff_partially_matched, matching_eval_spanet_partial = calculate_efficiencies(idx_true_partially_matched_1h, idx_spanet_partially_matched_1h, mask_1h, file_dict["true"], kl_values, all_name_list, "partially matched")
 
-        # compute number of events with 0 higgs matched
-        mask_0h = [ak.sum(ak.any(idx == -1, axis=-1), axis=-1) == 2 for idx in alltrue_idx]
+        # # compute number of events with 0 higgs matched
+        # mask_0h = [ak.sum(ak.any(idx == -1, axis=-1), axis=-1) == 2 for idx in alltrue_idx]
 
-        idx_true_unmatched = [idx[mask] for idx, mask in zip(alltrue_idx, mask_0h)]
-        frac_unmatched = [ak.sum(mask) / len(mask) for mask in mask_0h]
-        logger.info("\n")
-        for label, frac in zip([file_dict["true"]] + kl_values.tolist(), frac_unmatched):
-            logger.info(f"Fraction of unmatched events for {label}: {frac:.3f}")
+        # idx_true_unmatched = [idx[mask] for idx, mask in zip(alltrue_idx, mask_0h)]
+        # frac_unmatched = [ak.sum(mask) / len(mask) for mask in mask_0h]
+        # logger.info("\n")
+        # for label, frac in zip([file_dict["true"]] + kl_values.tolist(), frac_unmatched):
+        #     logger.info(f"Fraction of unmatched events for {label}: {frac:.3f}")
 
     # create a LorentzVector for the jets
     jet = [
@@ -237,7 +238,9 @@ for model_name, file_dict in spanet_dict.items():
     if not args.data:
         df_collection[model_name] = df_collection[model_name] | {
                 "efficiencies_fully_matched": efficiencies_fully_matched,
+                "unc_efficiencies_fully_matched": unc_eff_fully_matched,
                 "total_efficiencies_fully_matched": total_efficiencies_fully_matched,
+                "unc_total_efficiencies_fully_matched": unc_total_eff_fully_matched,
                 "diff_eff_spanet": eff_dict["diff_eff_spanet"],
                 "unc_diff_eff_spanet": eff_dict["unc_diff_eff_spanet"],
                 "total_diff_eff_spanet": eff_dict["total_diff_eff_spanet"],
@@ -337,7 +340,7 @@ allrun2_idx_fully_matched = [
 
 if not args.data:
     # compute efficiencies for fully matched events for Run 2 pairing
-    frac_fully_matched, efficiencies_run2, total_efficiencies_run2, matching_eval_run2 = calculate_efficiencies(alltrue_idx_fully_matched, allrun2_idx_fully_matched, mask_fully_matched, run2_dataset, kl_values, all_name_list, "run2")
+    frac_fully_matched, efficiencies_run2, total_efficiencies_run2, unc_efficiencies_run2, unc_total_efficiencies_run2, matching_eval_run2 = calculate_efficiencies(alltrue_idx_fully_matched, allrun2_idx_fully_matched, mask_fully_matched, run2_dataset, kl_values, all_name_list, "run2")
 
 # Reconstruct the Higgs boson candidates with the efficiency_fully_matched_run2 = (
 # of the jets considering the true pairings, the spanet pairings
@@ -382,7 +385,9 @@ if args.klambda and truefile_klambda != "none":
 if not args.data:
     r2_model = r2_model | {
             "efficiencies_fully_matched_run2": efficiencies_run2,
+            "unc_efficiencies_fully_matched_run2": unc_efficiencies_run2,
             "total_efficiencies_fully_matched_run2": total_efficiencies_run2,
+            "unc_total_efficiencies_fully_matched_run2": unc_total_efficiencies_run2,
             # Parameters for the diff_eff plots
             "diff_eff_run2": eff_dict["diff_eff_run2"],
             "unc_diff_eff_run2": eff_dict["unc_diff_eff_run2"],
@@ -400,7 +405,10 @@ if not args.data:
     logger.info(f"All datasets: {df_collection.keys()}")
     logger.info(f"Run2 set: {run2_dataset}")
     plot_diff_eff_klambda(
-        [model["efficiencies_fully_matched"][1:] for model in df_collection.values()] + [r2_model["efficiencies_fully_matched_run2"][1:]],
+        [model["efficiencies_fully_matched"][1:] for model in df_collection.values()] +
+        [r2_model["efficiencies_fully_matched_run2"][1:]],
+        [model["unc_efficiencies_fully_matched"][1:] for model in df_collection.values()] +
+        [r2_model["unc_efficiencies_fully_matched_run2"][1:]],
         [model["kl_values"] for model in df_collection.values()] + [r2_model["kl_values"]],
         [model["file_dict"]["label"] for model in df_collection.values()] + [r"$D_{HH}$-method"],
         [model["file_dict"]["color"] for model in df_collection.values()] + ["yellowgreen"],
@@ -408,7 +416,10 @@ if not args.data:
         plot_dir,
     )
     plot_diff_eff_klambda(
-        [model["total_efficiencies_fully_matched"][1:] for model in df_collection.values()] + [r2_model["total_efficiencies_fully_matched_run2"][1:]],
+        [model["total_efficiencies_fully_matched"][1:] for model in df_collection.values()] +
+        [r2_model["total_efficiencies_fully_matched_run2"][1:]],
+        [model["unc_total_efficiencies_fully_matched"][1:] for model in df_collection.values()] +
+        [r2_model["unc_total_efficiencies_fully_matched_run2"][1:]],
         [model["kl_values"] for model in df_collection.values()] + [r2_model["kl_values"]],
         [model["file_dict"]["label"] for model in df_collection.values()] + [r"$D_{HH}$-method"],
         [model["file_dict"]["color"] for model in df_collection.values()] + ["yellowgreen"],
