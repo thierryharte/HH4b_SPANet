@@ -22,12 +22,17 @@ from efficiency_functions import (
     separate_klambda,
 )
 
-logger = logging.getLogger(__name__)
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s | %(levelname)s | %(funcName)s | %(message)s",
-    datefmt="%d-%b-%y %H-%M-%S",
-)
+
+def setup_logging(logpath):
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s | %(levelname)s | %(funcName)s | %(message)s",
+        datefmt="%d-%b-%y %H-%M-%S",
+    )
+    logger = logging.getLogger(__name__)
+    logger.addHandler(logging.StreamHandler())
+    logger.addHandler(logging.FileHandler(f"{logpath}/logger_output.log", mode="a", encoding="utf-8"))
+    return logger
 
 
 vector.register_numba()
@@ -59,6 +64,7 @@ parser.add_argument(
 
 args = parser.parse_args()
 
+logger = setup_logging(args.plot_dir)
 
 if args.data:
     # remove non data samples

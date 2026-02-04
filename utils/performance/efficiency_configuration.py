@@ -4,12 +4,13 @@ There are two dictionaries; one is a dictionary showing the actual datasets and 
 """
 import logging
 
+# logger = logging.getLogger(__name__)
+# logging.basicConfig(
+#     level=logging.INFO,
+#     format="%(asctime)s | %(levelname)s | %(funcName)s | %(message)s",
+#     datefmt="%d-%b-%y %H-%M-%S",
+# )
 logger = logging.getLogger(__name__)
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s | %(levelname)s | %(funcName)s | %(message)s",
-    datefmt="%d-%b-%y %H-%M-%S",
-)
 
 spanet_dir = '/eos/user/t/tharte/Analysis_data/predictions/'
 spanet_dir_matteo = '/eos/user/m/mmalucch/spanet_inputs/out_prediction_files/'
