@@ -59,7 +59,12 @@ parser.add_argument(
     action="store_true",
     help="Oversample the dataset.",
 )
-
+parser.add_argument(
+    "--novars",
+    action="store_true",
+    help="If true, old save format without saved variations is expected",
+    default=False,
+)
 
 args = parser.parse_args()
 
@@ -241,14 +246,24 @@ for sample in samples:
 
     print("Datasets: ", datasets)
 
-    dataset_lenght = [
-        len(
-            df["columns"][sample][dataset][args.cat]["nominal"][
-                f"{list(features_dict.keys())[0]}_N"
-            ].value
-        )
-        for dataset in datasets
-    ]
+    if args.novars:
+        dataset_lenght = [
+            len(
+                df["columns"][sample][dataset][args.cat][
+                    f"{list(features_dict.keys())[0]}_N"
+                ].value
+            )
+            for dataset in datasets
+        ]
+    else:
+        dataset_lenght = [
+            len(
+                df["columns"][sample][dataset][args.cat]["nominal"][
+                    f"{list(features_dict.keys())[0]}_N"
+                ].value
+            )
+            for dataset in datasets
+        ]
 
     print("dataset_lenght",  dataset_lenght)
 
@@ -256,49 +271,74 @@ for sample in samples:
     # Since the array `weight` is filled on the fly with the weight associated with the event, it does not take into account the overall scaling by the sum of genweights (`sum_genweights`).
     # In order to correct for this, we have to scale by hand the `weight` array dividing by the sum of genweights.
     for dataset in datasets:
-        #print(df["columns"][sample][dataset][args.cat]["nominal"]["JetGoodHiggsMatched_provenance"])
-        if "weight" in df["columns"][sample][dataset][args.cat]["nominal"].keys():
-            weight = df["columns"][sample][dataset][args.cat]["nominal"]["weight"].value
-            #print("weights", weight)
-            #print("norma_xsec keys",norm_xsec.keys())
-            for x in norm_xsec.keys():
-                if x in dataset:
-                    #print("x", x)
-                    #print("dataset", dataset)
-                    norm_factor = norm_xsec[x]
-                    #print("norm_factor: ", norm_factor)
-                    break
-                else:
-                    norm_factor = 1.0
+        if args.novars:
+            if "weight" in df["columns"][sample][dataset][args.cat].keys():
+                weight = df["columns"][sample][dataset][args.cat]["weight"].value
+                for x in norm_xsec.keys():
+                    if x in dataset:
+                        norm_factor = norm_xsec[x]
+                        break
+                    else:
+                        norm_factor = 1.0
 
-            if df["sum_genweights"].get(dataset, None):
-                weight_new = column_accumulator(
-                    weight / df["sum_genweights"][dataset] / norm_factor
-                )
+                if df["sum_genweights"].get(dataset, None):
+                    weight_new = column_accumulator(
+                        weight / df["sum_genweights"][dataset] / norm_factor
+                    )
+                else:
+                    weight_new = column_accumulator(weight)
+                df["columns"][sample][dataset][args.cat]["weight"] = weight_new
+                print("weight_new",weight_new)
+                plt.hist(weight_new.value, np.logspace(-9,-3,60))
+                plt.yscale("log")
+                plt.xscale("log")
+                if not os.path.exists("weights_plots"):
+                    os.makedirs("weights_plots")
+                plt.savefig(f"./weights_plots/{dataset}")
             else:
-                weight_new = column_accumulator(weight)
-            df["columns"][sample][dataset][args.cat]["nominal"]["weight"] = weight_new
-            print("weight_new",weight_new)
-            plt.hist(weight_new.value, np.logspace(-9,-3,60))
-            plt.yscale("log")
-            plt.xscale("log")
-            if not os.path.exists("weights_plots"):
-                os.makedirs("weights_plots")
-            plt.savefig(f"./weights_plots/{dataset}")
+                df["columns"][sample][dataset][args.cat]["weight"] = column_accumulator(
+                    np.ones(dataset_lenght[list(datasets).index(dataset)])
+                    / dataset_lenght[list(datasets).index(dataset)]
+                )
         else:
-            df["columns"][sample][dataset][args.cat]["weight"] = column_accumulator(
-                np.ones(dataset_lenght[list(datasets).index(dataset)])
-                / dataset_lenght[list(datasets).index(dataset)]
-            )
-        #print("\n dataset", dataset)
-        #print("weights", df["columns"][sample][dataset][args.cat]["nominal"]["weight"])
+            if "weight" in df["columns"][sample][dataset][args.cat]["nominal"].keys():
+                weight = df["columns"][sample][dataset][args.cat]["nominal"]["weight"].value
+                for x in norm_xsec.keys():
+                    if x in dataset:
+                        norm_factor = norm_xsec[x]
+                        break
+                    else:
+                        norm_factor = 1.0
+
+                if df["sum_genweights"].get(dataset, None):
+                    weight_new = column_accumulator(
+                        weight / df["sum_genweights"][dataset] / norm_factor
+                    )
+                else:
+                    weight_new = column_accumulator(weight)
+                df["columns"][sample][dataset][args.cat]["nominal"]["weight"] = weight_new
+                print("weight_new",weight_new)
+                plt.hist(weight_new.value, np.logspace(-9,-3,60))
+                plt.yscale("log")
+                plt.xscale("log")
+                if not os.path.exists("weights_plots"):
+                    os.makedirs("weights_plots")
+                plt.savefig(f"./weights_plots/{dataset}")
+            else:
+                df["columns"][sample][dataset][args.cat]["weight"] = column_accumulator(
+                    np.ones(dataset_lenght[list(datasets).index(dataset)])
+                    / dataset_lenght[list(datasets).index(dataset)]
+                )
 
     print("\nSamples colums:" , df["columns"].keys())
     print("Dataset columns: ", df["columns"][sample].keys())
     print("Category columns: ", df["columns"][sample][dataset].keys())
     ## Accumulate ntuples from different data-taking eras
     # In order to enlarge our training sample, we merge ntuples coming from different data-taking eras.
-    cs = accumulate([df["columns"][sample][dataset][args.cat]["nominal"] for dataset in datasets])
+    if args.novars:
+        cs = accumulate([df["columns"][sample][dataset][args.cat] for dataset in datasets])
+    else:
+        cs = accumulate([df["columns"][sample][dataset][args.cat]["nominal"] for dataset in datasets])
     print(cs["JetGoodHiggsMatched_provenance"])
 
     kl_list = [-999.0] * len(datasets)
