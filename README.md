@@ -1,5 +1,5 @@
 # HH4b_SPANet
-Repository with [SPANet]([url](https://github.com/matteomalucchi/SPANet)) configuration for HH4b analysis. Originally forked from https://github.com/mmarchegiani/ttHbb_SPANet.
+Repository with [SPANet](https://github.com/matteomalucchi/SPANet) configuration for HH4b analysis. Originally forked from https://github.com/mmarchegiani/ttHbb_SPANet.
 
 ## Running SPANet within the `cmsml` docker container
 
