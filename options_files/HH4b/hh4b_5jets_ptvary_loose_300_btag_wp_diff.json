@@ -29,7 +29,7 @@
 
     "skip_connections": true,
     "initial_embedding_skip_connections": true,    
-    "event_info_file": "/afs/cern.ch/user/t/tharte/public/Software/HH4b_SPANet/event_files/HH4b/hh4b_5jet_btagWP.yaml",
+    "event_info_file": "/afs/cern.ch/user/t/tharte/public/Software/HH4b_SPANet/event_files/HH4b/hh4b_5jet_btagWP_diff.yaml",
     "training_file": "/eos/user/t/tharte/Analysis_data/spanet_samples/loose_MC_postEE_pt_vary_btagWP/output_JetGood_train.h5",
 
     "normalize_features": true,

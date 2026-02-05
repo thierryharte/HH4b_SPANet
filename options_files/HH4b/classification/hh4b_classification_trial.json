@@ -28,22 +28,26 @@
     "masking": "Filling",
 
     "skip_connections": true,
-    "initial_embedding_skip_connections": true,    
-    "event_info_file": "/afs/cern.ch/user/t/tharte/public/Software/HH4b_SPANet/event_files/HH4b/hh4b_5jet_btagWP.yaml",
-    "training_file": "/eos/user/t/tharte/Analysis_data/spanet_samples/loose_MC_postEE_pt_vary_btagWP/output_JetGood_train.h5",
+    "initial_embedding_skip_connections": true,
+    "event_info_file": "/afs/cern.ch/user/t/tharte/public/Software/HH4b_SPANet/event_files/HH4b/classification/hh4b_classification_trial.yaml",
+    "training_file": "/eos/user/t/tharte/Analysis_data/spanet_samples/classification/trial/columns_for_classifier.h5",
 
     "normalize_features": true,
     "limit_to_num_jets": 0,
 
     "balance_jets": false,
     "partial_events": true,
-    "balance_particles": true,
-    
+    "balance_particles": false,
+    "balance_classifications": true,
+    "balance_events": true,
+    "balance_losses": false,
+
     "dataset_limit": 1.0,
     "train_validation_split": 0.95,
+    "dataset_randomization": 9999,
     "batch_size": 2048,
     "num_dataloader_workers": 16,
-    
+
     "mask_sequence_vectors": true,
     "combine_pair_loss": "min",
     "optimizer": "AdamW",
@@ -51,19 +55,19 @@
     "learning_rate": 0.0001,
     "learning_rate_cycles": 0,
     "learning_rate_warmup_epochs": 0.0,
-    
-    "assignment_loss_scale": 1.0,
+
+    "assignment_loss_scale": 0.0,
     "detection_loss_scale": 0.0,
     "kl_loss_scale": 0.0,
     "regression_loss_scale": 0.0,
-    "classification_loss_scale": 0.0,
-    
+    "classification_loss_scale": 1.0,
+
     "l2_penalty": 0.000374,
     "gradient_clip": 0.425,
     "dropout": 0.0059,
-    
-    "metric": "validation_accuracy",
-    "epochs": 300,
+
+    "metric": "CLASSIFICATION/EVENT/signal_accuracy",
+    "epochs": 100,
     "num_gpu": 1,
     "verbose_output": true
 }

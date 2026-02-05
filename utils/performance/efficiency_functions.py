@@ -9,12 +9,13 @@ import mplhep as hep
 import numpy as np
 import vector
 
+# logger = logging.getLogger(__name__)
+# logging.basicConfig(
+#     level=logging.INFO,
+#     format="%(asctime)s | %(levelname)s | %(funcName)s | %(message)s",
+#     datefmt="%d-%b-%y %H-%M-%S",
+# )
 logger = logging.getLogger(__name__)
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s | %(levelname)s | %(funcName)s | %(message)s",
-    datefmt="%d-%b-%y %H-%M-%S",
-)
 
 vector.register_awkward()
 vector.register_numba()
@@ -94,6 +95,14 @@ def calculate_efficiencies(true_idx, model_idx, mask, truename, kl_values, all_n
         eff * frac
         for frac, eff in zip(fraction, model_eff)
     ]
+    unc_model_eff = [
+            sqrt(eff * (1 - eff) / len(matching_eval_ds))
+            for eff, matching_eval_ds in zip(model_eff, matching_eval_model)
+            ]
+    unc_total_model_eff = [
+            sqrt((total_eff * (1 - total_eff)) / len(matching_eval_ds))
+            for total_eff, matching_eval_ds in zip(total_model_eff, matching_eval_model)
+            ]
     # Printing the values
     logger.info("\n")
     for lab, frac in zip([truename] + kl_values.tolist(), fraction):
@@ -105,8 +114,16 @@ def calculate_efficiencies(true_idx, model_idx, mask, truename, kl_values, all_n
     logger.info("\n")
 
     for name, toteff in zip(all_names, total_model_eff):
-        logger.info(f"Total efficiency {label} for {name}: {toteff:.3f}")
-    return fraction, model_eff, total_model_eff, matching_eval_model
+        logger.info(f"Total efficiency uncertainty {label} for {name}: {toteff:.3f}")
+    logger.info("\n")
+    for lab, eff in zip(all_names, unc_model_eff):
+        logger.info(f"Efficiency {label} for {lab}: {eff:.3f}")
+    logger.info("\n")
+
+    for name, toteff in zip(all_names, unc_total_model_eff):
+        logger.info(f"Total efficiency uncertainty {label} for {name}: {toteff:.3f}")
+
+    return fraction, model_eff, total_model_eff, unc_model_eff, unc_total_model_eff, matching_eval_model
 
 
 def distance_pt_func(higgs_pair, k):
@@ -232,14 +249,17 @@ def plot_histos_1d(
         color.append("black")
 
     # We want to add a ratio plot with run2 ratios. Basically to see the difference between the SPANet and Dhh pairings.
-    compare_run2 = True
-    if compare_run2 and any(run2):
+    if not isinstance(true, awkward.highlevel.Array):  # Meaning, if we have a "true" dataset
+        compare_run2 = True
+    else:
+        compare_run2 = False
+    if compare_run2 and isinstance(run2, awkward.highlevel.Array):
         fig, (ax, ax_residuals) = plt.subplots(figsize=(6, 6), nrows=2, sharex=True, gridspec_kw={"height_ratios": [3, 1]})
         ax_residuals.set_xlabel(
             r"Leading $m_{H}$ [GeV]" if num == 1 else r"Subleading $m_{H}$ [GeV]"
         )
     # This would be the normal ratio with comparison to true values
-    elif any(true):
+    elif isinstance(true, awkward.highlevel.Array):  # Meaning, if we have a "true" dataset
         fig, (ax, ax_residuals) = plt.subplots(figsize=(6, 6), nrows=2, sharex=True, gridspec_kw={"height_ratios": [3, 1]})
         ax_residuals.set_xlabel(
             r"Leading $m_{H}$ [GeV]" if num == 1 else r"Subleading $m_{H}$ [GeV]"
@@ -292,7 +312,7 @@ def plot_histos_1d(
         )
         * (1.8 if "peak" not in name else 1.6),
     )
-    if compare_run2 and any(run2):
+    if compare_run2 and isinstance(run2, awkward.highlevel.Array):
         # Plot the residuals with respect to Run2
         res_spanet_run2 = [
             (histo[0] / norm) / (run2_hist[0] / run2_norm)
@@ -328,7 +348,43 @@ def plot_histos_1d(
 
         ax_residuals.grid()
 
-    # Currently not implemented ####
+    elif isinstance(true, awkward.highlevel.Array):  # Meaning, if we have a "true" dataset
+        # Plot the residuals with respect to Run2
+        res_spanet_true = [
+            (histo[0] / norm) / (true_hist[0] / true_norm)
+            for histo, norm in zip(spanet_hists, spanet_norm)
+        ]
+
+        err_spanet = [np.sqrt(histo[0]) / norm for histo, norm in zip(spanet_hists, spanet_norm)]
+        err_run2 = np.sqrt(run2_hist[0]) / run2_norm
+        err_true = np.sqrt(true_hist[0]) / true_norm
+
+        res_spanet_true_err = [
+            np.sqrt(
+                (err / (true_hist[0]) / true_norm) ** 2
+                + ((err_true * (histo[0] / norm)) / (true_hist[0] / true_norm) ** 2) ** 2
+            )
+            for histo, norm, err in zip(spanet_hists, spanet_norm, err_spanet)
+        ]
+        for sn, label, sn_err, col in zip(
+            res_spanet_true, spanet_labels, res_spanet_true_err, spanet_color
+        ):
+            ax_residuals.errorbar(
+                run2_hist[1][:-1],
+                sn,
+                yerr=sn_err,
+                marker=".",
+                # markersize=1,
+                label=label,
+                linestyle="None",
+                color=col,
+            )
+
+        # plot zero line
+        ax_residuals.axhline(1, color="black", linewidth=1)
+        ax_residuals.set_ylabel("SPANet / true pairing")
+
+        ax_residuals.grid()
 
     # elif true: # meaning true pairing file
     #    # plot the residuals respect to true
@@ -675,19 +731,19 @@ def separate_klambda(
     )
 
 
-def plot_diff_eff_klambda(effs, kl_values, labels, color, name, plot_dir="plots"):
+def plot_diff_eff_klambda(effs, unc_effs, kl_values, labels, color, name, plot_dir="plots"):
     # split the arrays depending on how many times the first kl value appears
     fig, ax = plt.subplots(figsize=(6, 6))
-    for label, kls, eff, col in zip(labels, kl_values, effs, color):
-        ax.plot(
+    for label, kls, eff, unc_eff, col in zip(labels, kl_values, effs, unc_effs, color):
+        ax.errorbar(
             kls,
             eff,
-            label=label,
+            yerr=unc_eff,
             linestyle="-",
-            marker="o",
+            label=label,
+            marker=".",
             color=col,
         )
-
     ax.legend(frameon=False, loc="lower left")
     ax.set_xlabel(r"$\kappa_{\lambda}$")
     ax.set_ylabel(name)

@@ -120,6 +120,10 @@ def unwrap_accumulator(x):
 
 
 def unflatten_to_jagged(flat, counts):
+    """flat: 1D array of length sum(counts)
+    counts: 1D int array of length Nevents
+    returns: awkward jagged array (Nevents, Nj)
+    """
     flat = unwrap_accumulator(flat)
     counts = unwrap_accumulator(counts)
 
@@ -137,6 +141,7 @@ def unflatten_to_jagged(flat, counts):
 
 
 def to_numpy_event_vector(x):
+    """Convert event-level data to a strict 1D numeric numpy array."""
     x = unwrap_accumulator(x)
 
     if is_awkward(x):
@@ -186,6 +191,13 @@ def pad_clip_jets(jets, max_jets):
 
 
 def infer_collection_and_var(name):
+    """Rules:
+    - if name starts with "events_", treat as Event-level collection "Event"
+    - else split into (collection, var) by first underscore, EXCEPT keep-together collections
+      e.g. "HH_pt" -> ("HH", "pt")
+           "add_jet1pt_pt" -> ("add_jet1pt", "pt")
+    - if no underscore, put it under Event-level "Event"
+    """
     if name.startswith("events_"):
         return "Event", name[len("events_") :]
 
@@ -235,6 +247,9 @@ def cast_int64(x):
 
 
 def ensure_resizable_dataset(group, path, data, shuffle, compression="gzip"):
+    """Create or append to a resizable dataset located at group/<path_parts...>.
+    data: numpy array, first dimension is N (events)
+    """
     g = group
     for p in path[:-1]:
         g = g.require_group(p)
@@ -267,6 +282,7 @@ def ensure_resizable_dataset(group, path, data, shuffle, compression="gzip"):
 
 
 def write_block_split(tr, te, path, data, train_mask, test_mask, shuffle):
+    """Append split slices of `data` to train/test datasets."""
     ensure_resizable_dataset(tr, path, data[train_mask], shuffle)
     ensure_resizable_dataset(te, path, data[test_mask], shuffle)
 
@@ -287,6 +303,7 @@ def coffea_to_h5(
     columns_key="columns",
     weight_name="weight",
 ):
+    """Convert the columns from coffea to h5 format to use as SPANet inputs."""
 
     cols = coffea.util.load(coffea_path)[columns_key]
 
