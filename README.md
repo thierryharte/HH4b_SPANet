@@ -476,7 +476,10 @@ python -m spanet.train -of options_file --gpus 1
 ## Train on HTCondor
 In order to train the SPANet model on HTCondor, one can use the following command:
 ```bash
-python jobs/submit_jobs_seed.py -o <options_files/option_file.json> -c <jobs/config/config.yaml> -s <start_seed>:<end_seed> -a <"additional arguments to pass to spanet.train"> --suffix <directory_suffix>
+python jobs/submit_jobs_seed.py -o <options_files/option_file.json> -c <jobs/config/config.yaml> -s <start_seed>:<end_seed> -a <"additional arguments to pass to spanet.train"> --suffix <directory_suffix> -out <output_dir>
+
+# e.g.
+python3 ~/public/Software/HH4b_SPANet/jobs/submit_jobs_seed.py -c ~/public/Software/HH4b_SPANet/jobs/config/jet_assignment_deep_network_3d.yaml -s 100:101 -o options_files/HH4b/hh4b_5jets_ptreg_loose_300_btag_wp.json -out /eos/user/t/tharte/Analysis_data/spanet_output
 ```
 
 ## Compute predictions
