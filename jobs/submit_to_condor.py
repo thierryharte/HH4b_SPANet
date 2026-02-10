@@ -6,18 +6,35 @@ import htcondor
 from omegaconf import OmegaConf
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--cfg', type=str, required=True)
-parser.add_argument("-of", "--options_file", type=str, default=None,
-                    help="JSON file with option overloads.", required=True)
-parser.add_argument("-l", "--log_dir", type=str, default=None,
-                    help="Output directory for the checkpoints and tensorboard logs. Default to current directory.", required=True)
-parser.add_argument("-cf", "--checkpoint", type=str, default=None,
-                    help="Optional checkpoint to load the training state from. "
-                         "Fully restores model weights and optimizer state.")
-parser.add_argument('--dry', action="store_true")
-parser.add_argument('--interactive', action="store_true")
-parser.add_argument('--ngpu', type=int, default=1)
-parser.add_argument('--ncpu', type=int, default=3)
+parser.add_argument("--cfg", type=str, required=True)
+parser.add_argument(
+    "-of",
+    "--options_file",
+    type=str,
+    default=None,
+    help="JSON file with option overloads.",
+    required=True,
+)
+parser.add_argument(
+    "-l",
+    "--log_dir",
+    type=str,
+    default=None,
+    help="Output directory for the checkpoints and tensorboard logs. Default to current directory.",
+    required=True,
+)
+parser.add_argument(
+    "-cf",
+    "--checkpoint",
+    type=str,
+    default=None,
+    help="Optional checkpoint to load the training state from. "
+    "Fully restores model weights and optimizer state.",
+)
+parser.add_argument("--dry", action="store_true")
+parser.add_argument("--interactive", action="store_true")
+parser.add_argument("--ngpu", type=int, default=1)
+parser.add_argument("--ncpu", type=int, default=3)
 parser.add_argument("--good-gpus", action="store_true")
 parser.add_argument("--seed", type=int, default=None, help="Random seed")
 parser.add_argument("--outputdir", type=str, default=None, help="Output directory")
@@ -27,15 +44,17 @@ args = parser.parse_args()
 basedir = f"{os.path.dirname(os.path.abspath(__file__))}/../"
 print(f"basedir {basedir}")
 homedir = os.environ["HOME"]
+spanet_main_dir = os.environ.get("SPANET_MAIN_DIR", "HOME")
+spanet_env_dir = os.environ.get("SPANET_ENV_DIR", "HOME")
 
 print("\nargs:", args.args)
 interactive = args.interactive
+if interactive:
+    print("interactive mode")
 
 singularity_bindings = (
-    "/afs, "
-    "/eos/user/t/tharte/, "
-    "/etc/sysconfig/ngbauth-submit, "
-    "${XDG_RUNTIME_DIR}"
+    "/afs, " "/eos/user/t/tharte/, " "/eos/user/m/mmalucch/spanet_infos/",
+    "/etc/sysconfig/ngbauth-submit, " "${XDG_RUNTIME_DIR}",
 )
 
 col = htcondor.Collector()
@@ -44,10 +63,10 @@ credd.add_user_cred(htcondor.CredTypes.Kerberos, None)
 
 cfg = OmegaConf.load(args.cfg)
 outputdir = basedir if not args.outputdir else args.outputdir
-model = cfg['model']
-job_flavour = cfg['job_flavour']
-ngpu = cfg['ngpu']
-ncpu = cfg['ncpu']
+model = cfg["model"]
+job_flavour = cfg["job_flavour"]
+ngpu = cfg["ngpu"]
+ncpu = cfg["ncpu"]
 
 # Override defaults by command line arguments
 if args.ngpu != parser.get_default("ngpu"):
@@ -59,37 +78,41 @@ print("Initializing job submission script...", end="\n\n")
 sub = htcondor.Submit()
 
 if interactive:
-    sub['InteractiveJob'] = True
+    sub["InteractiveJob"] = True
 
-if model in ["jet_assignment", "classification","jet_assignment_tune"]:
-    sub['Executable'] = f"{basedir}/jobs/{model}.sh"
-    sub['arguments'] = f"{basedir}/{args.options_file} {outputdir}/{args.log_dir} {args.seed} {args.args} {homedir}"
-    sub['Output'] = f"{basedir}/{args.log_dir}/{model}-$(ClusterId).$(ProcId).out"
-    sub['Error'] = f"{basedir}/{args.log_dir}/{model}-$(ClusterId).$(ProcId).err"
-    sub['Log'] = f"{basedir}/{args.log_dir}/{model}-$(ClusterId).log"
-    sub['MY.SendCredential'] = True
-    sub['MY.SingularityImage'] = '"/cvmfs/unpacked.cern.ch/registry.hub.docker.com/cmsml/cmsml:latest"'
-    sub['+JobFlavour'] = f'"{job_flavour}"'
-    sub['environment'] = (
+if model in ["jet_assignment", "classification", "jet_assignment_tune", "training"]:
+    sub["Executable"] = f"{basedir}/jobs/{model}.sh"
+    sub["arguments"] = (
+        f"{basedir}/{args.options_file} {outputdir}/{args.log_dir} {args.seed} {ngpu} {spanet_main_dir} {spanet_env_dir} {homedir} {args.args}"
+    )
+    sub["Output"] = f"{basedir}/{args.log_dir}/{model}-$(ClusterId).$(ProcId).out"
+    sub["Error"] = f"{basedir}/{args.log_dir}/{model}-$(ClusterId).$(ProcId).err"
+    sub["Log"] = f"{basedir}/{args.log_dir}/{model}-$(ClusterId).log"
+    sub["MY.SendCredential"] = True
+    sub["MY.SingularityImage"] = (
+        '"/cvmfs/unpacked.cern.ch/registry.hub.docker.com/cmsml/cmsml:latest"'
+    )
+    sub["+JobFlavour"] = f'"{job_flavour}"'
+    sub["environment"] = (
         f'SINGULARITY_BIND_EXPR="{singularity_bindings}", '
         f'KRB5CCNAME="FILE:${{XDG_RUNTIME_DIR}}/krb5cc"'
     )
-    sub['MY.SingularityUseGPU'] = True
+    sub["MY.SingularityUseGPU"] = True
 else:
     raise ValueError(f"Model {model} not implemented")
 
-#here add an else maybe and keep everything for jet_assignment_tune except the arguments
-
 # Load checkpoint
 if args.checkpoint:
-    sub['arguments'] += f" {args.checkpoint}"
+    sub["arguments"] += f" {args.checkpoint}"
 
 # GPU and CPU requirements
-sub['request_cpus'] = f"{args.ncpu}"
-sub['request_gpus'] = f"{args.ngpu}"
+sub["request_cpus"] = f"{args.ncpu}"
+sub["request_gpus"] = f"{args.ngpu}"
 
 if args.good_gpus:
-    sub['requirements'] = 'regexp("A100", TARGET.GPUs_DeviceName) || regexp("V100", TARGET.GPUs_DeviceName)'
+    sub["requirements"] = (
+        'regexp("A100", TARGET.GPUs_DeviceName) || regexp("V100", TARGET.GPUs_DeviceName)'
+    )
 
 print("Submission parameters:")
 print(sub, end="\n\n")

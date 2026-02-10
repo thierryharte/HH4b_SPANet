@@ -29,18 +29,22 @@
 
     "skip_connections": true,
     "initial_embedding_skip_connections": true,
-    "event_info_file": "event_files/HH4b/hh4b_5globaljet.yaml",
-    "training_file": "/eos/user/m/mmalucch/spanet_infos/spanet_inputs/9999padglobal/output_JetGoodHiggs_train.h5",
+    "event_info_file": "/afs/cern.ch/user/m/mmalucch/HH4b_SPANet/event_files/HH4b/vbf_ggf/hh4b_vbf_ggf_pairing.yaml",
+    "training_file": "/eos/user/m/mmalucch/spanet_infos/spanet_inputs/vbf/JetTotalSPANetPtFlattenPadded_pad9999_test.h5",
 
     "normalize_features": true,
     "limit_to_num_jets": 0,
 
     "balance_jets": false,
     "partial_events": true,
-    "balance_particles": true,
+    "balance_particles": false,
+    "balance_classifications": true,
+    "balance_events": true,
+    "balance_losses": false,
 
     "dataset_limit": 1.0,
     "train_validation_split": 0.95,
+    "dataset_randomization": 9999,
     "batch_size": 2048,
     "num_dataloader_workers": 16,
 
@@ -48,9 +52,9 @@
     "combine_pair_loss": "min",
     "optimizer": "AdamW",
     "focal_gamma": 0.0,
-    "learning_rate": 0.00659,
-    "learning_rate_cycles": 1,
-    "learning_rate_warmup_epochs": 1.0,
+    "learning_rate": 0.0001,
+    "learning_rate_cycles": 0,
+    "learning_rate_warmup_epochs": 0.0,
 
     "assignment_loss_scale": 1.0,
     "detection_loss_scale": 0.0,
@@ -62,7 +66,8 @@
     "gradient_clip": 0.425,
     "dropout": 0.0059,
 
-    "epochs": 50,
+    "metric": "validation_accuracy",
+    "epochs": 100,
     "num_gpu": 1,
     "verbose_output": true
 }
