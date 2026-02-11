@@ -1,5 +1,6 @@
 # HH4b_SPANet
-Repository with [SPANet](https://github.com/matteomalucchi/SPANet) configuration for HH4b analysis. Originally forked from https://github.com/mmarchegiani/ttHbb_SPANet.
+
+Repository with [SPANet](https://github.com/matteomalucchi/SPANet) configuration for HH4b analysis. Originally forked from <https://github.com/mmarchegiani/ttHbb_SPANet>.
 
 ## Running SPANet within the `cmsml` docker container
 
@@ -13,6 +14,7 @@ apptainer shell -B /afs -B /eos/user/t/tharte -B /eos/user/m/mmalucch/spanet_inp
 
 All the common packages for machine learning applications are now available in a singularity shell.
 We can proceed by installing `SPANet` in a virtual environment inside this Docker container:
+
 ```bash
 # Clone locally the SPANet repository
 git clone git@github.com:matteomalucchi/SPANet.git
@@ -32,7 +34,7 @@ For the script to run the efficiency evaluation plots, a different environment i
 This repo does not have a direct way to install. An example of such an environement is here. It might be more useful to start a new environment and just add the missing packages until the respective script runs. A better list is to be created.:
 <details>
     <summary>Installed packages (more than required)</summary>
-    
+
     absl-py==2.1.0
     aiohappyeyeballs==2.4.3
     aiohttp==3.10.10
@@ -390,6 +392,7 @@ This repo does not have a direct way to install. An example of such an environem
 </details>
 
 The next time the user enters in the apptainer the virtual environment needs to be activated.
+
 ```bash
 #Enter the image
 apptainer shell -B /afs -B /eos/user/t/tharte -B /eos/user/m/mmalucch/spanet_inputs -B /etc/sysconfig/ngbauth-submit -B ${XDG_RUNTIME_DIR} --env KRB5CCNAME="FILE:${XDG_RUNTIME_DIR}/krb5cc" --nv /cvmfs/unpacked.cern.ch/registry.hub.docker.com/cmsml/cmsml:latest
@@ -400,6 +403,7 @@ source myenv/bin/activate
 ```
 
 To check that SPANet is correctly installed in the environment, run the following command:
+
 ```bash
 python -m spanet.train --help
 ```
@@ -407,7 +411,9 @@ python -m spanet.train --help
 ## Dataset creation
 
 ### Coffea to H5 conversion
+
 In order to create the `.h5` dataset from the `.coffea` output file, one can use the following command:
+
 ```bash
 cd HH4b_SPANet
 python utils/dataset/coffea_to_h5.py -i input.coffea
@@ -415,7 +421,9 @@ python utils/dataset/coffea_to_h5.py -i input.coffea
 # Explicit example
 python3 /work/tharte/HH4b_SPANet/utils/dataset/coffea_to_h5.py -i $1/output_all.coffea -o $TMPDIR/ -r -c 4b_region
 ```
+
 This code can also be run in a slurm job using a small script. The script has to be adapted a bit and has hardcoded paths. But the idea is, to have such a script in the folder, where you run it and then you can just execute: `sbatch coffea_to_h5.sh`:
+
 ```
 #!/bin/bash
 #
@@ -443,11 +451,13 @@ cp $TMPDIR/* $1
 
 rm -rf $TMPDIR
 ```
+
 TODO: This script will be made more agnostic and put into the repo for easier use.
 
-
 ### Coffea to Parquet conversion
+
 In order to create the `.parquet` dataset from the `.coffea` output file, one can use the following command:
+
 ```bash
 cd HH4b_SPANet
 python utils/dataset/coffea_to_parquet.py -i input.coffea -o output_folder
@@ -459,7 +469,9 @@ python3 /work/tharte/HH4b_SPANet/utils/dataset/coffea_to_parquet.py -i ./output_
 The script will produce an output file for each sample in the `.parquet` format, saved in the folder `output_folder`.
 
 ### Parquet to H5 conversion
+
 Once the `.parquet` file is saved, the `.h5` file in the SPANet format can be produced using the following command:
+
 ```bash
 python utils/dataset/parquet_to_h5.py -i input.parquet -o output.h5
 
@@ -468,13 +480,17 @@ python3 /work/tharte/HH4b_SPANet/utils/dataset/parquet_to_h5.py -i ./*.parquet -
 ```
 
 ## Train SPANet model for jet assignment
+
 In order to train the SPANet model for jet assignment, run the following command:
+
 ```bash
 python -m spanet.train -of options_file --gpus 1
 ```
 
 ## Train on HTCondor
+
 In order to train the SPANet model on HTCondor, one can use the following command:
+
 ```bash
 python jobs/submit_jobs_seed.py -o <options_files/option_file.json> -c <jobs/config/config.yaml> -s <start_seed>:<end_seed> -a <"additional arguments to pass to spanet.train"> --suffix <directory_suffix> -out <output_dir>
 
@@ -482,23 +498,99 @@ python jobs/submit_jobs_seed.py -o <options_files/option_file.json> -c <jobs/con
 python3 ~/public/Software/HH4b_SPANet/jobs/submit_jobs_seed.py -c ~/public/Software/HH4b_SPANet/jobs/config/jet_assignment_deep_network_3d.yaml -s 100:101 -o options_files/HH4b/hh4b_5jets_ptreg_loose_300_btag_wp.json -out /eos/user/t/tharte/Analysis_data/spanet_output
 ```
 
+
+
+## Monitor training on TensorBoard
+
+To monitor the training one can use TensorBoard with the following command:
+
+```bash
+tensorboard --logdir <output_dir/version_[]>
+
+# e.g.
+tensorboard --logdir /eos/user/t/tharte/Analysis_data/spanet_output/version_0
+```
+
+This will print something like:
+
+```
+TensorBoard 2.X.X at http://localhost:6006/
+```
+
+### If running locally
+
+If you are running on your local machine, simply open the link in your browser:
+
+```
+http://localhost:6006
+```
+
+
+### If running on a remote machine (e.g. lxplus)
+
+Since TensorBoard runs on the remote machine’s `localhost`, you need to create an SSH tunnel to access it from your laptop.
+
+From your **local machine**, run:
+
+```bash
+ssh -L 6006:localhost:6006 <user>@lxplus.cern.ch
+```
+
+Then open in your local browser:
+
+```
+http://localhost:6006
+```
+
+This forwards your local port `6006` to the remote machine’s port `6006`, allowing you to access the TensorBoard interface securely.
+
+
+### Monitoring multiple runs
+
+If you want to compare different runs (e.g. `version_0`, `version_1`, `version_2`), point TensorBoard to the parent directory:
+
+```bash
+tensorboard --logdir /eos/user/t/tharte/Analysis_data/spanet_output/
+```
+
+TensorBoard will automatically display all available versions for comparison.
+
+---
+
+This allows you to monitor:
+
+* Training and validation loss
+* Classification metrics (e.g. accuracy)
+* Learning rate schedules
+* Other logged quantities
+
+Press `CTRL+C` to stop the TensorBoard server.
+
+
 ## Compute predictions
+
 In order to compute the predictions from a previously trained SPANet model, one has to run the following command:
+
 ```bash
 python -m spanet.predict $LOG_DIRECTORY predicitons.h5 -tf input.h5 --gpu
 ```
+
 where `$LOG_DIRECTORY` is the output folder where the checkpoints of the trained SPANet model are saved, `predicitons.h5` is the customizable name of the output file containing the predictions and `input.h5` is the input `.h5` file in SPANet format. With the `--gpu` flag one can profit from the available GPUs.
 
 ## Convert to onnx for further use
+
 To use the model afterwards with different frameworks, the easiest way is to have an `onnx` file. This can be exported easily like this:
+
 ```
 python -m spanet.export <path_to_training>/out_seed_trainings_100/version_0/ <output_file_name>.onnx --gpu
 ```
 
 ## Run the efficiency script
+
 This repo contains also a script to determine the pairing efficiency of the models. It runs on the files gained from `spanet.predict`.
 
 To add a new model, you just have to add a sub-dictionary to the `spanet_dict`:
+
 ```
 f'{spanet_dir}spanet_hh4b_5jets_300_ptreg_loose_s100_btag_wp.h5',
     'true': '5_jets_pt_true_wp_allklambda',
@@ -507,9 +599,9 @@ f'{spanet_dir}spanet_hh4b_5jets_300_ptreg_loose_s100_btag_wp.h5',
 ```
 
 And then in the target folder, you can run this:
+
 ```
 python3 ~/public/Software/HH4b_SPANet/utils/performance/efficiency_studies.py -pd . -k
 # Alternatively just run on the data samples, to analyse the mass sculpting:
 python3 ~/public/Software/HH4b_SPANet/utils/performance/efficiency_studies.py -pd . -d
 ```
-
