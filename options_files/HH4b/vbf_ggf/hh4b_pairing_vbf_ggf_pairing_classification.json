@@ -30,7 +30,7 @@
     "skip_connections": true,
     "initial_embedding_skip_connections": true,
     "event_info_file": "/afs/cern.ch/user/m/mmalucch/HH4b_SPANet/event_files/HH4b/vbf_ggf/hh4b_vbf_ggf_pairing_classification.yaml",
-    "training_file": "/eos/user/m/mmalucch/spanet_infos/spanet_inputs/vbf/JetTotalSPANetPtFlattenPadded_pad9999_test.h5",
+    "training_file": "/eos/user/m/mmalucch/spanet_infos/spanet_inputs/vbf/JetTotalSPANetPtFlattenPadded_pad9999_train.h5",
 
     "normalize_features": true,
     "limit_to_num_jets": 0,
@@ -67,7 +67,7 @@
     "dropout": 0.0059,
 
     "metric": "validation_accuracy",
-    "epochs": 2,
+    "epochs": 30,
     "num_gpu": 1,
     "verbose_output": true
 }

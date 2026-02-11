@@ -43,9 +43,13 @@ args = parser.parse_args()
 
 basedir = f"{os.path.dirname(os.path.abspath(__file__))}/../"
 print(f"basedir {basedir}")
+
 homedir = os.environ["HOME"]
-spanet_main_dir = os.environ.get("SPANET_MAIN_DIR", "HOME")
-spanet_env_dir = os.environ.get("SPANET_ENV_DIR", "HOME")
+spanet_main_dir = os.environ.get("SPANET_MAIN_DIR", os.environ["HOME"])
+spanet_env_dir = os.environ.get("SPANET_ENV_DIR", os.environ["HOME"])
+print("homedir: ", homedir)
+print("spanet_main_dir: ", spanet_main_dir)
+print("spanet_env_dir: ", spanet_env_dir)
 
 print("\nargs:", args.args)
 interactive = args.interactive

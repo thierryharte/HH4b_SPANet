@@ -22,11 +22,6 @@ source $SPANET_ENV_DIR/bin/activate
 cd $HH4b_SPANET_DIR
 echo $HH4b_SPANET_DIR
 
-echo "$(python --version)"
-
-
-sleep 20m
-
 
 # Launch training
 if [ $# -eq 7 ]; then
