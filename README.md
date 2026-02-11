@@ -395,7 +395,7 @@ The next time the user enters in the apptainer the virtual environment needs to 
 
 ```bash
 #Enter the image
-apptainer shell -B /afs -B /eos/user/t/tharte -B /eos/user/m/mmalucch/spanet_inputs -B /etc/sysconfig/ngbauth-submit -B ${XDG_RUNTIME_DIR} --env KRB5CCNAME="FILE:${XDG_RUNTIME_DIR}/krb5cc" --nv /cvmfs/unpacked.cern.ch/registry.hub.docker.com/cmsml/cmsml:latest
+apptainer shell -B /afs -B /eos/user/t/tharte -B /eos/user/m/mmalucch/spanet_infos/spanet_inputs -B /etc/sysconfig/ngbauth-submit -B ${XDG_RUNTIME_DIR} --env KRB5CCNAME="FILE:${XDG_RUNTIME_DIR}/krb5cc" --nv /cvmfs/unpacked.cern.ch/registry.hub.docker.com/cmsml/cmsml:latest
 
 # Activate the virtual environment
 cd SPANet
