@@ -62,13 +62,12 @@ echo "Python path:    $(which python)"
 cd "${HH4b_SPANET_DIR}"
 echo "Working dir:    $(pwd)"
 
-echo "Extra args passed to spanet.train: ${EXTRA_ARGS[*]}"
+echo "Extra args passed to spanet.tune: ${EXTRA_ARGS[*]}"
 
-# Launch training
-python -m spanet.train \
-    --options_file "$OPTIONS_FILE" \
+# Launch tuning
+python -m spanet.tune \
+    "$OPTIONS_FILE" \
     -n "$RUN_NAME" \
     --log_dir "$RUN_NAME" \
-    --time_limit 07:00:00:00 \
-    --gpus "$NUM_GPU" \
+    -g "$NUM_GPU" \
     "${EXTRA_ARGS[@]}"

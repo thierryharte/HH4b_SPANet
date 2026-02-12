@@ -84,10 +84,10 @@ sub = htcondor.Submit()
 if interactive:
     sub["InteractiveJob"] = True
 
-if model in ["jet_assignment", "classification", "jet_assignment_tune", "training"]:
+if model in ["training","model_tune"]:
     sub["Executable"] = f"{basedir}/jobs/{model}.sh"
     sub["arguments"] = (
-        f"{basedir}/{args.options_file} {outputdir}/{args.log_dir} {args.seed} {ngpu} {spanet_main_dir} {spanet_env_dir} {homedir} {args.args}"
+        f"-o {basedir}/{args.options_file} -n {outputdir}/{args.log_dir} -s {args.seed} -g {ngpu} -m {spanet_main_dir} -e {spanet_env_dir} -H {homedir} -- {args.args}"
     )
     sub["Output"] = f"{basedir}/{args.log_dir}/{model}-$(ClusterId).$(ProcId).out"
     sub["Error"] = f"{basedir}/{args.log_dir}/{model}-$(ClusterId).$(ProcId).err"
