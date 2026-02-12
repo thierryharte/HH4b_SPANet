@@ -25,6 +25,23 @@ from efficiency_configuration import *
 TRUE_PAIRING = False
 
 
+# TODO: Currently we only have the values for postEE!!!!
+def get_region_mask(region, column_file):
+    jet_btag = column_file["INPUTS"]["Jet"]["btagPNetB"]
+    if region == "4b" or region == "4M":
+        mask = (jet_btag[:, 0] > 0.65) & (jet_btag[:, 1] > 0.65) & (jet_btag[:, 2] > 0.2605) & (jet_btag[:, 3] > 0.2605)
+    if region == "3M":
+        mask = (jet_btag[:, 0] > 0.2605) & (jet_btag[:, 1] > 0.2605) & (jet_btag[:, 2] > 0.2605) & (jet_btag[:, 3] < 0.2605)
+    if region == "2M":
+        mask = (jet_btag[:, 0] > 0.2605) & (jet_btag[:, 1] > 0.2605) & (jet_btag[:, 2] < 0.2605) & (jet_btag[:, 3] < 0.2605)
+    if region == "3T1M":
+        mask = (jet_btag[:, 0] > 0.6915) & (jet_btag[:, 1] > 0.6915) & (jet_btag[:, 2] > 0.26915) & (jet_btag[:, 3] > 0.2605)
+    if region == "3T1L":
+        mask = (jet_btag[:, 0] > 0.6915) & (jet_btag[:, 1] > 0.6915) & (jet_btag[:, 2] > 0.26915) & (jet_btag[:, 3] > 0.0499)
+    return mask
+
+
+
 def check_double_assignment_vectorized(idx_b1, idx_b2, idx_b3, idx_b4, label):
     # Stack indices for each event: shape (N_events, 4)
     idx_all = np.stack([idx_b1, idx_b2, idx_b3, idx_b4], axis=1)
@@ -45,11 +62,13 @@ def check_double_assignment_vectorized(idx_b1, idx_b2, idx_b3, idx_b4, label):
         logger.info(f"OK: No double-assigned jets found in {label}.")
 
 
-def load_jets_and_pairing(samplefile, label):
+def load_jets_and_pairing(samplefile, label, max_jets=5):
     idx_b1 = samplefile["TARGETS"]["h1"]["b1"][()]
     idx_b2 = samplefile["TARGETS"]["h1"]["b2"][()]
     idx_b3 = samplefile["TARGETS"]["h2"]["b3"][()]
     idx_b4 = samplefile["TARGETS"]["h2"]["b4"][()]
+    for idx_arr in [idx_b1, idx_b2, idx_b3, idx_b4]:
+        idx_arr = ak.where(idx_arr >= max_jets, -1, max_jets)
     check_double_assignment_vectorized(idx_b1, idx_b2, idx_b3, idx_b4, label)
     idx_h1 = ak.concatenate(
             (
@@ -310,8 +329,11 @@ def plot_histos_1d(
                 weights=np.repeat(1.0 / (len(spanet[0]) * np.diff(bins)[0]), len(spanet[0])),
             )[0]
         )
-        * (1.8 if "peak" not in name else 1.6),
+        * (1.2 if "peak" not in name else 1.6),
     )
+    print(f"Bin size of the plot: {np.diff(bins)[0]}")
+    if "peak" not in name:
+        ax.set_xlim(50, 300)
     if compare_run2 and isinstance(run2, awkward.highlevel.Array):
         # Plot the residuals with respect to Run2
         res_spanet_run2 = [
@@ -343,6 +365,7 @@ def plot_histos_1d(
             )
 
         # plot zero line
+        ax_residuals.set_ylim(0, 3)
         ax_residuals.axhline(1, color="black", linewidth=1)
         ax_residuals.set_ylabel("SPANet / $D_{HH}$")
 
@@ -381,6 +404,7 @@ def plot_histos_1d(
             )
 
         # plot zero line
+        ax_residuals.set_ylim(0, 3)
         ax_residuals.axhline(1, color="black", linewidth=1)
         ax_residuals.set_ylabel("SPANet / true pairing")
 
@@ -666,12 +690,20 @@ def plot_true_higgs(true_higgs_fully_matched, mh_bins, num, plot_dir="plots"):
 
 
 def separate_klambda(
-    jet_infos, df_true, df_spanet_pred, idx_true, idx_spanet_pred
+    jet_infos, df_true, df_spanet_pred, idx_true, idx_spanet_pred, mask_region
 ):
     logger.info(f"jet_infos {len(jet_infos)}, {len(jet_infos[0])}")
-
-    kl_array_true = df_true["INPUTS"]["Event"]["kl"][()]
-    kl_array_spanet = df_spanet_pred["INPUTS"]["Event"]["kl"][()]
+    
+    try:
+        kl_array_true = df_true["INPUTS"]["Event"]["kl"][()][mask_region]
+    except KeyError:
+        print("Did not find Event/kl in kl_array_true, will try EVENT/kl")
+        kl_array_true = df_true["INPUTS"]["EVENT"]["kl"][()][mask_region]
+    try:
+        kl_array_spanet = df_spanet_pred["INPUTS"]["Event"]["kl"][()][mask_region]
+    except KeyError:
+        print("Did not find Event/kl in kl_array_spanet, will try EVENT/kl")
+        kl_array_spanet = df_spanet_pred["INPUTS"]["EVENT"]["kl"][()][mask_region]
     logger.info(f"kl_arrays {kl_array_spanet}")
 
     # for each kl_array, separate the array based on the kl value
@@ -735,15 +767,18 @@ def plot_diff_eff_klambda(effs, unc_effs, kl_values, labels, color, name, plot_d
     # split the arrays depending on how many times the first kl value appears
     fig, ax = plt.subplots(figsize=(6, 6))
     for label, kls, eff, unc_eff, col in zip(labels, kl_values, effs, unc_effs, color):
-        ax.errorbar(
-            kls,
-            eff,
-            yerr=unc_eff,
-            linestyle="-",
-            label=label,
-            marker=".",
-            color=col,
-        )
+        try:
+            ax.errorbar(
+                kls,
+                eff,
+                yerr=unc_eff,
+                linestyle="-",
+                label=label,
+                marker=".",
+                color=col,
+            )
+        except:
+            breakpoint()
     ax.legend(frameon=False, loc="lower left")
     ax.set_xlabel(r"$\kappa_{\lambda}$")
     ax.set_ylabel(name)
