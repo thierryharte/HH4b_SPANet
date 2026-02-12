@@ -63,7 +63,6 @@
     "dropout": 0.0059,
     
     "metric": "validation_accuracy",
-    "metric": "validation_accuracy",
     "epochs": 300,
     "num_gpu": 1,
     "verbose_output": true
