@@ -13,10 +13,10 @@ import logging
 logger = logging.getLogger(__name__)
 
 spanet_dir = '/eos/user/t/tharte/Analysis_data/predictions/'
-spanet_dir_matteo = '/eos/home-m/mmalucch/spanet_infos/spanet_inputs/out_prediction_files/'
+spanet_dir_matteo = '/eos/user/m/mmalucch/spanet_infos/spanet_inputs/out_prediction_files/'
 
 true_dir_thierry = '/eos/user/t/tharte/Analysis_data/spanet_samples/'
-true_dir_matteo = '/eos/home-m/mmalucch/spanet_infos/spanet_inputs/out_prediction_files/true_files/'
+true_dir_matteo = '/eos/user/m/mmalucch/spanet_infos/spanet_inputs/out_prediction_files/true_files/'
 
 # uncomment the configurations that you want to use
 
