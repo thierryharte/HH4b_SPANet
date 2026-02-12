@@ -14,7 +14,8 @@ KEEP_TOGETHER_COLLECTIONS = ["add_jet1pt"]
 # leave empty list to disable global variables
 GLOBAL_VARIABLES = ["all"]
 
-PADDING_VALUE = -999.0
+COFFEA_PADDING_VALUE = -999.0
+H5_PADDING_VALUE = 9999.0
 SEED = 9999
 _permutations = {}
 
@@ -42,7 +43,7 @@ def create_resonances_targets_from_provenance(jets_prov, max_jets):
           1 → h1
           2 → h2
           3 → VBF
-          PADDING_VALUE → invalid / padded
+          pad value → invalid / padded
     max_jets : int
 
     Returns
@@ -161,11 +162,14 @@ def to_numpy_event_vector(x):
 
 def pad_clip_jets(jets, max_jets):
     jets = unwrap_accumulator(jets)
+    
+    # replace coffea padding to h5 padding
+    jets=ak.where(jets==COFFEA_PADDING_VALUE, H5_PADDING_VALUE, jets)
 
     # Awkward jagged
     if is_awkward(jets):
         padded = ak.pad_none(jets, max_jets, axis=1, clip=True)
-        dense = ak.to_numpy(ak.fill_none(padded, PADDING_VALUE))
+        dense = ak.to_numpy(ak.fill_none(padded, H5_PADDING_VALUE))
         return dense
 
     arr = np.asarray(jets)
@@ -174,7 +178,7 @@ def pad_clip_jets(jets, max_jets):
     if arr.dtype == object and arr.ndim == 1:
         jets_ak = ak.Array(arr)
         padded = ak.pad_none(jets_ak, max_jets, axis=1, clip=True)
-        dense = ak.to_numpy(ak.fill_none(padded, PADDING_VALUE))
+        dense = ak.to_numpy(ak.fill_none(padded, H5_PADDING_VALUE))
         return dense
 
     # Dense numpy
@@ -184,7 +188,7 @@ def pad_clip_jets(jets, max_jets):
     N, Nj = arr.shape[:2]
     use = min(Nj, max_jets)
 
-    out = np.full((N, max_jets) + arr.shape[2:], PADDING_VALUE, dtype=arr.dtype)
+    out = np.full((N, max_jets) + arr.shape[2:], H5_PADDING_VALUE, dtype=arr.dtype)
     out[:, :use, ...] = arr[:, :use, ...]
 
     return out
@@ -381,10 +385,10 @@ def coffea_to_h5(
                                 max_jets,
                                 clip=True,
                             ),
-                            PADDING_VALUE,
+                            COFFEA_PADDING_VALUE,
                         )
                     )
-                    != PADDING_VALUE
+                    != COFFEA_PADDING_VALUE
                 )
 
                 jet_mask_written = False
@@ -423,7 +427,7 @@ def coffea_to_h5(
                     arr_u = unwrap_accumulator(arr)
                     is_jet = coll == JET_COLLECTION and var != "N"
                     is_global = var in GLOBAL_VARIABLES or (
-                        not is_jet and "all" in GLOBAL_VARIABLES
+                        not is_jet and "all" in GLOBAL_VARIABLES and coll== "events"
                     )
                     print(
                         f"Processing {dkey} {era} {region} variable {name} with shape {arr_u.shape} (jet: {is_jet}, global: {is_global})"

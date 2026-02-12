@@ -1,0 +1,4 @@
+model: training
+job_flavour: espresso
+ngpu: 1
+ncpu: 3
