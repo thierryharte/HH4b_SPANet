@@ -198,6 +198,9 @@ python3 jobs/submit_jobs_seed.py -o options_files/HH4b/vbf_ggf/hh4b_pairing_vbf_
 
 ### Tune the model on HTCondor
 
+> [!IMPORTANT]
+> Work in Progress
+
 To run a hyperparameter scan, one can use the `spanet.tune` script, which can be run on HTCondor using the corresponding configuration. An example of the command is given in shown below. You can chose which hyperparameters and which values to scan in the `SPANet/spanet/tune.py` file.
 
 ```bash
