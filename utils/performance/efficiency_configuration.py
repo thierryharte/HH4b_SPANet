@@ -20,7 +20,7 @@ true_dir_matteo = '/eos/user/m/mmalucch/spanet_infos/spanet_inputs/out_predictio
 
 # uncomment the configurations that you want to use
 
-run2_dataset_MC = '4_jets_allklambda_newkl_newCuts'
+run2_dataset_MC = '5_jets_pt_true_5wp_3L1cuts_allklambda'
 run2_dataset_DATA = '5_jets_pt_true_wp_DATA_oldWP'
 
 spanet_dict = {
@@ -57,11 +57,11 @@ spanet_dict = {
     #     'color': 'tan'},
 
     # --- btag WP ---
-    '5_jets_pt_btag_300e_allklambda': {
-        'file': f'{spanet_dir}spanet_hh4b_5jets_300_ptreg_loose_s100_btag.h5',
-        'true': '5_jets_pt_true_wp_allklambda_oldWP',
-        'label': 'SPANet baseline',
-        'color': 'darkblue'},
+    # '5_jets_pt_btag_300e_allklambda': {
+    #     'file': f'{spanet_dir}spanet_hh4b_5jets_300_ptreg_loose_s100_btag.h5',
+    #     'true': '5_jets_pt_true_wp_allklambda_oldWP',
+    #     'label': 'SPANet baseline',
+    #     'color': 'darkblue'},
     # '5_jets_pt_btag_wp_300e_allklambda': {
     #     'file': f'{spanet_dir}spanet_hh4b_5jets_300_ptreg_loose_s100_btag_wp.h5',
     #     'true': '5_jets_pt_true_wp_allklambda_oldWP',
@@ -72,16 +72,16 @@ spanet_dict = {
     #     'true': '5_jets_pt_true_wp_allklambda_oldWP',
     #     'label': 'SPANet btag 3 WP',
     #     'color': 'skyblue'},
-    '5_jets_ptvary_loose_btag_300e_03_17_allklambda_rerun': {
-        'file': f'{spanet_dir}rerun/spanet_rerun_hh4b_data_5jets_300_ptvary_loose_s100_btag_03_17_eval_on_btagWP.h5',
-        'true': '5_jets_pt_true_wp_allklambda_oldWP',
-        'label': 'SPANet - Flattened pt [0.3,1.7]',
-        'color': 'firebrick'},
-    '5_jets_ptvary_btag_wp_300e_allklambda': {
-        'file': f'{spanet_dir}spanet_hh4b_5jets_300_ptvary_loose_s100_btag_wp.h5',
-        'true': '5_jets_pt_true_wp_allklambda',
-        'label': 'SPANet btag 5 WP - Flattened pt [0.3,1.7]',
-        'color': 'orange'},
+    # '5_jets_ptvary_loose_btag_300e_03_17_allklambda_rerun': {
+    #     'file': f'{spanet_dir}rerun/spanet_rerun_hh4b_data_5jets_300_ptvary_loose_s100_btag_03_17_eval_on_btagWP.h5',
+    #     'true': '5_jets_pt_true_wp_allklambda_oldWP',
+    #     'label': 'SPANet - Flattened pt [0.3,1.7]',
+    #     'color': 'firebrick'},
+    # '5_jets_ptvary_btag_wp_300e_allklambda': {
+    #     'file': f'{spanet_dir}spanet_hh4b_5jets_300_ptvary_loose_s100_btag_wp.h5',
+    #     'true': '5_jets_pt_true_wp_allklambda',
+    #     'label': 'SPANet btag 5 WP - Flattened pt [0.3,1.7]',
+    #     'color': 'orange'},
     # '5_jets_ptvary_btag_3wp_300e_allklambda': {
     #     'file': f'{spanet_dir}spanet_hh4b_5jets_300_ptvary_loose_s100_btag_3wp.h5',
     #     'true': '5_jets_pt_true_wp_allklambda',
@@ -97,11 +97,11 @@ spanet_dict = {
     #     'true': '5_jets_pt_true_wp_allklambda_oldWP',
     #     'label': 'SPANet btag 3 WP - Flattened pt [0.3,1.7]',
     #     'color': 'coral'},
-    # '5_jets_ptvary_btag_1wp_300e_allklambda': {
-    #     'file': f'{spanet_dir}spanet_hh4b_5jets_300_ptvary_loose_s100_btag_1wp.h5',
-    #     'true': '5_jets_pt_true_wp_allklambda_oldWP',
-    #     'label': 'SPANet btag dummy WP - Flattened pt [0.3,1.7]',
-    #     'color': 'skyblue'},
+    '5_jets_ptvary_btag_1wp_300e_allklambda': {
+        'file': f'{spanet_dir}spanet_hh4b_5jets_300_ptvary_loose_s100_btag_1wp.h5',
+        'true': '5_jets_pt_true_wp_allklambda_oldWP',
+        'label': 'SPANet btag dummy WP - Flattened pt [0.3,1.7]',
+        'color': 'orange'},
     # '5_jets_pt_btag_300e_allklambda_eval_on_WPfile': {
     #     'file': f'{spanet_dir}spanet_hh4b_5jets_300_predict_s160_btag_eval_on_btagWP.h5',
     #     'true': '5_jets_pt_true_wp_allklambda_oldWP',
@@ -117,12 +117,28 @@ spanet_dict = {
     #     'true': '5_jets_pt_true_wp_allklambda',
     #     'label': 'SPANet btag 5 DeltaWP - Flattened pt [0.3,1.7] - inclusive',
     #     'color': 'mediumseagreen'},
-    # '5_jets_ptvary_btag_wp_inclusive_300e_allklambda': {
-    #     'file': f'{spanet_dir}spanet_hh4b_5jets_300_ptvary_loose_s100_btag_wp_inclusive.h5',
-    #     'true': '5_jets_pt_true_wp_allklambda',
-    #     'label': 'SPANet btag 5 WP - Flattened pt [0.3,1.7] - inclusive',
-    #     'color': 'deepskyblue'},
+    '5_jets_ptvary_btag_wp_inclusive_300e_allklambda': {
+        'file': f'{spanet_dir}spanet_hh4b_5jets_300_ptvary_loose_s100_btag_wp_inclusive.h5',
+        'true': '5_jets_pt_true_wp_allklambda',
+        'label': 'SPANet btag 5 WP - Flattened pt [0.3,1.7] - inclusive',
+        'color': 'deepskyblue'},
 
+    # New cuts
+    # '5_jets_ptvary_btag_wp_300e_allklambda': {
+    #     'file': f'{spanet_dir}spanet_hh4b_5jets_300_ptvary_loose_s100_btag_wp.h5',
+    #     'true': '5_jets_pt_true_wp_allklambda',
+    #     'label': 'SPANet btag 5 WP - Flattened pt [0.3,1.7]',
+    #     'color': 'orange'},
+    '5_jets_ptvary_btag_5wp_300e_3L1cuts_allklambda': {
+        'file': f'{spanet_dir}1_13_2_spanet_loose_MC_postEE_pt_vary_btagWP_s100_newLeptonVeto_3L1Cut_UpdateJetVetoMap_MC.h5',
+        'true': '5_jets_pt_true_5wp_3L1cuts_allklambda',
+        'label': 'SPANet btag 5 WP - Flattened pt [0.3,1.7] - 3L1 triggers',
+        'color': 'firebrick'},
+    # '5_jets_ptvary_btag_5wp_300e_NoL1cuts_allklambda': {
+    #     'file': f'{spanet_dir}1_13_2_spanet_loose_MC_postEE_pt_vary_btagWP_s100_newLeptonVeto_NoL1Cut_UpdateJetVetoMap_MC.h5',
+    #     'true': '5_jets_pt_true_5wp_NoL1cuts_allklambda',
+    #     'label': 'SPANet btag 5 WP - Flattened pt [0.3,1.7] - no L1 triggers',
+    #     'color': 'forestgreen'},
 
     # --- [0.3,1.7] ---
     # '5_jets_ptvary_loose_btag_300e_wide_allklambda': f'{spanet_dir}spanet_hh4b_5jets_300_ptvary_wide_loose_s100_btag.h5',  # THIS ## Chosen model
@@ -254,11 +270,11 @@ spanet_dict = {
     #     'color': 'darkblue'},
 
     # --- btag WP ---
-    '5_jets_pt_data_btag_300e_allklambda_eval_on_WPfile': {
-        'file': f'{spanet_dir}spanet_hh4b_5jets_300_predict_s160_btag_eval_on_btagWP_DATA_postEE.h5',
-       'true': '5_jets_pt_true_wp_DATA_oldWP',
-        'label': 'SPANet baseline',
-        'color': 'darkblue'},
+   #  '5_jets_pt_data_btag_300e_allklambda_eval_on_WPfile': {
+   #      'file': f'{spanet_dir}spanet_hh4b_5jets_300_predict_s160_btag_eval_on_btagWP_DATA_postEE.h5',
+   #     'true': '5_jets_pt_true_wp_DATA_oldWP',
+   #      'label': 'SPANet baseline',
+   #      'color': 'darkblue'},
    # '5_jets_pt_data_btag_wp_300e': {
    #     'file': f'{spanet_dir}spanet_hh4b_5jets_300_ptreg_loose_s100_btag_wp_DATA_postEE.h5',
    #     'true': '5_jets_pt_true_wp_DATA_oldWP',
@@ -269,16 +285,16 @@ spanet_dict = {
    #     'true': '5_jets_pt_true_wp_DATA_oldWP',
    #     'label': 'SPANet btag 3 WP full postEE',
    #     'color': 'skyblue'},
-   '5_jets_pt_data_vary_loose_btag_300e_03_17_allklambda_rerun': {
-        'file': f'{spanet_dir}rerun/spanet_rerun_hh4b_data_5jets_300_ptvary_loose_s100_btag_03_17_eval_on_btagWP_DATA_postEE.h5',
-       'true': '5_jets_pt_true_wp_DATA_oldWP',
-        'label': 'SPANet - Flattened pt [0.3,1.7]',
-        'color': 'firebrick'},
-   '5_jets_pt_data_vary_btag_wp_300e': {
-       'file': f'{spanet_dir}spanet_hh4b_5jets_300_ptvary_loose_s100_btag_wp_DATA_postEE.h5',
-       'true': '5_jets_pt_true_wp_DATA',
-       'label': 'SPANet btag 5 WP - Flattened pt [0.3,1.7]',
-       'color': 'orange'},
+   # '5_jets_pt_data_vary_loose_btag_300e_03_17_allklambda_rerun': {
+   #      'file': f'{spanet_dir}rerun/spanet_rerun_hh4b_data_5jets_300_ptvary_loose_s100_btag_03_17_eval_on_btagWP_DATA_postEE.h5',
+   #     'true': '5_jets_pt_true_wp_DATA_oldWP',
+   #      'label': 'SPANet - Flattened pt [0.3,1.7]',
+   #      'color': 'firebrick'},
+   # '5_jets_pt_data_vary_btag_wp_300e': {
+   #     'file': f'{spanet_dir}spanet_hh4b_5jets_300_ptvary_loose_s100_btag_wp_DATA_postEE.h5',
+   #     'true': '5_jets_pt_true_wp_DATA',
+   #     'label': 'SPANet btag 5 WP - Flattened pt [0.3,1.7]',
+   #     'color': 'orange'},
    # '5_jets_pt_data_vary_btag_3wp_300e': {
    #     'file': f'{spanet_dir}spanet_hh4b_5jets_300_ptvary_loose_s100_btag_3wp_DATA_postEE.h5',
    #     'true': '5_jets_pt_true_wp_DATA',
@@ -412,5 +428,7 @@ true_dict = {
     '5_jets_pt_true_wp_allklambda_oldWP': {'name': f"{true_dir_thierry}../spanet_samples/loose_MC_postEE_btagWP/old_WP/output_JetGood_test.h5", 'klambda': 'postEE'},
     '5_jets_pt_true_wp_allklambda': {'name': f"{true_dir_thierry}../spanet_samples/loose_MC_postEE_btagWP/output_JetGood_test.h5", 'klambda': 'postEE'},
     '5_jets_pt_true_wp_DATA_oldWP': {'name': f"{true_dir_thierry}../spanet_samples/loose_DATA_postEE_btagWP/old_WP/output_JetGood_test.h5", 'klambda': 'postEE'},
-    '5_jets_pt_true_wp_DATA': {'name': f"{true_dir_thierry}../spanet_samples/loose_DATA_postEE_btagWP/output_JetGood_test.h5", 'klambda': 'postEE'}
+    '5_jets_pt_true_wp_DATA': {'name': f"{true_dir_thierry}../spanet_samples/loose_DATA_postEE_btagWP/output_JetGood_test.h5", 'klambda': 'postEE'},
+    '5_jets_pt_true_5wp_3L1cuts_allklambda': {'name': f"{true_dir_thierry}../spanet_samples/1_13_2_loose_MC_postEE_pt_nominal_btagWP_newLeptonVeto_3L1Cut_UpdateJetVetoMap/output_JetGood_test.h5", 'klambda': 'postEE'},
+    '5_jets_pt_true_5wp_NoL1cuts_allklambda': {'name': f"{true_dir_thierry}../spanet_samples/1_13_2_loose_MC_postEE_pt_nominal_btagWP_newLeptonVeto_NoL1Cut_UpdateJetVetoMap/output_JetGood_test.h5", 'klambda': 'postEE'}
 }

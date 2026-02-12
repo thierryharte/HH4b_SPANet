@@ -7,7 +7,8 @@ import h5py
 import numpy as np
 import vector
 
-from efficiency_configuration import run2_dataset_DATA, run2_dataset_MC, spanet_dict, true_dict
+from efficiency_configuration_cutscomparison import run2_dataset_DATA, run2_dataset_MC, spanet_dict, true_dict
+# from efficiency_configuration import run2_dataset_DATA, run2_dataset_MC, spanet_dict, true_dict
 from efficiency_functions import (
     best_reco_higgs,
     calculate_diff_efficiencies,
@@ -20,6 +21,7 @@ from efficiency_functions import (
     plot_mhh,
     reco_higgs,
     separate_klambda,
+    get_region_mask,
 )
 
 
@@ -61,6 +63,12 @@ parser.add_argument(
     action="store_true",
     help="evaluate on data",
 )
+parser.add_argument(
+    "-r",
+    "--region",
+    default="4b",
+    help="define evaluation region.",
+)
 
 args = parser.parse_args()
 
@@ -74,7 +82,8 @@ else:
     run2_dataset = run2_dataset_MC
     spanet_dict = {k: v for k, v in spanet_dict.items() if "data" not in k}
 
-mh_bins = np.linspace(0, 300, 150)
+# mh_bins = np.linspace(0, 300, 150)
+mh_bins = np.linspace(0, 300, 61)
 mh_bins_peak = np.linspace(100, 140, 20)
 mh_bins_2d = (
     [np.linspace(50, 200, 80) for _ in range(3)]
@@ -98,14 +107,23 @@ for model_name, file_dict in spanet_dict.items():
     truefile = h5py.File(true_dict[file_dict["true"]]["name"], "r")
     truefile_klambda = true_dict[file_dict["true"]]["klambda"]
 
-    idx_true = load_jets_and_pairing(truefile, "true")
-    idx_spanet_pred = load_jets_and_pairing(spanetfile, "spanet")
+    mask_spanet = get_region_mask(args.region, spanetfile)
+    mask_true = get_region_mask(args.region, truefile)
+    assert all(mask_spanet == mask_true)
+
+    idx_true = load_jets_and_pairing(truefile, "true")[mask_true]
+    idx_spanet_pred = load_jets_and_pairing(spanetfile, "spanet")[mask_spanet]
+
 
     # load jet information
-    jet_ptPNetRegNeutrino = truefile["INPUTS"]["Jet"]["ptPnetRegNeutrino"][()]
-    jet_eta = truefile["INPUTS"]["Jet"]["eta"][()]
-    jet_phi = truefile["INPUTS"]["Jet"]["phi"][()]
-    jet_mass = truefile["INPUTS"]["Jet"]["mass"][()]
+    try:
+        jet_ptPNetRegNeutrino = truefile["INPUTS"]["Jet"]["ptPnetRegNeutrino"][()][mask_true]
+    except KeyError:
+        logger.warn("Did not find ptPnetRegNeutrino, will try to load pt normal")
+        jet_ptPNetRegNeutrino = truefile["INPUTS"]["Jet"]["pt"][()][mask_true]
+    jet_eta = truefile["INPUTS"]["Jet"]["eta"][()][mask_true]
+    jet_phi = truefile["INPUTS"]["Jet"]["phi"][()][mask_true]
+    jet_mass = truefile["INPUTS"]["Jet"]["mass"][()][mask_true]
 
     jet_infos = [jet_ptPNetRegNeutrino, jet_eta, jet_phi, jet_mass]
 
@@ -125,7 +143,7 @@ for model_name, file_dict in spanet_dict.items():
             kl_values,
             jet_infos_separate_klambda,
         ) = separate_klambda(
-            jet_infos, truefile, spanetfile, idx_true, idx_spanet_pred
+            jet_infos, truefile, spanetfile, idx_true, idx_spanet_pred, mask_region=mask_true
             )
 
         # I got now indexes for true and spanet and different kl.
@@ -259,13 +277,20 @@ for model_name, file_dict in spanet_dict.items():
 # -- Loading Run2 model
 truefile = h5py.File(true_dict[run2_dataset]["name"], "r")
 truefile_klambda = true_dict[run2_dataset]["klambda"]
-idx_true = load_jets_and_pairing(truefile, "true")
 
+mask_true = get_region_mask(args.region, truefile)
+assert all(mask_spanet == mask_true)
+
+idx_true = load_jets_and_pairing(truefile, "true", max_jets=4)[mask_true] # DHH cannot use the 5th jet, so we have to compare to the 4jet model.
 # load jet information
-jet_ptPNetRegNeutrino = truefile["INPUTS"]["Jet"]["ptPnetRegNeutrino"][()]
-jet_eta = truefile["INPUTS"]["Jet"]["eta"][()]
-jet_phi = truefile["INPUTS"]["Jet"]["phi"][()]
-jet_mass = truefile["INPUTS"]["Jet"]["mass"][()]
+try:
+    jet_ptPNetRegNeutrino = truefile["INPUTS"]["Jet"]["ptPnetRegNeutrino"][()][mask_true]
+except KeyError:
+    logger.warn("Did not find ptPnetRegNeutrino, will try to load pt normal")
+    jet_ptPNetRegNeutrino = truefile["INPUTS"]["Jet"]["pt"][()][mask_true]
+jet_eta = truefile["INPUTS"]["Jet"]["eta"][()][mask_true]
+jet_phi = truefile["INPUTS"]["Jet"]["phi"][()][mask_true]
+jet_mass = truefile["INPUTS"]["Jet"]["mass"][()][mask_true]
 
 jet_infos = [jet_ptPNetRegNeutrino, jet_eta, jet_phi, jet_mass]
 
@@ -284,8 +309,7 @@ if args.klambda and truefile_klambda != "none":
         kl_values,
         jet_infos_separate_klambda,
     ) = separate_klambda(
-        jet_infos, truefile, spanetfile, idx_true, None)  # Needs option for None in Spanet
-
+        jet_infos, truefile, spanetfile, idx_true, None, mask_region=mask_true)  # Needs option for None in Spanet
     # I got now indexes for true and spanet and different kl.
     # For this, I will add them to a list. If no kl is there, I will just make it a list of one element
     alltrue_idx.extend(true_kl_idx_list)
@@ -463,15 +487,31 @@ if not args.data:
 
 logger.info("Plotting higgs 1d all events")
 for bins, name in zip([mh_bins, mh_bins_peak], ["", "_peak"]):
+    if args.data:
+        kl_values = []  # This is needed to make sure, that we are only producing one plot.
     for number in [1, 2]:
-        plot_histos_1d(
-            bins,
-            [model["spanet_higgs_fully_matched"][0][:, number - 1].mass for model in df_collection.values()],  # spanet values
-            r2_model["run2_higgs_fully_matched"][0][:, number - 1].mass,  # run2 values
-            r2_model["true_higgs_fully_matched"][0][:, number - 1].mass if not args.data else None,  # true values
-            [model["file_dict"]["label"] for model in df_collection.values()],
-            [model["file_dict"]["color"] for model in df_collection.values()],
-            number,
-            name=name,
-            plot_dir=plot_dir,
-        )
+        for kl_variation, kl_name in zip(range(len(kl_values) + 1), ["all"] + kl_values.tolist()):
+            os.makedirs(f"kl_{kl_name}_massplot", exist_ok=True)
+            plot_histos_1d(
+                bins,
+                [model["spanet_higgs_fully_matched"][kl_variation][:, number - 1].mass for model in df_collection.values()],  # spanet values
+                r2_model["run2_higgs_fully_matched"][kl_variation][:, number - 1].mass,  # run2 values
+                r2_model["true_higgs_fully_matched"][kl_variation][:, number - 1].mass if not args.data else None,  # true values
+                [model["file_dict"]["label"] for model in df_collection.values()],
+                [model["file_dict"]["color"] for model in df_collection.values()],
+                number,
+                name=f"{name}_true_run2_kl_eval_{kl_name}",
+                plot_dir=f"{plot_dir}/kl_{kl_name}_massplot",
+            )
+            # for true_model in df_collection.values():
+            #     plot_histos_1d(
+            #         bins,
+            #         [model["spanet_higgs_fully_matched"][kl_variation][:, number - 1].mass for model in df_collection.values()],  # spanet values
+            #         r2_model["run2_higgs_fully_matched"][kl_variation][:, number - 1].mass,  # run2 values
+            #         true_model["true_higgs_fully_matched"][kl_variation][:, number - 1].mass if not args.data else None,  # true values
+            #         [model["file_dict"]["label"] for model in df_collection.values()],
+            #         [model["file_dict"]["color"] for model in df_collection.values()],
+            #         number,
+            #         name=f"kl_{kl_name}_massplots/{name}_true_{true_model['file_dict']['label']}_kl_eval_{kl_name}",
+            #         plot_dir=plot_dir,
+            #     )
