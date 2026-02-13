@@ -67,9 +67,14 @@ def load_jets_and_pairing(samplefile, label, max_jets=5):
     idx_b2 = samplefile["TARGETS"]["h1"]["b2"][()]
     idx_b3 = samplefile["TARGETS"]["h2"]["b3"][()]
     idx_b4 = samplefile["TARGETS"]["h2"]["b4"][()]
-    for idx_arr in [idx_b1, idx_b2, idx_b3, idx_b4]:
-        idx_arr = ak.where(idx_arr >= max_jets, -1, max_jets)
+    
+    idx_b1 = ak.where(idx_b1 >= max_jets, -1, idx_b1)
+    idx_b2 = ak.where(idx_b2 >= max_jets, -1, idx_b2)
+    idx_b3 = ak.where(idx_b3 >= max_jets, -1, idx_b3)
+    idx_b4 = ak.where(idx_b4 >= max_jets, -1, idx_b4)
+    
     check_double_assignment_vectorized(idx_b1, idx_b2, idx_b3, idx_b4, label)
+    
     idx_h1 = ak.concatenate(
             (
                 ak.unflatten(idx_b1, ak.ones_like(idx_b1)),
