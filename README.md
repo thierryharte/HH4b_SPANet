@@ -345,4 +345,11 @@ python utils/performance/efficiency_studies.py -pd <plot_dir> -k
 
 # Alternatively just run on the data samples, to analyse the mass sculpting:
 python utils/performance/efficiency_studies.py -pd <plot_dir> -d
+
+# To compute the efficiency also for vbf jets on actual vbf events (if the file has a mixture of ggF and VBF events where the class indicating the VBF is 1):
+python utils/performance/efficiency_studies.py -pd <plot_dir> --vbf -c 1
+
+# To ignore the vbf events (if the file has a mixture of ggF and VBF events where the class indicating the VBF is 1):
+python utils/performance/efficiency_studies.py -pd <plot_dir> -c 0
+
 ```

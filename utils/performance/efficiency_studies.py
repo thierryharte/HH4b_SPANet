@@ -7,8 +7,8 @@ import h5py
 import numpy as np
 import vector
 
-from efficiency_configuration_cutscomparison import run2_dataset_DATA, run2_dataset_MC, spanet_dict, true_dict
-# from efficiency_configuration import run2_dataset_DATA, run2_dataset_MC, spanet_dict, true_dict
+# from efficiency_configuration_cutscomparison import run2_dataset_DATA, run2_dataset_MC, spanet_dict, true_dict
+from efficiency_configuration import run2_dataset_DATA, run2_dataset_MC, spanet_dict, true_dict
 from efficiency_functions import (
     best_reco_higgs,
     calculate_diff_efficiencies,
@@ -22,19 +22,20 @@ from efficiency_functions import (
     reco_higgs,
     separate_klambda,
     get_region_mask,
+    get_class_mask
 )
 
 
 def setup_logging(logpath):
     logging.basicConfig(
         level=logging.INFO,
-        format="%(asctime)s | %(levelname)s | %(funcName)s | %(message)s",
+        format="%(asctime)s | %(levelname)s | %(name)s | %(funcName)s | %(message)s",
         datefmt="%d-%b-%y %H-%M-%S",
+        handlers=[
+            logging.StreamHandler(),
+            logging.FileHandler(f"{logpath}/logger_output.log", mode="a", encoding="utf-8"),
+        ],
     )
-    logger = logging.getLogger(__name__)
-    logger.addHandler(logging.StreamHandler())
-    logger.addHandler(logging.FileHandler(f"{logpath}/logger_output.log", mode="a", encoding="utf-8"))
-    return logger
 
 
 vector.register_numba()
@@ -66,13 +67,27 @@ parser.add_argument(
 parser.add_argument(
     "-r",
     "--region",
-    default="4b",
-    help="define evaluation region.",
+    default="inclusive",
+    help="define evaluation region. If 'inclusive' no cuts are applied"
 )
-
+parser.add_argument(
+    "-v",
+    "--vbf",
+    default=False,
+    action="store_true",
+    help="Compute efficiency also for vbf jets"
+)
+parser.add_argument(
+    "-c",
+    "--class-label",
+    default=None,
+    help="Consider only the class specified"
+)
 args = parser.parse_args()
 
-logger = setup_logging(args.plot_dir)
+os.makedirs(args.plot_dir, exist_ok=True)
+setup_logging(args.plot_dir)
+logger = logging.getLogger(__name__)
 
 if args.data:
     # remove non data samples
@@ -106,20 +121,34 @@ for model_name, file_dict in spanet_dict.items():
     spanetfile = h5py.File(file_dict["file"], "r")
     truefile = h5py.File(true_dict[file_dict["true"]]["name"], "r")
     truefile_klambda = true_dict[file_dict["true"]]["klambda"]
+    
+    logger.debug(f"Executing model {model_name} with spanetfile {file_dict['file']} and truefile {true_dict[file_dict['true']]['name']}")
 
-    mask_spanet = get_region_mask(args.region, spanetfile)
-    mask_true = get_region_mask(args.region, truefile)
-    assert all(mask_spanet == mask_true)
-
-    idx_true = load_jets_and_pairing(truefile, "true")[mask_true]
-    idx_spanet_pred = load_jets_and_pairing(spanetfile, "spanet")[mask_spanet]
+    # define region mask
+    mask_region_spanet = get_region_mask(args.region, spanetfile)
+    mask_region_true = get_region_mask(args.region, truefile)
+    assert all(mask_region_spanet == mask_region_true)
+    
+    # define the class mask 
+    # take the one for the true file because 
+    # the prediction file might have the predicted class
+    # and not the original one
+    mask_class_true=get_class_mask(args.class_label, truefile)
+    
+    mask_spanet=mask_region_spanet & mask_class_true
+    mask_true=mask_region_true & mask_class_true
+    
+    do_vbf_pairing= True if (args.vbf and "vbf" in file_dict.keys() and file_dict["vbf"]) else False
+    
+    idx_true = load_jets_and_pairing(truefile, "true", vbf=do_vbf_pairing)[mask_true]
+    idx_spanet_pred = load_jets_and_pairing(spanetfile, "spanet", vbf=do_vbf_pairing)[mask_spanet]
 
 
     # load jet information
     try:
         jet_ptPNetRegNeutrino = truefile["INPUTS"]["Jet"]["ptPnetRegNeutrino"][()][mask_true]
     except KeyError:
-        logger.warn("Did not find ptPnetRegNeutrino, will try to load pt normal")
+        logger.warning("Did not find ptPnetRegNeutrino, will try to load pt normal")
         jet_ptPNetRegNeutrino = truefile["INPUTS"]["Jet"]["pt"][()][mask_true]
     jet_eta = truefile["INPUTS"]["Jet"]["eta"][()][mask_true]
     jet_phi = truefile["INPUTS"]["Jet"]["phi"][()][mask_true]
@@ -152,6 +181,8 @@ for model_name, file_dict in spanet_dict.items():
         allspanet_idx.extend(spanet_kl_idx_list)
         alljetinfos.extend(jet_infos_separate_klambda)
         all_name_list.extend(kl_values)
+    else:
+        kl_values=np.array([])
 
     # Fully matched events
     mask_fully_matched = [ak.all(ak.all(idx >= 0, axis=-1), axis=-1) for idx in alltrue_idx]
@@ -167,7 +198,12 @@ for model_name, file_dict in spanet_dict.items():
 
     if not args.data:
         # Performing the matching
-        frac_fully_matched, efficiencies_fully_matched, total_efficiencies_fully_matched, unc_eff_fully_matched, unc_total_eff_fully_matched, matching_eval_spanet = calculate_efficiencies(alltrue_idx_fully_matched, allspanet_idx_fully_matched, mask_fully_matched, file_dict["true"], kl_values, all_name_list, "fully matched")
+        frac_fully_matched, efficiencies_fully_matched, total_efficiencies_fully_matched, unc_eff_fully_matched, unc_total_eff_fully_matched, matching_eval_spanet = (
+            calculate_efficiencies(
+                alltrue_idx_fully_matched, allspanet_idx_fully_matched, mask_fully_matched, file_dict["true"], kl_values, all_name_list, "fully matched", vbf=do_vbf_pairing
+            )
+        )
+        
 
         # Omitting calculation of partially matched for now
         # # do the same for partially matched events (only one higgs is matched)
@@ -177,7 +213,7 @@ for model_name, file_dict in spanet_dict.items():
         # idx_true_partially_matched_1h = [idx[mask] for idx, mask in zip(alltrue_idx, mask_1h)]
         # idx_spanet_partially_matched_1h = [idx[mask] for idx, mask in zip(allspanet_idx, mask_1h)]
 
-        # frac_partially_matched_1h, efficiencies_partially_matched_spanet, total_efficiencies_partially_matched_spanet, unc_eff_partially_matched, unc_total_eff_partially_matched, matching_eval_spanet_partial = calculate_efficiencies(idx_true_partially_matched_1h, idx_spanet_partially_matched_1h, mask_1h, file_dict["true"], kl_values, all_name_list, "partially matched")
+        # frac_partially_matched_1h, efficiencies_partially_matched_spanet, total_efficiencies_partially_matched_spanet, unc_eff_partially_matched, unc_total_eff_partially_matched, matching_eval_spanet_partial = calculate_efficiencies(idx_true_partially_matched_1h, idx_spanet_partially_matched_1h, mask_1h, file_dict["true"], kl_values, all_name_list, "partially matched", vbf=do_vbf_pairing)
 
         # # compute number of events with 0 higgs matched
         # mask_0h = [ak.sum(ak.any(idx == -1, axis=-1), axis=-1) == 2 for idx in alltrue_idx]
@@ -255,10 +291,9 @@ for model_name, file_dict in spanet_dict.items():
             "file_dict": file_dict,
             "spanet_higgs_fully_matched": spanet_higgs_fully_matched,
             }
-    if args.klambda and truefile_klambda != "none":
-        df_collection[model_name] = df_collection[model_name] | {
-                "kl_values": kl_values,
-                }
+    df_collection[model_name] = df_collection[model_name] | {
+            "kl_values": kl_values,
+            }
     if not args.data:
         df_collection[model_name] = df_collection[model_name] | {
                 "efficiencies_fully_matched": efficiencies_fully_matched,
@@ -277,16 +312,17 @@ for model_name, file_dict in spanet_dict.items():
 # -- Loading Run2 model
 truefile = h5py.File(true_dict[run2_dataset]["name"], "r")
 truefile_klambda = true_dict[run2_dataset]["klambda"]
+# idx_true = load_jets_and_pairing(truefile, "true", vbf=False)
 
 mask_true = get_region_mask(args.region, truefile)
 assert all(mask_spanet == mask_true)
 
-idx_true = load_jets_and_pairing(truefile, "true", max_jets=4)[mask_true] # DHH cannot use the 5th jet, so we have to compare to the 4jet model.
+idx_true = load_jets_and_pairing(truefile, "true", max_jets=4, vbf=False)[mask_true] # DHH cannot use the 5th jet, so we have to compare to the 4jet model.
 # load jet information
 try:
     jet_ptPNetRegNeutrino = truefile["INPUTS"]["Jet"]["ptPnetRegNeutrino"][()][mask_true]
 except KeyError:
-    logger.warn("Did not find ptPnetRegNeutrino, will try to load pt normal")
+    logger.warning("Did not find ptPnetRegNeutrino, will try to load pt normal")
     jet_ptPNetRegNeutrino = truefile["INPUTS"]["Jet"]["pt"][()][mask_true]
 jet_eta = truefile["INPUTS"]["Jet"]["eta"][()][mask_true]
 jet_phi = truefile["INPUTS"]["Jet"]["phi"][()][mask_true]
@@ -370,7 +406,7 @@ allrun2_idx_fully_matched = [
 
 if not args.data:
     # compute efficiencies for fully matched events for Run 2 pairing
-    frac_fully_matched, efficiencies_run2, total_efficiencies_run2, unc_efficiencies_run2, unc_total_efficiencies_run2, matching_eval_run2 = calculate_efficiencies(alltrue_idx_fully_matched, allrun2_idx_fully_matched, mask_fully_matched, run2_dataset, kl_values, all_name_list, "run2")
+    frac_fully_matched, efficiencies_run2, total_efficiencies_run2, unc_efficiencies_run2, unc_total_efficiencies_run2, matching_eval_run2 = calculate_efficiencies(alltrue_idx_fully_matched, allrun2_idx_fully_matched, mask_fully_matched, run2_dataset, kl_values, all_name_list, "run2", vbf=False)
 
 # Reconstruct the Higgs boson candidates with the efficiency_fully_matched_run2 = (
 # of the jets considering the true pairings, the spanet pairings
@@ -408,10 +444,9 @@ r2_model = {
         "file_dict": file_dict,
         "run2_higgs_fully_matched": run2_higgs_fully_matched,
         }
-if args.klambda and truefile_klambda != "none":
-    r2_model = r2_model | {
-            "kl_values": kl_values,
-            }
+r2_model = r2_model | {
+        "kl_values": kl_values,
+        }
 if not args.data:
     r2_model = r2_model | {
             "efficiencies_fully_matched_run2": efficiencies_run2,
@@ -429,33 +464,34 @@ if not args.data:
 
 # Plotting begins here
 if not args.data:
-    logger.info("\n")
-    logger.info("Plotting efficiencies fully matched for all klambda values")
-    # We are adding the run2 of the chosen element (defined in efficiency_calibrations) as last element
-    logger.info(f"All datasets: {df_collection.keys()}")
-    logger.info(f"Run2 set: {run2_dataset}")
-    plot_diff_eff_klambda(
-        [model["efficiencies_fully_matched"][1:] for model in df_collection.values()] +
-        [r2_model["efficiencies_fully_matched_run2"][1:]],
-        [model["unc_efficiencies_fully_matched"][1:] for model in df_collection.values()] +
-        [r2_model["unc_efficiencies_fully_matched_run2"][1:]],
-        [model["kl_values"] for model in df_collection.values()] + [r2_model["kl_values"]],
-        [model["file_dict"]["label"] for model in df_collection.values()] + [r"$D_{HH}$-method"],
-        [model["file_dict"]["color"] for model in df_collection.values()] + ["yellowgreen"],
-        "eff_fully_matched_allklambda",
-        plot_dir,
-    )
-    plot_diff_eff_klambda(
-        [model["total_efficiencies_fully_matched"][1:] for model in df_collection.values()] +
-        [r2_model["total_efficiencies_fully_matched_run2"][1:]],
-        [model["unc_total_efficiencies_fully_matched"][1:] for model in df_collection.values()] +
-        [r2_model["unc_total_efficiencies_fully_matched_run2"][1:]],
-        [model["kl_values"] for model in df_collection.values()] + [r2_model["kl_values"]],
-        [model["file_dict"]["label"] for model in df_collection.values()] + [r"$D_{HH}$-method"],
-        [model["file_dict"]["color"] for model in df_collection.values()] + ["yellowgreen"],
-        "tot_eff_fully_matched_allklambda",
-        plot_dir,
-    )
+    if args.klambda:
+        logger.info("\n")
+        logger.info("Plotting efficiencies fully matched for all klambda values")
+        # We are adding the run2 of the chosen element (defined in efficiency_calibrations) as last element
+        logger.info(f"All datasets: {df_collection.keys()}")
+        logger.info(f"Run2 set: {run2_dataset}")
+        plot_diff_eff_klambda(
+            [model["efficiencies_fully_matched"][1:] for model in df_collection.values()] +
+            [r2_model["efficiencies_fully_matched_run2"][1:]],
+            [model["unc_efficiencies_fully_matched"][1:] for model in df_collection.values()] +
+            [r2_model["unc_efficiencies_fully_matched_run2"][1:]],
+            [model["kl_values"] for model in df_collection.values()] + [r2_model["kl_values"]],
+            [model["file_dict"]["label"] for model in df_collection.values()] + [r"$D_{HH}$-method"],
+            [model["file_dict"]["color"] for model in df_collection.values()] + ["yellowgreen"],
+            "eff_fully_matched_allklambda",
+            plot_dir,
+        )
+        plot_diff_eff_klambda(
+            [model["total_efficiencies_fully_matched"][1:] for model in df_collection.values()] +
+            [r2_model["total_efficiencies_fully_matched_run2"][1:]],
+            [model["unc_total_efficiencies_fully_matched"][1:] for model in df_collection.values()] +
+            [r2_model["unc_total_efficiencies_fully_matched_run2"][1:]],
+            [model["kl_values"] for model in df_collection.values()] + [r2_model["kl_values"]],
+            [model["file_dict"]["label"] for model in df_collection.values()] + [r"$D_{HH}$-method"],
+            [model["file_dict"]["color"] for model in df_collection.values()] + ["yellowgreen"],
+            "tot_eff_fully_matched_allklambda",
+            plot_dir,
+        )
 
     logger.info("Plotting differential efficiencies")
     plot_diff_eff(
@@ -491,7 +527,7 @@ for bins, name in zip([mh_bins, mh_bins_peak], ["", "_peak"]):
         kl_values = []  # This is needed to make sure, that we are only producing one plot.
     for number in [1, 2]:
         for kl_variation, kl_name in zip(range(len(kl_values) + 1), ["all"] + kl_values.tolist()):
-            os.makedirs(f"kl_{kl_name}_massplot", exist_ok=True)
+            os.makedirs(f"{plot_dir}/kl_{kl_name}_massplot", exist_ok=True)
             plot_histos_1d(
                 bins,
                 [model["spanet_higgs_fully_matched"][kl_variation][:, number - 1].mass for model in df_collection.values()],  # spanet values

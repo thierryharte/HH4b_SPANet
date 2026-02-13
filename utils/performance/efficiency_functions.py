@@ -27,20 +27,34 @@ TRUE_PAIRING = False
 
 # TODO: Currently we only have the values for postEE!!!!
 def get_region_mask(region, column_file):
+    if region=="inclusive":
+        return ak.ones_like(column_file["INPUTS"]["Jet"]["MASK"][:,0])
+    
     jet_btag = column_file["INPUTS"]["Jet"]["btagPNetB"]
     if region == "4b" or region == "4M":
-        mask = (jet_btag[:, 0] > 0.65) & (jet_btag[:, 1] > 0.65) & (jet_btag[:, 2] > 0.2605) & (jet_btag[:, 3] > 0.2605)
-    if region == "3M":
+        mask = (jet_btag[:, 0] > 0.2605) & (jet_btag[:, 1] > 0.2605) & (jet_btag[:, 2] > 0.2605) & (jet_btag[:, 3] > 0.2605)
+    elif region == "3M":
         mask = (jet_btag[:, 0] > 0.2605) & (jet_btag[:, 1] > 0.2605) & (jet_btag[:, 2] > 0.2605) & (jet_btag[:, 3] < 0.2605)
-    if region == "2M":
+    elif region == "2M":
         mask = (jet_btag[:, 0] > 0.2605) & (jet_btag[:, 1] > 0.2605) & (jet_btag[:, 2] < 0.2605) & (jet_btag[:, 3] < 0.2605)
-    if region == "3T1M":
-        mask = (jet_btag[:, 0] > 0.6915) & (jet_btag[:, 1] > 0.6915) & (jet_btag[:, 2] > 0.26915) & (jet_btag[:, 3] > 0.2605)
-    if region == "3T1L":
-        mask = (jet_btag[:, 0] > 0.6915) & (jet_btag[:, 1] > 0.6915) & (jet_btag[:, 2] > 0.26915) & (jet_btag[:, 3] > 0.0499)
+    elif region == "3T1M":
+        mask = (jet_btag[:, 0] > 0.6915) & (jet_btag[:, 1] > 0.6915) & (jet_btag[:, 2] > 0.6915) & (jet_btag[:, 3] > 0.2605)
+    elif region == "3T1L":
+        mask = (jet_btag[:, 0] > 0.6915) & (jet_btag[:, 1] > 0.6915) & (jet_btag[:, 2] > 0.6915) & (jet_btag[:, 3] > 0.0499)  & (jet_btag[:, 3] < 0.2605)
+    else:
+        raise ValueError("Undefined region")
     return mask
 
-
+def get_class_mask(class_label, column_file):
+    if class_label:
+        try:
+            class_array=column_file["CLASSIFICATIONS"]['EVENT']["class"][()].astype(np.int64)
+            mask=class_array == int(class_label)
+            return mask
+        except:
+            logger.info("The file doesn't contain a class array. Setting the mask for the class to True ...")
+    
+    return ak.ones_like(column_file["INPUTS"]["Jet"]["MASK"][:,0])
 
 def check_double_assignment_vectorized(idx_b1, idx_b2, idx_b3, idx_b4, label):
     # Stack indices for each event: shape (N_events, 4)
@@ -62,16 +76,19 @@ def check_double_assignment_vectorized(idx_b1, idx_b2, idx_b3, idx_b4, label):
         logger.info(f"OK: No double-assigned jets found in {label}.")
 
 
-def load_jets_and_pairing(samplefile, label, max_jets=5):
+
+def load_jets_and_pairing(samplefile, label, max_jets=None, vbf=False):
     idx_b1 = samplefile["TARGETS"]["h1"]["b1"][()]
     idx_b2 = samplefile["TARGETS"]["h1"]["b2"][()]
     idx_b3 = samplefile["TARGETS"]["h2"]["b3"][()]
     idx_b4 = samplefile["TARGETS"]["h2"]["b4"][()]
     
-    idx_b1 = ak.where(idx_b1 >= max_jets, -1, idx_b1)
-    idx_b2 = ak.where(idx_b2 >= max_jets, -1, idx_b2)
-    idx_b3 = ak.where(idx_b3 >= max_jets, -1, idx_b3)
-    idx_b4 = ak.where(idx_b4 >= max_jets, -1, idx_b4)
+    if max_jets is not None:
+        # keep up to max_jets for the pairing
+        idx_b1 = ak.where(idx_b1 >= max_jets, -1, idx_b1)
+        idx_b2 = ak.where(idx_b2 >= max_jets, -1, idx_b2)
+        idx_b3 = ak.where(idx_b3 >= max_jets, -1, idx_b3)
+        idx_b4 = ak.where(idx_b4 >= max_jets, -1, idx_b4)
     
     check_double_assignment_vectorized(idx_b1, idx_b2, idx_b3, idx_b4, label)
     
@@ -89,22 +106,38 @@ def load_jets_and_pairing(samplefile, label, max_jets=5):
             ),
             axis=1,
         )
+    full_idx_list=[ak.unflatten(idx_h1, ak.ones_like(idx_h1[:, 0])), ak.unflatten(idx_h2, ak.ones_like(idx_h2[:, 0]))]
+    
+    if vbf and "vbf" in samplefile["TARGETS"].keys():
+        # Include the VBF matching
+        idx_q1 = samplefile["TARGETS"]["vbf"]["q1"][()]
+        idx_q2 = samplefile["TARGETS"]["vbf"]["q2"][()]
+        idx_vbf = ak.concatenate(
+                (
+                    ak.unflatten(idx_q1, ak.ones_like(idx_q1)),
+                    ak.unflatten(idx_q2, ak.ones_like(idx_q2)),
+                ),
+                axis=1,
+            )
+        full_idx_list.append(ak.unflatten(idx_vbf, ak.ones_like(idx_vbf[:, 0])))
+         
     idx = ak.concatenate(
-            (
-                ak.unflatten(idx_h1, ak.ones_like(idx_h1[:, 0])),
-                ak.unflatten(idx_h2, ak.ones_like(idx_h2[:, 0])),
-            ),
+            tuple(full_idx_list),
             axis=1,
         )
     return idx
 
 
-def calculate_efficiencies(true_idx, model_idx, mask, truename, kl_values, all_names, label):
+def calculate_efficiencies(true_idx, model_idx, mask, truename, kl_values, all_names, label, vbf=False):
     matching_eval_model = [
+        # higgs 1 and higgs 2 
         (ak.all(true[:, 0] == spanet[:, 0], axis=1)
           | ak.all(true[:, 0] == spanet[:, 1], axis=1))
         & (ak.all(true[:, 1] == spanet[:, 0], axis=1)
           | ak.all(true[:, 1] == spanet[:, 1], axis=1))
+        # vbf
+        & (ak.all(true[:, 2] == spanet[:, 2], axis=1) 
+           if vbf else ak.ones_like(true[:, 0, 0]))
         for true, spanet in zip(true_idx, model_idx)
     ]
 
@@ -136,17 +169,16 @@ def calculate_efficiencies(true_idx, model_idx, mask, truename, kl_values, all_n
     for lab, eff in zip(all_names, model_eff):
         logger.info(f"Efficiency {label} for {lab}: {eff:.3f}")
     logger.info("\n")
-
-    for name, toteff in zip(all_names, total_model_eff):
-        logger.info(f"Total efficiency uncertainty {label} for {name}: {toteff:.3f}")
+    for name, toteff in zip(all_names, unc_model_eff):
+        logger.info(f"Efficiency uncertainty {label} for {name}: {toteff:.3f}")
+    
     logger.info("\n")
-    for lab, eff in zip(all_names, unc_model_eff):
-        logger.info(f"Efficiency {label} for {lab}: {eff:.3f}")
+    for lab, eff in zip(all_names, total_model_eff):
+        logger.info(f"Total efficiency {label} for {lab}: {eff:.3f}")
     logger.info("\n")
-
     for name, toteff in zip(all_names, unc_total_model_eff):
         logger.info(f"Total efficiency uncertainty {label} for {name}: {toteff:.3f}")
-
+    
     return fraction, model_eff, total_model_eff, unc_model_eff, unc_total_model_eff, matching_eval_model
 
 
@@ -772,18 +804,15 @@ def plot_diff_eff_klambda(effs, unc_effs, kl_values, labels, color, name, plot_d
     # split the arrays depending on how many times the first kl value appears
     fig, ax = plt.subplots(figsize=(6, 6))
     for label, kls, eff, unc_eff, col in zip(labels, kl_values, effs, unc_effs, color):
-        try:
-            ax.errorbar(
-                kls,
-                eff,
-                yerr=unc_eff,
-                linestyle="-",
-                label=label,
-                marker=".",
-                color=col,
-            )
-        except:
-            breakpoint()
+        ax.errorbar(
+            kls,
+            eff,
+            yerr=unc_eff,
+            linestyle="-",
+            label=label,
+            marker=".",
+            color=col,
+        )
     ax.legend(frameon=False, loc="lower left")
     ax.set_xlabel(r"$\kappa_{\lambda}$")
     ax.set_ylabel(name)
