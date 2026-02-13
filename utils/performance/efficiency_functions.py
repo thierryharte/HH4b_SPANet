@@ -27,34 +27,66 @@ TRUE_PAIRING = False
 
 # TODO: Currently we only have the values for postEE!!!!
 def get_region_mask(region, column_file):
-    if region=="inclusive":
-        return ak.ones_like(column_file["INPUTS"]["Jet"]["MASK"][:,0])
-    
+    if region == "inclusive":
+        return ak.ones_like(column_file["INPUTS"]["Jet"]["MASK"][:, 0])
+
     jet_btag = column_file["INPUTS"]["Jet"]["btagPNetB"]
     if region == "4b" or region == "4M":
-        mask = (jet_btag[:, 0] > 0.2605) & (jet_btag[:, 1] > 0.2605) & (jet_btag[:, 2] > 0.2605) & (jet_btag[:, 3] > 0.2605)
+        mask = (
+            (jet_btag[:, 0] > 0.2605)
+            & (jet_btag[:, 1] > 0.2605)
+            & (jet_btag[:, 2] > 0.2605)
+            & (jet_btag[:, 3] > 0.2605)
+        )
     elif region == "3M":
-        mask = (jet_btag[:, 0] > 0.2605) & (jet_btag[:, 1] > 0.2605) & (jet_btag[:, 2] > 0.2605) & (jet_btag[:, 3] < 0.2605)
+        mask = (
+            (jet_btag[:, 0] > 0.2605)
+            & (jet_btag[:, 1] > 0.2605)
+            & (jet_btag[:, 2] > 0.2605)
+            & (jet_btag[:, 3] < 0.2605)
+        )
     elif region == "2M":
-        mask = (jet_btag[:, 0] > 0.2605) & (jet_btag[:, 1] > 0.2605) & (jet_btag[:, 2] < 0.2605) & (jet_btag[:, 3] < 0.2605)
+        mask = (
+            (jet_btag[:, 0] > 0.2605)
+            & (jet_btag[:, 1] > 0.2605)
+            & (jet_btag[:, 2] < 0.2605)
+            & (jet_btag[:, 3] < 0.2605)
+        )
     elif region == "3T1M":
-        mask = (jet_btag[:, 0] > 0.6915) & (jet_btag[:, 1] > 0.6915) & (jet_btag[:, 2] > 0.6915) & (jet_btag[:, 3] > 0.2605)
+        mask = (
+            (jet_btag[:, 0] > 0.6915)
+            & (jet_btag[:, 1] > 0.6915)
+            & (jet_btag[:, 2] > 0.6915)
+            & (jet_btag[:, 3] > 0.2605)
+        )
     elif region == "3T1L":
-        mask = (jet_btag[:, 0] > 0.6915) & (jet_btag[:, 1] > 0.6915) & (jet_btag[:, 2] > 0.6915) & (jet_btag[:, 3] > 0.0499)  & (jet_btag[:, 3] < 0.2605)
+        mask = (
+            (jet_btag[:, 0] > 0.6915)
+            & (jet_btag[:, 1] > 0.6915)
+            & (jet_btag[:, 2] > 0.6915)
+            & (jet_btag[:, 3] > 0.0499)
+            & (jet_btag[:, 3] < 0.2605)
+        )
     else:
         raise ValueError("Undefined region")
     return mask
 
+
 def get_class_mask(class_label, column_file):
     if class_label:
         try:
-            class_array=column_file["CLASSIFICATIONS"]['EVENT']["class"][()].astype(np.int64)
-            mask=class_array == int(class_label)
+            class_array = column_file["CLASSIFICATIONS"]["EVENT"]["class"][()].astype(
+                np.int64
+            )
+            mask = class_array == int(class_label)
             return mask
         except:
-            logger.info("The file doesn't contain a class array. Setting the mask for the class to True ...")
-    
-    return ak.ones_like(column_file["INPUTS"]["Jet"]["MASK"][:,0])
+            logger.info(
+                "The file doesn't contain a class array. Setting the mask for the class to True ..."
+            )
+
+    return ak.ones_like(column_file["INPUTS"]["Jet"]["MASK"][:, 0])
+
 
 def check_double_assignment_vectorized(idx_b1, idx_b2, idx_b3, idx_b4, label):
     # Stack indices for each event: shape (N_events, 4)
@@ -66,7 +98,9 @@ def check_double_assignment_vectorized(idx_b1, idx_b2, idx_b3, idx_b4, label):
     # For each event, sort the indices
     idx_sorted = np.sort(idx_all_valid, axis=1)
     # Compare adjacent indices for equality (double assignment)
-    double_assigned = np.any((idx_sorted[:, 1:] == idx_sorted[:, :-1]) & (idx_sorted[:, 1:] >= 0), axis=1)
+    double_assigned = np.any(
+        (idx_sorted[:, 1:] == idx_sorted[:, :-1]) & (idx_sorted[:, 1:] >= 0), axis=1
+    )
     n_double = np.sum(double_assigned)
     if n_double > 0:
         rows = np.where(double_assigned)[0]
@@ -76,68 +110,79 @@ def check_double_assignment_vectorized(idx_b1, idx_b2, idx_b3, idx_b4, label):
         logger.info(f"OK: No double-assigned jets found in {label}.")
 
 
-
 def load_jets_and_pairing(samplefile, label, max_jets=None, vbf=False):
     idx_b1 = samplefile["TARGETS"]["h1"]["b1"][()]
     idx_b2 = samplefile["TARGETS"]["h1"]["b2"][()]
     idx_b3 = samplefile["TARGETS"]["h2"]["b3"][()]
     idx_b4 = samplefile["TARGETS"]["h2"]["b4"][()]
-    
+
     if max_jets is not None:
         # keep up to max_jets for the pairing
         idx_b1 = ak.where(idx_b1 >= max_jets, -1, idx_b1)
         idx_b2 = ak.where(idx_b2 >= max_jets, -1, idx_b2)
         idx_b3 = ak.where(idx_b3 >= max_jets, -1, idx_b3)
         idx_b4 = ak.where(idx_b4 >= max_jets, -1, idx_b4)
-    
+
     check_double_assignment_vectorized(idx_b1, idx_b2, idx_b3, idx_b4, label)
-    
+
     idx_h1 = ak.concatenate(
-            (
-                ak.unflatten(idx_b1, ak.ones_like(idx_b1)),
-                ak.unflatten(idx_b2, ak.ones_like(idx_b2)),
-            ),
-            axis=1,
-        )
+        (
+            ak.unflatten(idx_b1, ak.ones_like(idx_b1)),
+            ak.unflatten(idx_b2, ak.ones_like(idx_b2)),
+        ),
+        axis=1,
+    )
     idx_h2 = ak.concatenate(
-            (
-                ak.unflatten(idx_b3, ak.ones_like(idx_b3)),
-                ak.unflatten(idx_b4, ak.ones_like(idx_b4)),
-            ),
-            axis=1,
-        )
-    full_idx_list=[ak.unflatten(idx_h1, ak.ones_like(idx_h1[:, 0])), ak.unflatten(idx_h2, ak.ones_like(idx_h2[:, 0]))]
-    
+        (
+            ak.unflatten(idx_b3, ak.ones_like(idx_b3)),
+            ak.unflatten(idx_b4, ak.ones_like(idx_b4)),
+        ),
+        axis=1,
+    )
+    full_idx_list = [
+        ak.unflatten(idx_h1, ak.ones_like(idx_h1[:, 0])),
+        ak.unflatten(idx_h2, ak.ones_like(idx_h2[:, 0])),
+    ]
+
     if vbf and "vbf" in samplefile["TARGETS"].keys():
         # Include the VBF matching
         idx_q1 = samplefile["TARGETS"]["vbf"]["q1"][()]
         idx_q2 = samplefile["TARGETS"]["vbf"]["q2"][()]
         idx_vbf = ak.concatenate(
-                (
-                    ak.unflatten(idx_q1, ak.ones_like(idx_q1)),
-                    ak.unflatten(idx_q2, ak.ones_like(idx_q2)),
-                ),
-                axis=1,
-            )
-        full_idx_list.append(ak.unflatten(idx_vbf, ak.ones_like(idx_vbf[:, 0])))
-         
-    idx = ak.concatenate(
-            tuple(full_idx_list),
+            (
+                ak.unflatten(idx_q1, ak.ones_like(idx_q1)),
+                ak.unflatten(idx_q2, ak.ones_like(idx_q2)),
+            ),
             axis=1,
         )
+        full_idx_list.append(ak.unflatten(idx_vbf, ak.ones_like(idx_vbf[:, 0])))
+
+    idx = ak.concatenate(
+        tuple(full_idx_list),
+        axis=1,
+    )
     return idx
 
 
-def calculate_efficiencies(true_idx, model_idx, mask, truename, kl_values, all_names, label, vbf=False):
+def calculate_efficiencies(
+    true_idx, model_idx, mask, truename, kl_values, all_names, label, vbf=False
+):
     matching_eval_model = [
-        # higgs 1 and higgs 2 
-        (ak.all(true[:, 0] == spanet[:, 0], axis=1)
-          | ak.all(true[:, 0] == spanet[:, 1], axis=1))
-        & (ak.all(true[:, 1] == spanet[:, 0], axis=1)
-          | ak.all(true[:, 1] == spanet[:, 1], axis=1))
+        # higgs 1 and higgs 2
+        (
+            ak.all(true[:, 0] == spanet[:, 0], axis=1)
+            | ak.all(true[:, 0] == spanet[:, 1], axis=1)
+        )
+        & (
+            ak.all(true[:, 1] == spanet[:, 0], axis=1)
+            | ak.all(true[:, 1] == spanet[:, 1], axis=1)
+        )
         # vbf
-        & (ak.all(true[:, 2] == spanet[:, 2], axis=1) 
-           if vbf else ak.ones_like(true[:, 0, 0]))
+        & (
+            ak.all(true[:, 2] == spanet[:, 2], axis=1)
+            if vbf
+            else ak.ones_like(true[:, 0, 0])
+        )
         for true, spanet in zip(true_idx, model_idx)
     ]
 
@@ -148,18 +193,15 @@ def calculate_efficiencies(true_idx, model_idx, mask, truename, kl_values, all_n
     ]
     logger.info(f"matching_{label}_model: {[len(c) for c in matching_eval_model]}")
     fraction = [ak.sum(m) / len(m) for m in mask]
-    total_model_eff = [
-        eff * frac
-        for frac, eff in zip(fraction, model_eff)
-    ]
+    total_model_eff = [eff * frac for frac, eff in zip(fraction, model_eff)]
     unc_model_eff = [
-            sqrt(eff * (1 - eff) / len(matching_eval_ds))
-            for eff, matching_eval_ds in zip(model_eff, matching_eval_model)
-            ]
+        sqrt(eff * (1 - eff) / len(matching_eval_ds))
+        for eff, matching_eval_ds in zip(model_eff, matching_eval_model)
+    ]
     unc_total_model_eff = [
-            sqrt((total_eff * (1 - total_eff)) / len(matching_eval_ds))
-            for total_eff, matching_eval_ds in zip(total_model_eff, matching_eval_model)
-            ]
+        sqrt((total_eff * (1 - total_eff)) / len(matching_eval_ds))
+        for total_eff, matching_eval_ds in zip(total_model_eff, matching_eval_model)
+    ]
     # Printing the values
     logger.info("\n")
     for lab, frac in zip([truename] + kl_values.tolist(), fraction):
@@ -171,15 +213,22 @@ def calculate_efficiencies(true_idx, model_idx, mask, truename, kl_values, all_n
     logger.info("\n")
     for name, toteff in zip(all_names, unc_model_eff):
         logger.info(f"Efficiency uncertainty {label} for {name}: {toteff:.3f}")
-    
+
     logger.info("\n")
     for lab, eff in zip(all_names, total_model_eff):
         logger.info(f"Total efficiency {label} for {lab}: {eff:.3f}")
     logger.info("\n")
     for name, toteff in zip(all_names, unc_total_model_eff):
         logger.info(f"Total efficiency uncertainty {label} for {name}: {toteff:.3f}")
-    
-    return fraction, model_eff, total_model_eff, unc_model_eff, unc_total_model_eff, matching_eval_model
+
+    return (
+        fraction,
+        model_eff,
+        total_model_eff,
+        unc_model_eff,
+        unc_total_model_eff,
+        matching_eval_model,
+    )
 
 
 def distance_pt_func(higgs_pair, k):
@@ -299,24 +348,34 @@ def plot_histos_1d(
         values.append(run2)
         labels.append(r"$D_{HH}$-method")
         color.append("yellowgreen")
-    if isinstance(true, awkward.highlevel.Array):  # Meaning, if we have a "true" dataset
+    if isinstance(
+        true, awkward.highlevel.Array
+    ):  # Meaning, if we have a "true" dataset
         values.append(true)
         labels.append("True pairing")
         color.append("black")
 
     # We want to add a ratio plot with run2 ratios. Basically to see the difference between the SPANet and Dhh pairings.
-    if not isinstance(true, awkward.highlevel.Array):  # Meaning, if we have a "true" dataset
+    if not isinstance(
+        true, awkward.highlevel.Array
+    ):  # Meaning, if we have a "true" dataset
         compare_run2 = True
     else:
         compare_run2 = False
     if compare_run2 and isinstance(run2, awkward.highlevel.Array):
-        fig, (ax, ax_residuals) = plt.subplots(figsize=(6, 6), nrows=2, sharex=True, gridspec_kw={"height_ratios": [3, 1]})
+        fig, (ax, ax_residuals) = plt.subplots(
+            figsize=(6, 6), nrows=2, sharex=True, gridspec_kw={"height_ratios": [3, 1]}
+        )
         ax_residuals.set_xlabel(
             r"Leading $m_{H}$ [GeV]" if num == 1 else r"Subleading $m_{H}$ [GeV]"
         )
     # This would be the normal ratio with comparison to true values
-    elif isinstance(true, awkward.highlevel.Array):  # Meaning, if we have a "true" dataset
-        fig, (ax, ax_residuals) = plt.subplots(figsize=(6, 6), nrows=2, sharex=True, gridspec_kw={"height_ratios": [3, 1]})
+    elif isinstance(
+        true, awkward.highlevel.Array
+    ):  # Meaning, if we have a "true" dataset
+        fig, (ax, ax_residuals) = plt.subplots(
+            figsize=(6, 6), nrows=2, sharex=True, gridspec_kw={"height_ratios": [3, 1]}
+        )
         ax_residuals.set_xlabel(
             r"Leading $m_{H}$ [GeV]" if num == 1 else r"Subleading $m_{H}$ [GeV]"
         )
@@ -363,7 +422,9 @@ def plot_histos_1d(
                 spanet[0],
                 bins,
                 density=False,
-                weights=np.repeat(1.0 / (len(spanet[0]) * np.diff(bins)[0]), len(spanet[0])),
+                weights=np.repeat(
+                    1.0 / (len(spanet[0]) * np.diff(bins)[0]), len(spanet[0])
+                ),
             )[0]
         )
         * (1.2 if "peak" not in name else 1.6),
@@ -378,12 +439,15 @@ def plot_histos_1d(
             for histo, norm in zip(spanet_hists, spanet_norm)
         ]
 
-        err_spanet = [np.sqrt(histo[0]) / norm for histo, norm in zip(spanet_hists, spanet_norm)]
+        err_spanet = [
+            np.sqrt(histo[0]) / norm for histo, norm in zip(spanet_hists, spanet_norm)
+        ]
         err_run2 = np.sqrt(run2_hist[0]) / run2_norm
         res_spanet_run2_err = [
             np.sqrt(
                 (err / (run2_hist[0]) / run2_norm) ** 2
-                + ((err_run2 * (histo[0] / norm)) / (run2_hist[0] / run2_norm) ** 2) ** 2
+                + ((err_run2 * (histo[0] / norm)) / (run2_hist[0] / run2_norm) ** 2)
+                ** 2
             )
             for histo, norm, err in zip(spanet_hists, spanet_norm, err_spanet)
         ]
@@ -408,21 +472,26 @@ def plot_histos_1d(
 
         ax_residuals.grid()
 
-    elif isinstance(true, awkward.highlevel.Array):  # Meaning, if we have a "true" dataset
+    elif isinstance(
+        true, awkward.highlevel.Array
+    ):  # Meaning, if we have a "true" dataset
         # Plot the residuals with respect to Run2
         res_spanet_true = [
             (histo[0] / norm) / (true_hist[0] / true_norm)
             for histo, norm in zip(spanet_hists, spanet_norm)
         ]
 
-        err_spanet = [np.sqrt(histo[0]) / norm for histo, norm in zip(spanet_hists, spanet_norm)]
+        err_spanet = [
+            np.sqrt(histo[0]) / norm for histo, norm in zip(spanet_hists, spanet_norm)
+        ]
         err_run2 = np.sqrt(run2_hist[0]) / run2_norm
         err_true = np.sqrt(true_hist[0]) / true_norm
 
         res_spanet_true_err = [
             np.sqrt(
                 (err / (true_hist[0]) / true_norm) ** 2
-                + ((err_true * (histo[0] / norm)) / (true_hist[0] / true_norm) ** 2) ** 2
+                + ((err_true * (histo[0] / norm)) / (true_hist[0] / true_norm) ** 2)
+                ** 2
             )
             for histo, norm, err in zip(spanet_hists, spanet_norm, err_spanet)
         ]
@@ -536,13 +605,7 @@ def plot_histos_1d(
 
     ax.legend(loc="upper right", frameon=False)
 
-    hep.cms.label(
-        year="2022",
-        com="13.6",
-        label="Private Work",
-        ax=ax,
-        data=True
-    )
+    hep.cms.label(year="2022", com="13.6", label="Private Work", ax=ax, data=True)
     plt.savefig(f"{plot_dir}/higgs_mass_{num}{name}.png", dpi=300, bbox_inches="tight")
     plt.savefig(f"{plot_dir}/higgs_mass_{num}{name}.pdf", dpi=300, bbox_inches="tight")
     plt.savefig(f"{plot_dir}/higgs_mass_{num}{name}.svg", bbox_inches="tight")
@@ -605,22 +668,14 @@ def plot_histos_2d(mh_bins, higgs, label, name, plot_dir="plots"):
     # TODO: change title
     # ax.set_title(f"2D Higgs Mass {name} {label}", pad=20)
 
-    hep.cms.label(
-        year="2022",
-        com="13.6",
-        label="Private Work",
-        ax=ax,
-        data=True
-    )
+    hep.cms.label(year="2022", com="13.6", label="Private Work", ax=ax, data=True)
     plt.savefig(
         f"{plot_dir}/higgs_mass_2d_{name}_{label}.png", dpi=300, bbox_inches="tight"
     )
     plt.savefig(
         f"{plot_dir}/higgs_mass_2d_{name}_{label}.pdf", dpi=300, bbox_inches="tight"
     )
-    plt.savefig(
-        f"{plot_dir}/higgs_mass_2d_{name}_{label}.svg", bbox_inches="tight"
-    )
+    plt.savefig(f"{plot_dir}/higgs_mass_2d_{name}_{label}.svg", bbox_inches="tight")
     plt.close()
 
 
@@ -638,7 +693,7 @@ def plot_diff_eff(
     labels_list = []
     for eff, unc_eff, label, col in zip(efficiency, unc_efficiency, labels, color):
         ax.errorbar(
-                0.5 * (mhh_bins[:-1] + mhh_bins[1:]),
+            0.5 * (mhh_bins[:-1] + mhh_bins[1:]),
             eff,
             yerr=unc_eff,
             label=label,
@@ -730,7 +785,7 @@ def separate_klambda(
     jet_infos, df_true, df_spanet_pred, idx_true, idx_spanet_pred, mask_region
 ):
     logger.info(f"jet_infos {len(jet_infos)}, {len(jet_infos[0])}")
-    
+
     try:
         kl_array_true = df_true["INPUTS"]["Event"]["kl"][()][mask_region]
     except KeyError:
@@ -800,7 +855,9 @@ def separate_klambda(
     )
 
 
-def plot_diff_eff_klambda(effs, unc_effs, kl_values, labels, color, name, plot_dir="plots"):
+def plot_diff_eff_klambda(
+    effs, unc_effs, kl_values, labels, color, name, plot_dir="plots"
+):
     # split the arrays depending on how many times the first kl value appears
     fig, ax = plt.subplots(figsize=(6, 6))
     for label, kls, eff, unc_eff, col in zip(labels, kl_values, effs, unc_effs, color):
