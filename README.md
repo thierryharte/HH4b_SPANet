@@ -153,6 +153,12 @@ python3 /work/tharte/HH4b_SPANet/utils/dataset/parquet_to_h5.py -i ./*.parquet -
 
 The SPANet configuration is composed of two files: the `event_file` and the `option_file`. Further information can be found on the SPANet repository at [EventInfo](https://github.com/matteomalucchi/SPANet/blob/master/docs/EventInfo.md) and [Options](https://github.com/matteomalucchi/SPANet/blob/master/docs/Options.md).
 
+> [!TIP]
+> When writing the path to the `event_file` in the `option_file`, you should use the absolute path to the `event_file`. In order to make it compatible with also other users, you can use the environment variables defined in [this section](#train-on-htcondor). An example of this can found in [this `option_file`](./options_files/HH4b/vbf_ggf/hh4b_pairing_vbf_ggf_pairing_classification.json), where the key is written like this:
+> ```json
+>"event_info_file": "${SPANET_MAIN_DIR}/HH4b_SPANet/event_files/HH4b/vbf_ggf/hh4b_vbf_ggf_pairing_classification.yaml",
+>```
+
 ### Configuration examples
 
 In the following you can find some example configurations for the various tasks:
