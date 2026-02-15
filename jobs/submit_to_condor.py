@@ -65,6 +65,12 @@ col = htcondor.Collector()
 credd = htcondor.Credd()
 credd.add_user_cred(htcondor.CredTypes.Kerberos, None)
 
+schedds = col.query(htcondor.AdTypes.Schedd, projection=["Name", "MyAddress", "TotalIdleJobs"])
+bigbird_schedds = [ad for ad in schedds if "bigbird" in ad["Name"]]
+
+best = min(bigbird_schedds, key=lambda ad: ad.get("TotalIdleJobs", 999999))
+client = htcondor.Schedd(best)
+
 cfg = OmegaConf.load(args.cfg)
 outputdir = basedir if not args.outputdir else args.outputdir
 model = cfg["model"]
