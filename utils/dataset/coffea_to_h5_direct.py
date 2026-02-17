@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import re
 import argparse
 import awkward as ak
 import coffea.util
@@ -7,12 +8,13 @@ import h5py
 import numpy as np
 
 
-JET_COLLECTION = "JetTotalSPANetPtFlattenPadded"
+# JET_COLLECTION = "JetTotalSPANetPtFlattenPadded"
+JET_COLLECTION = "JetGood"
 KEEP_TOGETHER_COLLECTIONS = ["add_jet1pt"]
 
 # "all" means all non-jet variables are saved as global variables
 # leave empty list to disable global variables
-GLOBAL_VARIABLES = ["all"]
+GLOBAL_VARIABLES = [""]
 
 COFFEA_PADDING_VALUE = -999.0
 H5_PADDING_VALUE = 9999.0
@@ -245,6 +247,15 @@ def cast_int64(x):
     return x
 
 
+def extract_kl_value(s):
+    match = re.search(r"kl-([mp0-9]+)", s)
+    if not match:
+        return None
+
+    value_str = match.group(1)
+    value_str = value_str.replace("m", "-").replace("p", ".")
+    return float(value_str)
+
 # -----------------------------------------------------------------------------
 # HDF5 helpers
 # -----------------------------------------------------------------------------
@@ -328,21 +339,21 @@ def coffea_to_h5(
         tr_in, tr_w, tr_c, tr_t = mk(ftr)
         te_in, te_w, te_c, te_t = mk(fte)
 
-        dataset_keys = list(cols.keys())
-        for i, dkey in enumerate(dataset_keys):
+        sample_keys = list(cols.keys())
+        for i, skey in enumerate(sample_keys):
             # shuffle only on the last dataset to avoid multiple shufflings
-            shuffle = do_data_shuffling and (i == len(dataset_keys) - 1)
+            shuffle = do_data_shuffling and (i == len(sample_keys) - 1)
 
-            class_idx = dataset_to_class_index(dkey, class_labels)
+            class_idx = dataset_to_class_index(skey, class_labels)
             region = regions[class_idx]
 
-            for era in cols[dkey]:
-                if region not in cols[dkey][era]:
+            for dataset in cols[skey]:
+                if region not in cols[skey][dataset]:
                     raise ValueError(
-                        f"Region '{region}' not found for dataset '{dkey}' era '{era}'"
+                        f"Region '{region}' not found for dataset '{skey}' dataset '{dataset}'"
                     )
 
-                payload = cols[dkey][era][region]
+                payload = cols[skey][dataset][region]
 
                 w = to_numpy_event_vector(payload[weight_name])
                 N = len(w)
@@ -366,7 +377,7 @@ def coffea_to_h5(
 
                 cls = np.full(N, class_idx, dtype=np.int64)
                 write_block_split(
-                    tr_c, te_c, ["EVENT", "class"], cls, train_mask, test_mask, shuffle
+                    tr_c, te_c, ["Event", "class"], cls, train_mask, test_mask, shuffle
                 )
 
                 jet_counts = None
@@ -424,13 +435,14 @@ def coffea_to_h5(
                         continue
 
                     coll, var = infer_collection_and_var(name)
+                    print(name)
                     arr_u = unwrap_accumulator(arr)
                     is_jet = coll == JET_COLLECTION and var != "N"
                     is_global = var in GLOBAL_VARIABLES or (
-                        not is_jet and "all" in GLOBAL_VARIABLES and coll== "events"
+                        not is_jet and "all" in GLOBAL_VARIABLES and coll == "events"
                     )
                     print(
-                        f"Processing {dkey} {era} {region} variable {name} with shape {arr_u.shape} (jet: {is_jet}, global: {is_global})"
+                        f"Processing {skey} {dataset} {region} variable {name} with shape {arr_u.shape} (jet: {is_jet}, global: {is_global})"
                     )
 
                     if is_jet:
@@ -472,6 +484,18 @@ def coffea_to_h5(
                             test_mask,
                             shuffle,
                         )
+                if "GluGlu" in dataset:
+                    kl_val = extract_kl_value(dataset)
+                    kl_val_array = kl_val * ak.ones_like(to_numpy_event_vector(payload[weight_name]))
+                    write_block_split(
+                        tr_in,
+                        te_in,
+                        ["Event", "kl"],
+                        cast_floats32(kl_val_array),
+                        train_mask,
+                        test_mask,
+                        shuffle,
+                    )
 
     print(f"Wrote: {h5_tr}, {h5_te}")
 

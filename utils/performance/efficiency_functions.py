@@ -613,7 +613,8 @@ def plot_histos_1d(
             histtype="step",
             linewidth=1,
             density=False,
-            weights=np.repeat(1.0 / (len(sn) * np.diff(bins)[0]), len(sn)),
+            # weights=np.repeat(1.0 / (len(sn) * np.diff(bins)[0]), len(sn)),
+            weights=np.repeat(1.0 / (len(sn)), len(sn)),
             color=color,
         )
     ax.grid(linestyle=":")
@@ -636,9 +637,8 @@ def plot_histos_1d(
                 spanet[0],
                 bins,
                 density=False,
-                weights=np.repeat(
-                    1.0 / (len(spanet[0]) * np.diff(bins)[0]), len(spanet[0])
-                ),
+                # weights=np.repeat(1.0 / (len(spanet[0]) * np.diff(bins)[0]), len(spanet[0])),
+                weights=np.repeat(1.0 / (len(spanet[0])), len(spanet[0])),
             )[0]
         )
         * (1.2 if "peak" not in name else 1.6),
