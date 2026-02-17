@@ -9,12 +9,6 @@ import mplhep as hep
 import numpy as np
 import vector
 
-# logger = logging.getLogger(__name__)
-# logging.basicConfig(
-#     level=logging.INFO,
-#     format="%(asctime)s | %(levelname)s | %(funcName)s | %(message)s",
-#     datefmt="%d-%b-%y %H-%M-%S",
-# )
 logger = logging.getLogger(__name__)
 
 vector.register_awkward()
@@ -23,10 +17,11 @@ vector.register_numba()
 from efficiency_configuration import *
 
 TRUE_PAIRING = False
+H5_PADDING_VALUE = 9999.0
 
 
 # TODO: Currently we only have the values for postEE!!!!
-def get_region_mask(region, column_file):
+def get_region_mask(region, column_file, do_vbf_pairing):
     if region == "inclusive":
         return ak.ones_like(column_file["INPUTS"]["Jet"]["MASK"][:, 0])
 
@@ -67,8 +62,44 @@ def get_region_mask(region, column_file):
             & (jet_btag[:, 3] > 0.0499)
             & (jet_btag[:, 3] < 0.2605)
         )
+    elif region == "vbf_presel" and do_vbf_pairing:
+        mask = get_mask_vbf_region(column_file, 400, 3.5)
+    elif region == "vbf_no_kin_cuts" and do_vbf_pairing:
+        mask = get_mask_vbf_region(column_file, 0, 0)
     else:
         raise ValueError("Undefined region")
+    return mask
+
+
+def get_mask_vbf_region(column_file, mjj_cut, delta_eta_cut):
+    jet_list = [
+        get_jet_4vec(
+            column_file, ak.ones_like(column_file["INPUTS"]["Jet"]["MASK"][:, 0])
+        )
+    ]
+    jet_vbf = [j[:, 4:] for j in jet_list]
+    idx_vbf_lead_mjj = get_lead_mjj_jet_idx(jet_vbf)[0]
+    jet = jet_list[0]
+    vbf_jets_max_mjj_0 = ak.unflatten(
+        jet[
+            ak.local_index(jet, axis=0),
+            idx_vbf_lead_mjj[:, 0],
+        ],
+        1,
+    )
+    vbf_jets_max_mjj_1 = ak.unflatten(
+        jet[
+            ak.local_index(jet, axis=0),
+            idx_vbf_lead_mjj[:, 1],
+        ],
+        1,
+    )
+    delta_eta = abs(vbf_jets_max_mjj_0.eta - vbf_jets_max_mjj_1.eta)
+    mjj = (vbf_jets_max_mjj_0 + vbf_jets_max_mjj_1).mass
+
+    mask = ak.flatten((mjj > mjj_cut) & (delta_eta > delta_eta_cut))
+    mask = ak.where(ak.is_none(mask), False, mask)
+
     return mask
 
 
@@ -88,9 +119,69 @@ def get_class_mask(class_label, column_file):
     return ak.ones_like(column_file["INPUTS"]["Jet"]["MASK"][:, 0])
 
 
-def check_double_assignment_vectorized(idx_b1, idx_b2, idx_b3, idx_b4, label):
+def get_lead_mjj_jet_idx(jet):
+    # choose higgs jets as the two jets with the highest mjj that are not from higgs decay
+
+    jet_combinations = [ak.combinations(j, 2) for j in jet]
+    jet_combinations_mass = [(jc["0"] + jc["1"]).mass for jc in jet_combinations]
+    jet_combinations_mass_max_idx = [
+        ak.to_numpy(ak.argsort(jcm, axis=1, ascending=False)[:, 0])
+        for jcm in jet_combinations_mass
+    ]
+    jets_max_mass = [
+        jc[ak.local_index(jc, axis=0), jcm]
+        for jc, jcm in zip(jet_combinations, jet_combinations_mass_max_idx)
+    ]
+    comb_idx_min_vbf = [
+        ak.to_numpy(
+            ak.concatenate(
+                [
+                    ak.unflatten(jmm["0"].index, 1),
+                    ak.unflatten(jmm["1"].index, 1),
+                ],
+                axis=1,
+            ),
+            1,
+        )
+        for jmm in jets_max_mass
+    ]
+
+    return comb_idx_min_vbf
+
+
+def get_jet_4vec(truefile, mask_true):
+    # load jet information
+    try:
+        jet_pt = truefile["INPUTS"]["Jet"]["ptPnetRegNeutrino"][()][mask_true]
+    except KeyError:
+        logger.warning("Did not find ptPnetRegNeutrino, will try to load pt normal")
+        jet_pt = truefile["INPUTS"]["Jet"]["pt"][()][mask_true]
+
+    jet_eta = truefile["INPUTS"]["Jet"]["eta"][()][mask_true]
+    jet_phi = truefile["INPUTS"]["Jet"]["phi"][()][mask_true]
+    jet_mass = truefile["INPUTS"]["Jet"]["mass"][()][mask_true]
+
+    jet_infos = [jet_pt, jet_eta, jet_phi, jet_mass]
+    for i in range(len(jet_infos)):
+        jet_infos[i] = ak.mask(jet_infos[i], jet_infos[i] != H5_PADDING_VALUE)
+
+    # create a LorentzVector for the jets
+    jet = ak.zip(
+        {
+            "pt": jet_infos[0],
+            "eta": jet_infos[1],
+            "phi": jet_infos[2],
+            "mass": jet_infos[3],
+            "index": ak.local_index(jet_infos[0], axis=1),
+        },
+        with_name="Momentum4D",
+    )
+    return jet
+
+
+def check_double_assignment_vectorized(full_idx_list, label):
     # Stack indices for each event: shape (N_events, 4)
-    idx_all = np.stack([idx_b1, idx_b2, idx_b3, idx_b4], axis=1)
+    idx_all = np.stack(full_idx_list, axis=1)
     # Mask for valid indices
     valid_mask = idx_all >= 0
     # Set invalid indices to a large negative number so they don't interfere
@@ -110,44 +201,69 @@ def check_double_assignment_vectorized(idx_b1, idx_b2, idx_b3, idx_b4, label):
         logger.info(f"OK: No double-assigned jets found in {label}.")
 
 
-def load_jets_and_pairing(samplefile, label, max_jets=None, vbf=False):
-    idx_b1 = samplefile["TARGETS"]["h1"]["b1"][()]
-    idx_b2 = samplefile["TARGETS"]["h1"]["b2"][()]
-    idx_b3 = samplefile["TARGETS"]["h2"]["b3"][()]
-    idx_b4 = samplefile["TARGETS"]["h2"]["b4"][()]
+def load_jets_and_pairing(
+    samplefile,
+    label,
+    allowed_idx_higgs=None,
+    allowed_idx_vbf=None,
+    higgs=True,
+    vbf=False,
+):
+    full_idx_list = []
+    if higgs:
+        idx_b1 = samplefile["TARGETS"]["h1"]["b1"][()]
+        idx_b2 = samplefile["TARGETS"]["h1"]["b2"][()]
+        idx_b3 = samplefile["TARGETS"]["h2"]["b3"][()]
+        idx_b4 = samplefile["TARGETS"]["h2"]["b4"][()]
 
-    if max_jets is not None:
-        # keep up to max_jets for the pairing
-        idx_b1 = ak.where(idx_b1 >= max_jets, -1, idx_b1)
-        idx_b2 = ak.where(idx_b2 >= max_jets, -1, idx_b2)
-        idx_b3 = ak.where(idx_b3 >= max_jets, -1, idx_b3)
-        idx_b4 = ak.where(idx_b4 >= max_jets, -1, idx_b4)
+        if allowed_idx_higgs is not None:
+            # keep up to max_jets for the pairing
+            idx_b1 = ak.where(
+                ak.any(idx_b1[..., None] == allowed_idx_higgs, axis=-1), idx_b1, -1
+            )
+            idx_b2 = ak.where(
+                ak.any(idx_b2[..., None] == allowed_idx_higgs, axis=-1), idx_b2, -1
+            )
+            idx_b3 = ak.where(
+                ak.any(idx_b3[..., None] == allowed_idx_higgs, axis=-1), idx_b3, -1
+            )
+            idx_b4 = ak.where(
+                ak.any(idx_b4[..., None] == allowed_idx_higgs, axis=-1), idx_b4, -1
+            )
 
-    check_double_assignment_vectorized(idx_b1, idx_b2, idx_b3, idx_b4, label)
-
-    idx_h1 = ak.concatenate(
-        (
-            ak.unflatten(idx_b1, ak.ones_like(idx_b1)),
-            ak.unflatten(idx_b2, ak.ones_like(idx_b2)),
-        ),
-        axis=1,
-    )
-    idx_h2 = ak.concatenate(
-        (
-            ak.unflatten(idx_b3, ak.ones_like(idx_b3)),
-            ak.unflatten(idx_b4, ak.ones_like(idx_b4)),
-        ),
-        axis=1,
-    )
-    full_idx_list = [
-        ak.unflatten(idx_h1, ak.ones_like(idx_h1[:, 0])),
-        ak.unflatten(idx_h2, ak.ones_like(idx_h2[:, 0])),
-    ]
+        idx_h1 = ak.concatenate(
+            (
+                ak.unflatten(idx_b1, ak.ones_like(idx_b1)),
+                ak.unflatten(idx_b2, ak.ones_like(idx_b2)),
+            ),
+            axis=1,
+        )
+        idx_h2 = ak.concatenate(
+            (
+                ak.unflatten(idx_b3, ak.ones_like(idx_b3)),
+                ak.unflatten(idx_b4, ak.ones_like(idx_b4)),
+            ),
+            axis=1,
+        )
+        full_idx_list += [
+            ak.unflatten(idx_h1, ak.ones_like(idx_h1[:, 0])),
+            ak.unflatten(idx_h2, ak.ones_like(idx_h2[:, 0])),
+        ]
 
     if vbf and "vbf" in samplefile["TARGETS"].keys():
         # Include the VBF matching
         idx_q1 = samplefile["TARGETS"]["vbf"]["q1"][()]
         idx_q2 = samplefile["TARGETS"]["vbf"]["q2"][()]
+
+        if allowed_idx_vbf is not None:
+            # keep up to max_jets for the pairing
+            idx_q1 = ak.where(
+                ak.any(idx_q1[..., None] == allowed_idx_vbf, axis=-1), idx_q1, -1
+            )
+            idx_q2 = ak.where(
+                ak.any(idx_q2[..., None] == allowed_idx_vbf, axis=-1), idx_q2, -1
+            )
+
         idx_vbf = ak.concatenate(
             (
                 ak.unflatten(idx_q1, ak.ones_like(idx_q1)),
@@ -157,34 +273,67 @@ def load_jets_and_pairing(samplefile, label, max_jets=None, vbf=False):
         )
         full_idx_list.append(ak.unflatten(idx_vbf, ak.ones_like(idx_vbf[:, 0])))
 
+    check_double_assignment_vectorized(full_idx_list, label)
     idx = ak.concatenate(
         tuple(full_idx_list),
         axis=1,
     )
+
     return idx
 
 
 def calculate_efficiencies(
-    true_idx, model_idx, mask, truename, kl_values, all_names, label, vbf=False
+    true_idx,
+    prediction_idx,
+    mask,
+    truename,
+    kl_values,
+    all_names,
+    label,
+    higgs=True,
+    vbf=False,
 ):
-    matching_eval_model = [
+    matching_eval_model = [ak.ones_like(true[:, 0, 0]) for true in true_idx]
+
+    if higgs:
         # higgs 1 and higgs 2
-        (
-            ak.all(true[:, 0] == spanet[:, 0], axis=1)
-            | ak.all(true[:, 0] == spanet[:, 1], axis=1)
-        )
-        & (
-            ak.all(true[:, 1] == spanet[:, 0], axis=1)
-            | ak.all(true[:, 1] == spanet[:, 1], axis=1)
-        )
+        matching_eval_model_higgs = [
+            (
+                ak.all(true[:, 0] == prediction[:, 0], axis=1)
+                | ak.all(true[:, 0] == prediction[:, 1], axis=1)
+            )
+            & (
+                ak.all(true[:, 1] == prediction[:, 0], axis=1)
+                | ak.all(true[:, 1] == prediction[:, 1], axis=1)
+            )
+            for true, prediction in zip(true_idx, prediction_idx)
+        ]
+        matching_eval_model = [
+            matching_eval_model[i] & matching_eval_model_higgs[i]
+            for i in range(len(matching_eval_model))
+        ]
+
+    if vbf:
+        # if there are also the higgs idx, then the vbf is the third idx
+        # otherwise is the first idx
+        if higgs:
+            idx_vbf = 2
+        else:
+            idx_vbf = 0
+
         # vbf
-        & (
-            ak.all(true[:, 2] == spanet[:, 2], axis=1)
-            if vbf
-            else ak.ones_like(true[:, 0, 0])
-        )
-        for true, spanet in zip(true_idx, model_idx)
-    ]
+        matching_eval_model_vbf = [
+            (
+                ak.all(true[:, idx_vbf] == prediction[:, idx_vbf], axis=1)
+                # check also if the idx are swapped (altought this shouldn't happen)
+                | ak.all(true[:, idx_vbf, ::-1] == prediction[:, idx_vbf], axis=1)
+            )
+            for true, prediction in zip(true_idx, prediction_idx)
+        ]
+        matching_eval_model = [
+            matching_eval_model[i] & matching_eval_model_vbf[i]
+            for i in range(len(matching_eval_model))
+        ]
 
     # compute efficiencies for events
     model_eff = [
@@ -298,26 +447,91 @@ def reco_higgs(jet_collection, idx_collection):
     return higgs_candidates_unflatten_order
 
 
-def best_reco_higgs(jet_collection, idx_collection):
-    higgs_1 = ak.unflatten(
-        jet_collection[np.arange(len(idx_collection)), idx_collection[:, 0, 0]]
-        + jet_collection[np.arange(len(idx_collection)), idx_collection[:, 0, 1]],
-        1,
-    )
-    higgs_2 = ak.unflatten(
-        jet_collection[np.arange(len(idx_collection)), idx_collection[:, 1, 0]]
-        + jet_collection[np.arange(len(idx_collection)), idx_collection[:, 1, 1]],
-        1,
-    )
+def best_reco_higgs(jet_collection, idx_collection, higgs=True):
+    if higgs:
+        higgs_1 = ak.unflatten(
+            jet_collection[np.arange(len(idx_collection)), idx_collection[:, 0, 0]]
+            + jet_collection[np.arange(len(idx_collection)), idx_collection[:, 0, 1]],
+            1,
+        )
+        higgs_2 = ak.unflatten(
+            jet_collection[np.arange(len(idx_collection)), idx_collection[:, 1, 0]]
+            + jet_collection[np.arange(len(idx_collection)), idx_collection[:, 1, 1]],
+            1,
+        )
 
-    higgs_pair = ak.concatenate([higgs_1, higgs_2], axis=1)
+        higgs_pair = ak.concatenate([higgs_1, higgs_2], axis=1)
 
-    # order the higgs candidates by pt
-    higgs_candidates_unflatten_order_idx = ak.argsort(
-        higgs_pair.pt, axis=1, ascending=False
-    )
-    higgs_candidates_unflatten_order = higgs_pair[higgs_candidates_unflatten_order_idx]
+        # order the higgs candidates by pt
+        higgs_candidates_unflatten_order_idx = ak.argsort(
+            higgs_pair.pt, axis=1, ascending=False
+        )
+        higgs_candidates_unflatten_order = higgs_pair[
+            higgs_candidates_unflatten_order_idx
+        ]
+    else:
+        # if we don't reconstruct the higgs, put a dummy output
+        higgs_candidates_unflatten_order = ak.ones_like(
+            ak.concatenate(
+                [
+                    ak.unflatten(idx_collection[:, 0, 0], 1),
+                    ak.unflatten(idx_collection[:, 0, 0], 1),
+                ],
+                axis=1,
+            )
+        )
+
     return higgs_candidates_unflatten_order
+
+
+def run2_algorithm(jet, mask_fully_matched, higgs=True, vbf=False):
+    comb_idx_min_list = []
+    if higgs:
+        # implement the Run 2 pairing algorithm
+        comb_idx = [[(0, 1), (2, 3)], [(0, 2), (1, 3)], [(0, 3), (1, 2)]]
+
+        higgs_candidates_unflatten_order = [reco_higgs(j, comb_idx) for j in jet]
+        distance = [
+            distance_pt_func(higgs, 1.04)[0]
+            for higgs in higgs_candidates_unflatten_order
+        ]
+        max_pt = [
+            distance_pt_func(higgs, 1.04)[1]
+            for higgs in higgs_candidates_unflatten_order
+        ]
+
+        dist_order_idx = [ak.argsort(d, axis=1, ascending=True) for d in distance]
+        dist_order = [ak.sort(d, axis=1, ascending=True) for d in distance]
+
+        pt_order_idx = [ak.argsort(pt, axis=1, ascending=False) for pt in max_pt]
+        # if the distance between the two best candidates is less than 30, we do not consider the event
+        min_idx = [
+            ak.where(d[:, 1] - d[:, 0] > 30, d_idx[:, 0], pt_idx[:, 0])
+            for d, d_idx, pt_idx in zip(dist_order, dist_order_idx, pt_order_idx)
+        ]
+
+        comb_idx = [np.tile(comb_idx, (len(m), 1, 1, 1)) for m in min_idx]
+        # given the min_idx, select the correct combination corresponding to the index
+        comb_idx_min_higgs = [
+            comb[np.arange(len(m)), m] for comb, m in zip(comb_idx, min_idx)
+        ]
+        comb_idx_min_list.append(comb_idx_min_higgs)
+
+    if vbf:
+        # choose higgs jets as the two jets with the highest mjj that are not from higgs decay
+        jet_vbf = [j[:, 4:] for j in jet]
+        comb_idx_min_vbf = get_lead_mjj_jet_idx(jet_vbf)
+        comb_idx_min_vbf = [np.expand_dims(ci, 1) for ci in comb_idx_min_vbf]
+
+        comb_idx_min_list.append(comb_idx_min_vbf)
+
+    # combine the idx
+    comb_idx_min_conc = ak.concatenate(comb_idx_min_list, axis=2)
+    allrun2_idx_fully_matched = [
+        ak.Array(comb)[m] for comb, m in zip(comb_idx_min_conc, mask_fully_matched)
+    ]
+
+    return allrun2_idx_fully_matched
 
 
 def calculate_diff_efficiencies(matched, mask, mask_matched):
@@ -782,9 +996,9 @@ def plot_true_higgs(true_higgs_fully_matched, mh_bins, num, plot_dir="plots"):
 
 
 def separate_klambda(
-    jet_infos, df_true, df_spanet_pred, idx_true, idx_spanet_pred, mask_region
+    jet, df_true, df_spanet_pred, idx_true, idx_spanet_pred, mask_region
 ):
-    logger.info(f"jet_infos {len(jet_infos)}, {len(jet_infos[0])}")
+    logger.info(f"jet {len(jet)}, {len(jet[0])}")
 
     try:
         kl_array_true = df_true["INPUTS"]["Event"]["kl"][()][mask_region]
@@ -807,7 +1021,7 @@ def separate_klambda(
 
     # Filling two dictionaries with the events of the respective kl values
     # One for the true one and one for the spanet one
-    jet_infos_separate_klambda = []
+    jet_separate_klambda = []
 
     true_kl_idx_list = []
     kl_values = []
@@ -819,9 +1033,9 @@ def separate_klambda(
         true_kl_idx_list.append(idx_true[mask])
         kl_values.append(kl)
         temp_jet = []
-        for j, jet_info in enumerate(jet_infos):
+        for j, jet_info in enumerate(jet):
             temp_jet.append(jet_info[mask])
-        jet_infos_separate_klambda.append(temp_jet)
+        jet_separate_klambda.append(temp_jet)
 
     if idx_spanet_pred is not None:
         kl_unique_spanet = np.unique(kl_array_spanet)
@@ -839,19 +1053,11 @@ def separate_klambda(
     # keep only two decimal in the kl_values
     kl_values = np.round(kl_values, 2)
 
-    # logger.info("true_kl_idx_list", true_kl_idx_list)
-    # logger.info("true_kl_idx_list len", len(true_kl_idx_list))
-    # logger.info("spanet_kl_idx_list", spanet_kl_idx_list)
-    # logger.info("spanet_kl_idx_list len", len(spanet_kl_idx_list))
-    # logger.info("kl_values", kl_unique_true)
-    # logger.info("jet_infos_separate_klambda", jet_infos_separate_klambda)
-    # logger.info("jet_infos_separate_klambda len", len(jet_infos_separate_klambda))
-
     return (
         true_kl_idx_list,
         spanet_kl_idx_list,
         kl_values,
-        jet_infos_separate_klambda,
+        jet_separate_klambda,
     )
 
 

@@ -349,7 +349,12 @@ python utils/performance/efficiency_studies.py -pd <plot_dir> -d
 # To compute the efficiency also for vbf jets on actual vbf events (if the file has a mixture of ggF and VBF events where the class indicating the VBF is 1):
 python utils/performance/efficiency_studies.py -pd <plot_dir> --vbf -c 1
 
+# compute only vbf pairing (ignore higgs pairing) for vbf events with the vbf preselection  (mjj>400 and delta eta<3.5)
+python3 utils/performance/efficiency_studies.py -pd <plot_dir> --vbf -c 1 -ih -r vbf_presel
+ 
+# compute only vbf pairing (ignore higgs pairing) for vbf events with the vbf jets requirement (ask just that there are additional jets but w/o kin cuts)
+python3 utils/performance/efficiency_studies.py -pd <plot_dir> --vbf -c 1 -ih -r vbf_no_kin_cuts
+
 # To ignore the vbf events (if the file has a mixture of ggF and VBF events where the class indicating the VBF is 1):
 python utils/performance/efficiency_studies.py -pd <plot_dir> -c 0
-
 ```
