@@ -120,7 +120,7 @@ def get_class_mask(class_label, column_file):
 
 
 def get_lead_mjj_jet_idx(jet):
-    # choose higgs jets as the two jets with the highest mjj that are not from higgs decay
+    # choose vbf jets as the two jets with the highest mjj that are not from higgs decay
 
     jet_combinations = [ak.combinations(j, 2) for j in jet]
     jet_combinations_mass = [(jc["0"] + jc["1"]).mass for jc in jet_combinations]
