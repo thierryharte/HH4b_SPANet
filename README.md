@@ -71,6 +71,11 @@ To convert the coffea files outputs of [PocketCoffea](https://pocketcoffea.readt
 ```bash
 python utils/dataset/coffea_to_h5_direct.py --input <input_coffea_file> --output <output_h5_file>  --regions <list_of_regions_per_class> --class-labels <list_of_classes> --max-jets <max_num_jets_or_pairing> --train-frac <fraction_used_for_training> [--no-shuffle] 
 
+# example for vbf ggf spanet training
+python utils/dataset/coffea_to_h5_direct.py --input output_all.coffea --output spanet_training_input.h5  --regions 4b_region 4b_region --class-labels GluGlu VBF --max-jets 9
+
+# example for HH4b vs Bkg spanet classification 
+python utils/dataset/coffea_to_h5_direct.py --input output_all.coffea --output spanet_training_input.h5  --regions 2b_signal_region_postW 4b_signal_region --class-labels DATA GluGlu --max-jets 5
 ```
 
 <details>
@@ -179,6 +184,7 @@ spanet_singularity
 source spanet_env/bin/activate
 
 python -m spanet.train -of <options_file> --gpus 1
+python -m spanet.train -of options_files/HH4b/vbf_ggf/hh4b_pairing_vbf_ggf_pairing_classification.json --gpus 1
 ```
 
 ## Train on HTCondor
