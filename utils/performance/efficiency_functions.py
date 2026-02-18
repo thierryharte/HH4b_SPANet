@@ -125,7 +125,7 @@ def get_lead_mjj_jet_idx(jet):
     jet_combinations = [ak.combinations(j, 2) for j in jet]
     jet_combinations_mass = [(jc["0"] + jc["1"]).mass for jc in jet_combinations]
     jet_combinations_mass_max_idx = [
-        ak.to_numpy(ak.argsort(jcm, axis=1, ascending=False)[:, 0])
+        ak.to_numpy(ak.firsts(ak.argsort(jcm, axis=1, ascending=False)))
         for jcm in jet_combinations_mass
     ]
     jets_max_mass = [
@@ -1032,10 +1032,7 @@ def separate_klambda(
         logger.info(f"kl {kl}")
         true_kl_idx_list.append(idx_true[mask])
         kl_values.append(kl)
-        temp_jet = []
-        for j, jet_info in enumerate(jet):
-            temp_jet.append(jet_info[mask])
-        jet_separate_klambda.append(temp_jet)
+        jet_separate_klambda.append(jet[mask])
 
     if idx_spanet_pred is not None:
         kl_unique_spanet = np.unique(kl_array_spanet)

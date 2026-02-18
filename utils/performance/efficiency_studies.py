@@ -375,9 +375,12 @@ def main():
 
     jet_vbf_for_idx = [j[:, 4:] for j in jet_for_idx]
 
-    # get the idx of the 2 leading mjj jets (excluding the 4 jets leading in btag from higgs)
-    allowed_idx_vbf_run2 = get_lead_mjj_jet_idx(jet_vbf_for_idx)[0]
-
+    if do_vbf_pairing:
+        # get the idx of the 2 leading mjj jets (excluding the 4 jets leading in btag from higgs)
+        allowed_idx_vbf_run2 = get_lead_mjj_jet_idx(jet_vbf_for_idx)[0]
+    else:
+        allowed_idx_vbf_run2=[]
+        
     # Run 2 method cannot use the 5th jet, so we have to compare to the 4jet model
     # Also the VBF jets are only the 2 leading in mjj
     idx_true = load_jets_and_pairing(
