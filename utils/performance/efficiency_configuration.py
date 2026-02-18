@@ -533,7 +533,7 @@ true_dict = {
         "klambda": "postEE",
     },
     "9_jets_vbf_ggf_SM": {
-        "name": "/eos/user/m/mmalucch/spanet_infos/spanet_inputs/vbf/JetTotalSPANetPtFlattenPadded_pad9999_test.h5",
+        "name": "/eos/user/m/mmalucch/spanet_infos/spanet_inputs/vbf/vbf_SM/JetTotalSPANetPtFlattenPadded_pad9999_test.h5",
         "klambda": "postEE",
         "vbf": True,
     },
