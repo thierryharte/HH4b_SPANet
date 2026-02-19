@@ -110,13 +110,21 @@ def get_class_mask(class_label, column_file):
                 np.int64
             )
             mask = class_array == int(class_label)
-            return mask
-        except:
+        except KeyError:
             logger.info(
+                'The file doesn\'t contain an "EVENT" array, so trying with "Event" instead'
+            )
+            class_array = column_file["CLASSIFICATIONS"]["Event"]["class"][()].astype(
+                np.int64
+            )
+            mask = class_array == int(class_label)
+        except KeyError:
+            logger.warning(
                 "The file doesn't contain a class array. Setting the mask for the class to True ..."
             )
+            mask = ak.ones_like(column_file["INPUTS"]["Jet"]["MASK"][:, 0])
 
-    return ak.ones_like(column_file["INPUTS"]["Jet"]["MASK"][:, 0])
+    return mask
 
 
 def get_lead_mjj_jet_idx(jet):
@@ -124,9 +132,13 @@ def get_lead_mjj_jet_idx(jet):
 
     jet_combinations = [ak.combinations(j, 2) for j in jet]
     jet_combinations_mass = [(jc["0"] + jc["1"]).mass for jc in jet_combinations]
-    jet_combinations_mass_max_idx = [
-        ak.to_numpy(ak.firsts(ak.argsort(jcm, axis=1, ascending=False)))
+    jet_combinations_mass_max_idx_ak = [
+        ak.firsts(ak.argsort(jcm, axis=1, ascending=False))
         for jcm in jet_combinations_mass
+    ]
+    assert all([ak.all(~ak.is_none(jcm)) for jcm in jet_combinations_mass_max_idx_ak])
+    jet_combinations_mass_max_idx = [
+        ak.to_numpy(ak.fill_none(jcm, -1)) for jcm in jet_combinations_mass_max_idx_ak
     ]
     jets_max_mass = [
         jc[ak.local_index(jc, axis=0), jcm]
@@ -141,7 +153,6 @@ def get_lead_mjj_jet_idx(jet):
                 ],
                 axis=1,
             ),
-            1,
         )
         for jmm in jets_max_mass
     ]
@@ -359,16 +370,16 @@ def calculate_efficiencies(
     logger.info("\n")
     for lab, eff in zip(all_names, model_eff):
         logger.info(f"Efficiency {label} for {lab}: {eff:.3f}")
-    logger.info("\n")
-    for name, toteff in zip(all_names, unc_model_eff):
-        logger.info(f"Efficiency uncertainty {label} for {name}: {toteff:.3f}")
+    # logger.info("\n")
+    # for name, toteff in zip(all_names, unc_model_eff):
+    #     logger.info(f"Efficiency uncertainty {label} for {name}: {toteff:.3f}")
 
     logger.info("\n")
     for lab, eff in zip(all_names, total_model_eff):
         logger.info(f"Total efficiency {label} for {lab}: {eff:.3f}")
-    logger.info("\n")
-    for name, toteff in zip(all_names, unc_total_model_eff):
-        logger.info(f"Total efficiency uncertainty {label} for {name}: {toteff:.3f}")
+    # logger.info("\n")
+    # for name, toteff in zip(all_names, unc_total_model_eff):
+    #     logger.info(f"Total efficiency uncertainty {label} for {name}: {toteff:.3f}")
 
     return (
         fraction,
@@ -643,7 +654,6 @@ def plot_histos_1d(
         )
         * (1.2 if "peak" not in name else 1.6),
     )
-    print(f"Bin size of the plot: {np.diff(bins)[0]}")
     if "peak" not in name:
         ax.set_xlim(50, 300)
     if compare_run2 and isinstance(run2, awkward.highlevel.Array):
@@ -999,16 +1009,15 @@ def separate_klambda(
     jet, df_true, df_spanet_pred, idx_true, idx_spanet_pred, mask_region
 ):
     logger.info(f"jet {len(jet)}, {len(jet[0])}")
-
     try:
         kl_array_true = df_true["INPUTS"]["Event"]["kl"][()][mask_region]
     except KeyError:
-        print("Did not find Event/kl in kl_array_true, will try EVENT/kl")
+        logger.info("Did not find Event/kl in kl_array_true, will try EVENT/kl")
         kl_array_true = df_true["INPUTS"]["EVENT"]["kl"][()][mask_region]
     try:
         kl_array_spanet = df_spanet_pred["INPUTS"]["Event"]["kl"][()][mask_region]
     except KeyError:
-        print("Did not find Event/kl in kl_array_spanet, will try EVENT/kl")
+        logger.info("Did not find Event/kl in kl_array_spanet, will try EVENT/kl")
         kl_array_spanet = df_spanet_pred["INPUTS"]["EVENT"]["kl"][()][mask_region]
     logger.info(f"kl_arrays {kl_array_spanet}")
 
@@ -1059,57 +1068,76 @@ def separate_klambda(
 
 
 def plot_diff_eff_klambda(
-    effs, unc_effs, kl_values, labels, color, name, plot_dir="plots"
+    effs,
+    unc_effs,
+    kl_values,
+    labels,
+    color,
+    name,
+    plot_dir="plots",
+    xlabels=None,  # dict: {kl_value: "label"}
 ):
-    # split the arrays depending on how many times the first kl value appears
+    """
+    Parameters
+    ----------
+    xlabels : dict or None
+        Dictionary mapping kl_values -> string labels.
+        Example: { -1.0: "SM", 0.0: "BSM 1", 2.0: "BSM 2" }
+    """
+
     fig, ax = plt.subplots(figsize=(6, 6))
+
+    # Create mapping kl_value -> equidistant position
+    if xlabels is not None:
+        # preserve order based on first appearance in kl_values
+        all_kls = []
+        for kls in kl_values:
+            for kl in kls:
+                if kl not in all_kls:
+                    all_kls.append(kl)
+
+        kl_to_pos = {kl: i for i, kl in enumerate(all_kls)}
+        positions = np.arange(len(all_kls))
+
+    # Plot
     for label, kls, eff, unc_eff, col in zip(labels, kl_values, effs, unc_effs, color):
+
+        if xlabels is None:
+            x = kls
+        else:
+            x = [kl_to_pos[kl] for kl in kls]
+
         ax.errorbar(
-            kls,
+            x,
             eff,
             yerr=unc_eff,
             linestyle="-",
-            label=label,
             marker=".",
+            label=label,
             color=col,
         )
-    ax.legend(frameon=False, loc="lower left")
-    ax.set_xlabel(r"$\kappa_{\lambda}$")
+
+    # Apply custom tick labels
+    if xlabels is not None:
+        tick_labels = [xlabels.get(str(kl), str(kl)) for kl in all_kls]
+        ax.set_xticks(positions)
+        ax.set_xticklabels(tick_labels, ha="center", fontsize=5)
+    else:
+        ax.set_xlabel(r"$\kappa_{\lambda}$")
+
     ax.set_ylabel(name)
+    ax.legend(frameon=False, loc="lower left")
     ax.grid(linestyle=":")
+
     hep.cms.label(
         year="2022",
         com="13.6",
         label="Private Work",
         ax=ax,
     )
+
     plt.savefig(f"{plot_dir}/{name}.png", dpi=300, bbox_inches="tight")
     plt.savefig(f"{plot_dir}/{name}.pdf", dpi=300, bbox_inches="tight")
     plt.savefig(f"{plot_dir}/{name}.svg", dpi=300, bbox_inches="tight")
+
     plt.close()
-
-
-def add_fields(collection, fields=None, four_vec="PtEtaPhiMLorentzVector"):
-    if fields == None:
-        fields = list(collection.fields)
-    for field in ["pt", "eta", "phi", "mass"]:
-        if field not in fields:
-            fields.append(field)
-    if four_vec == "PtEtaPhiMLorentzVector":
-        fields_dict = {field: getattr(collection, field) for field in fields}
-        collection = ak.zip(
-            fields_dict,
-            with_name="PtEtaPhiMLorentzVector",
-        )
-    elif four_vec == "Momentum4D":
-        fields = ["pt", "eta", "phi", "mass"]
-        fields_dict = {field: getattr(collection, field) for field in fields}
-        collection = ak.zip(
-            fields_dict,
-            with_name="Momentum4D",
-        )
-    else:
-        for field in fields:
-            collection = ak.with_field(collection, getattr(collection, field), field)
-
-    return collection

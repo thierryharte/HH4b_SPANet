@@ -6,14 +6,10 @@ import awkward as ak
 import h5py
 import numpy as np
 import vector
+import importlib.util
+import sys
+from pathlib import Path
 
-# from efficiency_configuration_cutscomparison import run2_dataset_DATA, run2_dataset_MC, spanet_dict, true_dict
-from efficiency_configuration import (
-    run2_dataset_DATA,
-    run2_dataset_MC,
-    spanet_dict,
-    true_dict,
-)
 from efficiency_functions import (
     best_reco_higgs,
     calculate_diff_efficiencies,
@@ -93,12 +89,70 @@ parser.add_argument(
     help="Compute efficiency excluding the jets from Higgs",
 )
 parser.add_argument(
+    "-hm",
+    "--histo-mass",
+    default=False,
+    action="store_true",
+    help="Plot the Higgs mass histograms",
+)
+parser.add_argument(
     "-c", "--class-label", default=None, help="Consider only the class specified"
+)
+parser.add_argument(
+    "-conf",
+    "--configuration",
+    default=None,
+    help="Configuration with the models to consider",
 )
 args = parser.parse_args()
 
 if not args.vbf and args.ignore_higgs:
     raise ValueError("Efficiency must be computed at least for one resonance!")
+
+
+cv_c2v_kl_values_dict= {
+    "1.37": "$\\kappa_{V}$=1.74 \n$\\kappa_{2V}$=1.37 \n$\\kappa_{\\lambda}$=14.4",
+    "0.03": "$\\kappa_{V}$=-0.01 \n$\\kappa_{2V}$=0.03 \n$\\kappa_{\\lambda}$=10.2",
+    "1.44": "$\\kappa_{V}$=-0.76 \n$\\kappa_{2V}$=1.44 \n$\\kappa_{\\lambda}$=-19.3",
+    "0.96": "$\\kappa_{V}$=-0.96 \n$\\kappa_{2V}$=0.96 \n$\\kappa_{\\lambda}$=-1.43",
+    "1.94": "$\\kappa_{V}$=-1.21 \n$\\kappa_{2V}$=1.94 \n$\\kappa_{\\lambda}$=-0.94",
+    "2.72": "$\\kappa_{V}$=-1.6 \n$\\kappa_{2V}$=2.72 \n$\\kappa_{\\lambda}$=-1.36",
+    "3.57": "$\\kappa_{V}$=-1.83 \n$\\kappa_{2V}$=3.57 \n$\\kappa_{\\lambda}$=-3.39",
+    "3.87": "$\\kappa_{V}$=-2.12 \n$\\kappa_{2V}$=3.87 \n$\\kappa_{\\lambda}$=-5.96",
+    "0.0": "$\\kappa_{V}$=1\n$\\kappa_{2V}$=0\n$\\kappa_{\\lambda}$=1",
+    "1.0": "$\\kappa_{V}$=1\n$\\kappa_{2V}$=1 \n$\\kappa_{\\lambda}$=1",
+}
+
+
+def import_module_from_path(module_path):
+    module_path = Path(module_path).resolve()
+
+    module_name = module_path.stem  # filename without .py
+
+    spec = importlib.util.spec_from_file_location(module_name, module_path)
+    module = importlib.util.module_from_spec(spec)
+
+    sys.modules[module_name] = module
+    spec.loader.exec_module(module)
+
+    return module
+
+
+if args.configuration:
+    config = import_module_from_path(args.configuration)
+    print("Imported configuration:", config)
+    run2_dataset_DATA = config.run2_dataset_DATA
+    run2_dataset_MC = config.run2_dataset_MC
+    spanet_dict = config.spanet_dict
+    true_dict = config.true_dict
+else:
+    # from efficiency_configuration_cutscomparison import run2_dataset_DATA, run2_dataset_MC, spanet_dict, true_dict
+    from efficiency_configuration import (
+        run2_dataset_DATA,
+        run2_dataset_MC,
+        spanet_dict,
+        true_dict,
+    )
 
 
 os.makedirs(args.plot_dir, exist_ok=True)
@@ -141,7 +195,7 @@ def main():
         truefile = h5py.File(true_dict[file_dict["true"]]["name"], "r")
         truefile_klambda = true_dict[file_dict["true"]]["klambda"]
 
-        logger.debug(
+        logger.info(
             f"Executing model {model_name} with spanetfile {file_dict['file']} and truefile {true_dict[file_dict['true']]['name']}"
         )
 
@@ -379,8 +433,8 @@ def main():
         # get the idx of the 2 leading mjj jets (excluding the 4 jets leading in btag from higgs)
         allowed_idx_vbf_run2 = get_lead_mjj_jet_idx(jet_vbf_for_idx)[0]
     else:
-        allowed_idx_vbf_run2=[]
-        
+        allowed_idx_vbf_run2 = []
+
     # Run 2 method cannot use the 5th jet, so we have to compare to the 4jet model
     # Also the VBF jets are only the 2 leading in mjj
     idx_true = load_jets_and_pairing(
@@ -555,6 +609,7 @@ def main():
                 + ["yellowgreen"],
                 "eff_fully_matched_allklambda",
                 plot_dir,
+                xlabels=cv_c2v_kl_values_dict if args.vbf else None,
             )
             plot_diff_eff_klambda(
                 [
@@ -575,6 +630,7 @@ def main():
                 + ["yellowgreen"],
                 "tot_eff_fully_matched_allklambda",
                 plot_dir,
+                xlabels=cv_c2v_kl_values_dict if args.vbf else None,
             )
         if not args.ignore_higgs:
             logger.info("Plotting differential efficiencies")
@@ -608,7 +664,7 @@ def main():
                 "total_diff_eff_spanet",
             )
 
-    if not args.ignore_higgs:
+    if not args.ignore_higgs and args.histo_mass:
         logger.info("Plotting mhh")
         plot_mhh(
             mhh_bins,

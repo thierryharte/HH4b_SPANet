@@ -160,6 +160,7 @@ The SPANet configuration is composed of two files: the `event_file` and the `opt
 
 > [!TIP]
 > When writing the path to the `event_file` in the `option_file`, you should use the absolute path to the `event_file`. In order to make it compatible with also other users, you can use the environment variables defined in [this section](#train-on-htcondor). An example of this can found in [this `option_file`](./options_files/HH4b/vbf_ggf/hh4b_pairing_vbf_ggf_pairing_classification.json), where the key is written like this:
+>
 > ```json
 >"event_info_file": "${SPANET_MAIN_DIR}/HH4b_SPANet/event_files/HH4b/vbf_ggf/hh4b_vbf_ggf_pairing_classification.yaml",
 >```
@@ -259,7 +260,7 @@ Since TensorBoard runs on the remote machine’s `localhost`, you need to create
 From your **local machine**, run:
 
 ```bash
-ssh -L 6006:localhost:6006 <user>@lxplus.cern.ch
+ssh -L 6006:localhost:6006 <user>@lxplus<node>.cern.ch
 ```
 
 Then open in your local browser:
@@ -338,7 +339,7 @@ f'{spanet_dir}spanet_hh4b_5jets_300_ptreg_loose_s100_btag_wp.h5':{
 }
 ```
 
-And then in the target folder, you can run this inside the singularity
+And then in the target folder, you can run this inside the singularity.
 
 ```bash
 #Enter the singularity
@@ -347,20 +348,30 @@ spanet_singularity
 # Activate the virtual environment
 source spanet_env/bin/activate
 
-python utils/performance/efficiency_studies.py -pd <plot_dir> -k
+cd HH4b_SPANet
+
+# plot the efficiency as a function of k-lambda and plot the Higgs mass histograms
+python utils/performance/efficiency_studies.py -pd <plot_dir> -k [-conf <relative_path_to_conf>] [--histo-mass]
 
 # Alternatively just run on the data samples, to analyse the mass sculpting:
-python utils/performance/efficiency_studies.py -pd <plot_dir> -d
+python utils/performance/efficiency_studies.py -pd <plot_dir> -d --histo-mass
 
 # To compute the efficiency also for vbf jets on actual vbf events (if the file has a mixture of ggF and VBF events where the class indicating the VBF is 1):
-python utils/performance/efficiency_studies.py -pd <plot_dir> --vbf -c 1
+python utils/performance/efficiency_studies.py -pd <plot_dir> --vbf -c 1 -conf utils/performance/efficiency_configuration_vbf_ggf.py
 
 # compute only vbf pairing (ignore higgs pairing) for vbf events with the vbf preselection  (mjj>400 and delta eta<3.5)
-python3 utils/performance/efficiency_studies.py -pd <plot_dir> --vbf -c 1 -ih -r vbf_presel
+python3 utils/performance/efficiency_studies.py -pd <plot_dir> --vbf -c 1 -ih -r vbf_presel  -conf utils/performance/efficiency_configuration_vbf_ggf.py
  
 # compute only vbf pairing (ignore higgs pairing) for vbf events with the vbf jets requirement (ask just that there are additional jets but w/o kin cuts)
-python3 utils/performance/efficiency_studies.py -pd <plot_dir> --vbf -c 1 -ih -r vbf_no_kin_cuts
+python3 utils/performance/efficiency_studies.py -pd <plot_dir> --vbf -c 1 -ih -r vbf_no_kin_cuts  -conf utils/performance/efficiency_configuration_vbf_ggf.py
+
 
 # To ignore the vbf events (if the file has a mixture of ggF and VBF events where the class indicating the VBF is 1):
 python utils/performance/efficiency_studies.py -pd <plot_dir> -c 0
 ```
+
+> [!TIP]
+> To pass the configuration with the input files for the efficiency computation through the argument `-conf`, use the relative path from where you are executing the script.
+>
+> - ggF analysis: `HH4b_SPANet/utils/performance/efficiency_configuration.py`
+> - VBF vs ggF analysis: `HH4b_SPANet/utils/performance/efficiency_configuration_vbf_ggf.py`

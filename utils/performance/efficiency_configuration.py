@@ -252,14 +252,6 @@ spanet_dict = {
     #     'true': '5_jets_pt_true_inclusive_b_region_bratio_inclusive_allklambda',
     #     'label': 'SPANet - Inclusive b region, flattened pt bratio 1,2,3,4,5',
     #     'color': 'red'},
-    # --- VBF pairing ---
-    # 'hh4b_pairing_vbf_ggf_pairing_classification': {
-    #     'file': '/eos/user/m/mmalucch/spanet_infos/spanet_outputs/out_spanet_outputs/out_hh4b_pairing_vbf_ggf_pairing_classification/out_seed_trainings_100/version_2/predicitons.h5',
-    #     'true': '9_jets_vbf_ggf_SM',
-    #     'label': 'SPANet - VBF/ggF',
-    #     'color': 'orange',
-    #     'vbf': True,
-    # },
     # ============================================= DATA ===========================================================
     #  baseline with b-tag
     # '5_jets_pt_data_btag_300e': f'{spanet_dir}DATA/spanet_hh4b_data_5jets_300_predict_s160_btag.h5', # ---DATA
@@ -531,10 +523,5 @@ true_dict = {
     "5_jets_pt_true_5wp_NoL1cuts_allklambda": {
         "name": f"{true_dir_thierry}../spanet_samples/1_13_2_loose_MC_postEE_pt_nominal_btagWP_newLeptonVeto_NoL1Cut_UpdateJetVetoMap/output_JetGood_test.h5",
         "klambda": "postEE",
-    },
-    "9_jets_vbf_ggf_SM": {
-        "name": "/eos/user/m/mmalucch/spanet_infos/spanet_inputs/vbf/vbf_SM/JetTotalSPANetPtFlattenPadded_pad9999_test.h5",
-        "klambda": "postEE",
-        "vbf": True,
     },
 }
