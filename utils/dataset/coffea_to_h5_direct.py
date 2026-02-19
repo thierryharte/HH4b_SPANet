@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import re
+import os
 import argparse
 import awkward as ak
 import coffea.util
@@ -8,8 +9,8 @@ import h5py
 import numpy as np
 
 
-JET_COLLECTION = "JetTotalSPANetPtFlattenPadded"
-# JET_COLLECTION = "JetGood"
+JET_COLLECTIONS_LIST = ["JetTotalSPANetPtFlattenPadded","JetTotalSPANetPadded"]
+
 KEEP_TOGETHER_COLLECTIONS = ["add_jet1pt"]
 
 # "all" means all non-jet variables are saved as global variables
@@ -345,204 +346,215 @@ def coffea_to_h5(
 
     cols = coffea.util.load(coffea_path)[columns_key]
 
-    rng = np.random.default_rng(SEED)
-    h5_tr = h5_path.replace(".h5", "_train.h5")
-    h5_te = h5_path.replace(".h5", "_test.h5")
+    
+    path_base=os.path.splitext(h5_path)[0]
+    out_dir_name= os.path.dirname(h5_path)
+    os.makedirs(out_dir_name, exist_ok=True)
+    
+    for jet_coll in JET_COLLECTIONS_LIST:
+        # initialize the random numbers for every collection
+        # so that the order remains the same 
+        rng = np.random.default_rng(SEED)
+        
+        h5_tr = f"{path_base}{jet_coll}_train.h5"
+        h5_te = f"{path_base}{jet_coll}_test.h5"
 
-    with h5py.File(h5_tr, "w") as ftr, h5py.File(h5_te, "w") as fte:
+        with h5py.File(h5_tr, "w") as ftr, h5py.File(h5_te, "w") as fte:
 
-        def mk(f):
-            return (
-                f.create_group("INPUTS"),
-                f.create_group("WEIGHTS"),
-                f.create_group("CLASSIFICATIONS"),
-                f.create_group("TARGETS"),
-            )
+            def mk(f):
+                return (
+                    f.create_group("INPUTS"),
+                    f.create_group("WEIGHTS"),
+                    f.create_group("CLASSIFICATIONS"),
+                    f.create_group("TARGETS"),
+                )
 
-        tr_in, tr_w, tr_c, tr_t = mk(ftr)
-        te_in, te_w, te_c, te_t = mk(fte)
+            tr_in, tr_w, tr_c, tr_t = mk(ftr)
+            te_in, te_w, te_c, te_t = mk(fte)
 
-        sample_keys = list(cols.keys())
-        for i, skey in enumerate(sample_keys):
-            # shuffle only on the last dataset to avoid multiple shufflings
-            shuffle = do_data_shuffling and (i == len(sample_keys) - 1)
+            sample_keys = list(cols.keys())
+            for i, skey in enumerate(sample_keys):
+                # shuffle only on the last dataset to avoid multiple shufflings
+                shuffle = do_data_shuffling and (i == len(sample_keys) - 1)
 
-            class_idx = dataset_to_class_index(skey, class_labels)
-            region = regions[class_idx]
+                class_idx = dataset_to_class_index(skey, class_labels)
+                region = regions[class_idx]
 
-            for dataset in cols[skey]:
-                if region not in cols[skey][dataset]:
-                    raise ValueError(
-                        f"Region '{region}' not found for dataset '{skey}' dataset '{dataset}'"
-                    )
-                
-                if args.novars:
-                    payload = cols[skey][dataset][region]
-                else:
-                    variation="nominal"
-                    payload = cols[skey][dataset][region][variation]
+                for dataset in cols[skey]:
+                    if region not in cols[skey][dataset]:
+                        raise ValueError(
+                            f"Region '{region}' not found for dataset '{skey}' dataset '{dataset}'"
+                        )
                     
+                    if args.novars:
+                        payload = cols[skey][dataset][region]
+                    else:
+                        variation="nominal"
+                        payload = cols[skey][dataset][region][variation]
+                        
 
-                w = to_numpy_event_vector(payload[weight_name])
-                N = len(w)
+                    w = to_numpy_event_vector(payload[weight_name])
+                    N = len(w)
 
-                train_mask = (
-                    rng.random(N) < train_frac
-                    if shuffle
-                    else np.arange(N) < int(N * train_frac)
-                )
-                test_mask = ~train_mask
+                    train_mask = (
+                        rng.random(N) < train_frac
+                        if shuffle
+                        else np.arange(N) < int(N * train_frac)
+                    )
+                    test_mask = ~train_mask
 
-                write_block_split(
-                    tr_w,
-                    te_w,
-                    ["weight"],
-                    cast_floats32(w),
-                    train_mask,
-                    test_mask,
-                    shuffle,
-                )
+                    write_block_split(
+                        tr_w,
+                        te_w,
+                        ["weight"],
+                        cast_floats32(w),
+                        train_mask,
+                        test_mask,
+                        shuffle,
+                    )
 
-                cls = np.full(N, class_idx, dtype=np.int64)
-                write_block_split(
-                    tr_c, te_c, ["EVENT", "class"], cls, train_mask, test_mask, shuffle
-                )
+                    cls = np.full(N, class_idx, dtype=np.int64)
+                    write_block_split(
+                        tr_c, te_c, ["EVENT", "class"], cls, train_mask, test_mask, shuffle
+                    )
 
-                jet_counts = None
-                jetN = f"{JET_COLLECTION}_N"
-                if jetN in payload:
-                    jet_counts = to_numpy_event_vector(payload[jetN]).astype(np.int64)
+                    jet_counts = None
+                    jetN = f"{jet_coll}_N"
+                    if jetN in payload:
+                        jet_counts = to_numpy_event_vector(payload[jetN]).astype(np.int64)
 
-                jet_pt = unflatten_to_jagged(
-                    unwrap_accumulator(payload[f"{JET_COLLECTION}_pt"]), jet_counts
-                )
-                mask_jet_pt = (
-                    ak.to_numpy(
-                        ak.fill_none(
-                            ak.pad_none(
-                                jet_pt,
-                                max_jets,
-                                clip=True,
-                            ),
-                            COFFEA_PADDING_VALUE,
+                    jet_pt = unflatten_to_jagged(
+                        unwrap_accumulator(payload[f"{jet_coll}_pt"]), jet_counts
+                    )
+                    mask_jet_pt = (
+                        ak.to_numpy(
+                            ak.fill_none(
+                                ak.pad_none(
+                                    jet_pt,
+                                    max_jets,
+                                    clip=True,
+                                ),
+                                COFFEA_PADDING_VALUE,
+                            )
                         )
-                    )
-                    != COFFEA_PADDING_VALUE
-                )
-
-                jet_mask_written = False
-
-                # Create the Targets
-                prov_key = f"{JET_COLLECTION}_provenance"
-                if prov_key in payload:
-                    jets_prov = unflatten_to_jagged(
-                        unwrap_accumulator(payload[prov_key]), jet_counts
+                        != COFFEA_PADDING_VALUE
                     )
 
-                    # Split train / test *before* creating targets
-                    prov_tr = jets_prov[train_mask]
-                    prov_te = jets_prov[test_mask]
+                    jet_mask_written = False
 
-                    targets_tr = create_resonances_targets_from_provenance(
-                        prov_tr, max_jets
-                    )
-                    targets_te = create_resonances_targets_from_provenance(
-                        prov_te, max_jets
-                    )
-
-                    for (r, q), arr in targets_tr.items():
-                        ensure_resizable_dataset(tr_t, [r, q], cast_int64(arr), shuffle)
-
-                    for (r, q), arr in targets_te.items():
-                        ensure_resizable_dataset(te_t, [r, q], cast_int64(arr), shuffle)
-                else:
-                    create_dummy_targets(N, tr_t, te_t, train_mask, test_mask, shuffle)
-
-                for name, arr in payload.items():
-                    if name == weight_name:
-                        continue
-
-                    coll, var = infer_collection_and_var(name)
-                    arr_u = unwrap_accumulator(arr)
-                    is_jet = coll == JET_COLLECTION and var != "N"
-                    is_global = var in GLOBAL_VARIABLES or (
-                        not is_jet and "all" in GLOBAL_VARIABLES and coll == "events"
-                    )
-                    print(
-                        f"Processing {skey} {dataset} {region} variable {name} with shape {arr_u.shape} (jet: {is_jet}, global: {is_global})"
-                    )
-
-                    if is_jet:
-                        arr_np = np.asarray(arr_u)
-                        jets = (
-                            unflatten_to_jagged(arr_u, jet_counts)
-                            if arr_np.ndim == 1 and jet_counts is not None
-                            else arr_u
+                    # Create the Targets
+                    prov_key = f"{jet_coll}_provenance"
+                    if prov_key in payload:
+                        jets_prov = unflatten_to_jagged(
+                            unwrap_accumulator(payload[prov_key]), jet_counts
                         )
 
-                        jtr, jte = jets[train_mask], jets[test_mask]
-                        mtr, mte = mask_jet_pt[train_mask], mask_jet_pt[test_mask]
-                        dtr = pad_clip_jets(jtr, max_jets)
-                        dte = pad_clip_jets(jte, max_jets)
+                        # Split train / test *before* creating targets
+                        prov_tr = jets_prov[train_mask]
+                        prov_te = jets_prov[test_mask]
 
-                        ensure_resizable_dataset(
-                            tr_in, ["Jet", var], cast_floats32(dtr), shuffle
+                        targets_tr = create_resonances_targets_from_provenance(
+                            prov_tr, max_jets
                         )
-                        ensure_resizable_dataset(
-                            te_in, ["Jet", var], cast_floats32(dte), shuffle
+                        targets_te = create_resonances_targets_from_provenance(
+                            prov_te, max_jets
                         )
 
-                        if not jet_mask_written:
+                        for (r, q), arr in targets_tr.items():
+                            ensure_resizable_dataset(tr_t, [r, q], cast_int64(arr), shuffle)
+
+                        for (r, q), arr in targets_te.items():
+                            ensure_resizable_dataset(te_t, [r, q], cast_int64(arr), shuffle)
+                    else:
+                        create_dummy_targets(N, tr_t, te_t, train_mask, test_mask, shuffle)
+
+                    for name, arr in payload.items():
+                        if name == weight_name:
+                            continue
+
+                        coll, var = infer_collection_and_var(name)
+                        arr_u = unwrap_accumulator(arr)
+                        is_jet = coll == jet_coll and var != "N"
+                        is_global = var in GLOBAL_VARIABLES or (
+                            not is_jet and "all" in GLOBAL_VARIABLES and coll == "events"
+                        )
+                        
+                        if is_jet or is_global:
+                            print(
+                                f"Processing {skey} {dataset} {region} variable {name} with shape {arr_u.shape} (jet: {is_jet}, global: {is_global})"
+                            )
+
+                        if is_jet:
+                            arr_np = np.asarray(arr_u)
+                            jets = (
+                                unflatten_to_jagged(arr_u, jet_counts)
+                                if arr_np.ndim == 1 and jet_counts is not None
+                                else arr_u
+                            )
+
+                            jtr, jte = jets[train_mask], jets[test_mask]
+                            mtr, mte = mask_jet_pt[train_mask], mask_jet_pt[test_mask]
+                            dtr = pad_clip_jets(jtr, max_jets)
+                            dte = pad_clip_jets(jte, max_jets)
+
                             ensure_resizable_dataset(
-                                tr_in, ["Jet", "MASK"], mtr, shuffle
+                                tr_in, ["Jet", var], cast_floats32(dtr), shuffle
                             )
                             ensure_resizable_dataset(
-                                te_in, ["Jet", "MASK"], mte, shuffle
+                                te_in, ["Jet", var], cast_floats32(dte), shuffle
                             )
-                            jet_mask_written = True
-                    elif is_global:
-                        arr_ev = to_numpy_event_vector(arr_u)
+
+                            if not jet_mask_written:
+                                ensure_resizable_dataset(
+                                    tr_in, ["Jet", "MASK"], mtr, shuffle
+                                )
+                                ensure_resizable_dataset(
+                                    te_in, ["Jet", "MASK"], mte, shuffle
+                                )
+                                jet_mask_written = True
+                        elif is_global:
+                            arr_ev = to_numpy_event_vector(arr_u)
+                            write_block_split(
+                                tr_in,
+                                te_in,
+                                [coll, var],
+                                cast_floats32(arr_ev),
+                                train_mask,
+                                test_mask,
+                                shuffle,
+                            )
+                            
+
+                    # Get the various k-values for each dataset
+                    if "GluGlu" in dataset:
+                        kl_val = extract_param_value(dataset, "kl")
+                        kl_val_array = kl_val * ak.ones_like(to_numpy_event_vector(payload[weight_name]))
                         write_block_split(
                             tr_in,
                             te_in,
-                            [coll, var],
-                            cast_floats32(arr_ev),
+                            ["Event", "kl"],
+                            cast_floats32(kl_val_array),
                             train_mask,
                             test_mask,
                             shuffle,
                         )
-                        
+                    
+                    if "VBF" in dataset:
+                        # Get the C2V and not the k_lambda because the c2v is unique for each dataset of vbf 
+                        # while the k_lambda is not
+                        c2v_val = extract_param_value(dataset, "C2V")
+                        c2v_val_array = c2v_val * ak.ones_like(to_numpy_event_vector(payload[weight_name]))
+                        write_block_split(
+                            tr_in,
+                            te_in,
+                            ["Event", "kl"],
+                            cast_floats32(c2v_val_array),
+                            train_mask,
+                            test_mask,
+                            shuffle,
+                        )
 
-                # Get the various k-values for each dataset
-                if "GluGlu" in dataset:
-                    kl_val = extract_param_value(dataset, "kl")
-                    kl_val_array = kl_val * ak.ones_like(to_numpy_event_vector(payload[weight_name]))
-                    write_block_split(
-                        tr_in,
-                        te_in,
-                        ["Event", "kl"],
-                        cast_floats32(kl_val_array),
-                        train_mask,
-                        test_mask,
-                        shuffle,
-                    )
-                
-                if "VBF" in dataset:
-                    # Get the C2V and not the k_lambda because the c2v is unique for each dataset of vbf 
-                    # while the k_lambda is not
-                    c2v_val = extract_param_value(dataset, "C2V")
-                    c2v_val_array = c2v_val * ak.ones_like(to_numpy_event_vector(payload[weight_name]))
-                    write_block_split(
-                        tr_in,
-                        te_in,
-                        ["Event", "kl"],
-                        cast_floats32(c2v_val_array),
-                        train_mask,
-                        test_mask,
-                        shuffle,
-                    )
-
-    print(f"Wrote: {h5_tr}, {h5_te}")
+        print(f"Wrote: {h5_tr}, {h5_te}")
 
 
 # -----------------------------------------------------------------------------
@@ -554,7 +566,7 @@ def parse_args():
     p = argparse.ArgumentParser("coffea → HDF5 converter")
 
     p.add_argument("-i", "--input", required=True, help="Input coffea file path")
-    p.add_argument("-o", "--output", required=True, help="Output HDF5 file path")
+    p.add_argument("-o", "--output", required=True, help="Output HDF5 file path prefix (e.g. path/to/file/prefix_name)")
     p.add_argument(
         "-r",
         "--regions",
