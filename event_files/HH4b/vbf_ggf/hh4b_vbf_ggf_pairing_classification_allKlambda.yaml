@@ -53,5 +53,5 @@ REGRESSIONS:
 # REQUIRED - REGRESSIONS - List of desired classes to predict from observables.
 # -----------------------------------------------------------------------------
 CLASSIFICATIONS:
-  Event:
+  EVENT:
     - class
