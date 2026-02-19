@@ -78,6 +78,11 @@ python utils/dataset/coffea_to_h5_direct.py --input output_all.coffea --output s
 python utils/dataset/coffea_to_h5_direct.py --input output_all.coffea --output spanet_training_input.h5  --regions 2b_signal_region_postW 4b_signal_region --class-labels DATA GluGlu --max-jets 5
 ```
 
+> [!IMPORTANT]
+> When creating on a file for training where pT of the jets is flattened, remember to also create the corresponding file where pT is not flattened to later evaluate the model!
+
+
+
 <details>
 <summary> Legacy dataset creation (outdated instructions)  </summary>
 
@@ -303,10 +308,13 @@ spanet_singularity
 # Activate the virtual environment
 source spanet_env/bin/activate
 
-python -m spanet.predict $LOG_DIRECTORY predicitons.h5 -tf input.h5 --gpu
+python -m spanet.predict <log_directory> predicitons.h5 -tf input.h5 --gpu
 ```
 
-where `$LOG_DIRECTORY` is the output folder where the checkpoints of the trained SPANet model are saved, `predicitons.h5` is the customizable name of the output file containing the predictions and `input.h5` is the input `.h5` file in SPANet format. With the `--gpu` flag one can profit from the available GPUs.
+where `<log_directory>` is the output folder where the checkpoints of the trained SPANet model are saved, `predicitons.h5` is the customizable name of the output file containing the predictions and `input.h5` is the input `.h5` file in SPANet format. With the `--gpu` flag one can profit from the available GPUs.
+
+> [!IMPORTANT]
+> When evaluating a model trained on a file where the jet pT was flattened, remember to evaluate it on a file where the pT is not flattened to get the correct performance!
 
 > [!TIP]
 > To use the gpu locally, connect to `ssh <user>@lxplus-gpu.cern.ch`
@@ -329,15 +337,30 @@ python -m spanet.export <path_to_training>/out_seed_trainings_100/version_0/ <ou
 
 This repo contains also a script to determine the pairing efficiency of the models. It runs on the files gained from `spanet.predict`.
 
-To add a new model, you just have to add a sub-dictionary to the `spanet_dict`:
+To add a new model, you just have to add a sub-dictionary to the `spanet_dict` in the configuration for the efficiency script you want to use (e.g. `utils/performance/efficiency_configuration.py`)
 
 ```python
-f'{spanet_dir}spanet_hh4b_5jets_300_ptreg_loose_s100_btag_wp.h5':{
+#e.g.
+'5_jets_pt_btag_wp_300e_allklambda':{
+    'file': '/eos/user/t/tharte/Analysis_data/predictions/spanet_hh4b_5jets_300_ptreg_loose_s100_btag_wp.h5',
     'true': '5_jets_pt_true_wp_allklambda',
     'label': 'SPANet btag WP',
     'color': 'orange',
 }
 ```
+
+and then add the corresponding item in the `true_dict` (if not already present)
+
+```python
+#e.g.
+"5_jets_pt_true_wp_allklambda": {
+    "name": "/eos/user/t/tharte/Analysis_data/spanet_samples/loose_MC_postEE_btagWP/output_JetGood_test.h5",
+    "klambda": "postEE",
+},
+```
+
+> [!IMPORTANT]
+> When evaluating the performance of a model trained on a file where the jet pT was flattened, remember to put here the files where the pT is not flattened for both the prediction and true files!
 
 And then in the target folder, you can run this inside the singularity.
 
