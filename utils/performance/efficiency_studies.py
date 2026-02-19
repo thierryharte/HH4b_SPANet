@@ -109,7 +109,8 @@ args = parser.parse_args()
 if not args.vbf and args.ignore_higgs:
     raise ValueError("Efficiency must be computed at least for one resonance!")
 
-
+# the key is the value saved in the h5 file under `kl` but it is
+# actually C2V (not k_lambda) because it is unique to each dataset
 cv_c2v_kl_values_dict= {
     "1.37": "$\\kappa_{V}$=1.74 \n$\\kappa_{2V}$=1.37 \n$\\kappa_{\\lambda}$=14.4",
     "0.03": "$\\kappa_{V}$=-0.01 \n$\\kappa_{2V}$=0.03 \n$\\kappa_{\\lambda}$=10.2",
