@@ -8,8 +8,8 @@ import h5py
 import numpy as np
 
 
-# JET_COLLECTION = "JetTotalSPANetPtFlattenPadded"
-JET_COLLECTION = "JetGood"
+JET_COLLECTION = "JetTotalSPANetPtFlattenPadded"
+# JET_COLLECTION = "JetGood"
 KEEP_TOGETHER_COLLECTIONS = ["add_jet1pt"]
 
 # "all" means all non-jet variables are saved as global variables
@@ -247,14 +247,37 @@ def cast_int64(x):
     return x
 
 
-def extract_kl_value(s):
-    match = re.search(r"kl-([mp0-9]+)", s)
+def extract_param_value(s, param):
+    """
+    Extract a parameter value from a string.
+
+    Parameters
+    ----------
+    s : str
+        Input string.
+    param : str
+        Parameter name to extract (e.g. 'kl', 'CV', 'C2V', 'C3', 'kt').
+
+    Returns
+    -------
+    float or None
+        Extracted value or None if not found.
+    """
+
+    # pattern allows "-" or "_" after param name
+    pattern = rf"{param}[-_]([mp0-9]+)"
+
+    match = re.search(pattern, s)
     if not match:
         return None
 
     value_str = match.group(1)
+
+    # convert encoding: m -> -, p -> .
     value_str = value_str.replace("m", "-").replace("p", ".")
+
     return float(value_str)
+
 
 # -----------------------------------------------------------------------------
 # HDF5 helpers
@@ -352,8 +375,13 @@ def coffea_to_h5(
                     raise ValueError(
                         f"Region '{region}' not found for dataset '{skey}' dataset '{dataset}'"
                     )
-
-                payload = cols[skey][dataset][region]
+                
+                if args.novars:
+                    payload = cols[skey][dataset][region]
+                else:
+                    variation="nominal"
+                    payload = cols[skey][dataset][region][variation]
+                    
 
                 w = to_numpy_event_vector(payload[weight_name])
                 N = len(w)
@@ -377,7 +405,7 @@ def coffea_to_h5(
 
                 cls = np.full(N, class_idx, dtype=np.int64)
                 write_block_split(
-                    tr_c, te_c, ["Event", "class"], cls, train_mask, test_mask, shuffle
+                    tr_c, te_c, ["EVENT", "class"], cls, train_mask, test_mask, shuffle
                 )
 
                 jet_counts = None
@@ -435,7 +463,6 @@ def coffea_to_h5(
                         continue
 
                     coll, var = infer_collection_and_var(name)
-                    print(name)
                     arr_u = unwrap_accumulator(arr)
                     is_jet = coll == JET_COLLECTION and var != "N"
                     is_global = var in GLOBAL_VARIABLES or (
@@ -484,14 +511,32 @@ def coffea_to_h5(
                             test_mask,
                             shuffle,
                         )
+                        
+
+                # Get the various k-values for each dataset
                 if "GluGlu" in dataset:
-                    kl_val = extract_kl_value(dataset)
+                    kl_val = extract_param_value(dataset, "kl")
                     kl_val_array = kl_val * ak.ones_like(to_numpy_event_vector(payload[weight_name]))
                     write_block_split(
                         tr_in,
                         te_in,
                         ["Event", "kl"],
                         cast_floats32(kl_val_array),
+                        train_mask,
+                        test_mask,
+                        shuffle,
+                    )
+                
+                if "VBF" in dataset:
+                    # Get the C2V and not the k_lambda because the c2v is unique for each dataset of vbf 
+                    # while the k_lambda is not
+                    c2v_val = extract_param_value(dataset, "C2V")
+                    c2v_val_array = c2v_val * ak.ones_like(to_numpy_event_vector(payload[weight_name]))
+                    write_block_split(
+                        tr_in,
+                        te_in,
+                        ["Event", "kl"],
+                        cast_floats32(c2v_val_array),
                         train_mask,
                         test_mask,
                         shuffle,
@@ -533,6 +578,13 @@ def parse_args():
     p.add_argument(
         "-ns", "--no-shuffle", action="store_true", help="Disable data shuffling"
     )
+    p.add_argument(
+        "--novars",
+        action="store_true",
+        help="If true, old save format without saved variations is expected",
+        default=False,
+    )
+
 
     return p.parse_args()
 
