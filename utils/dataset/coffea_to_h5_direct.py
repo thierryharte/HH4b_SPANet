@@ -9,13 +9,7 @@ import h5py
 import numpy as np
 
 
-JET_COLLECTIONS_LIST = ["JetTotalSPANetPtFlattenPadded","JetTotalSPANetPadded"]
-
 KEEP_TOGETHER_COLLECTIONS = ["add_jet1pt"]
-
-# "all" means all non-jet variables are saved as global variables
-# leave empty list to disable global variables
-GLOBAL_VARIABLES = [""]
 
 COFFEA_PADDING_VALUE = -999.0
 H5_PADDING_VALUE = 9999.0
@@ -165,9 +159,9 @@ def to_numpy_event_vector(x):
 
 def pad_clip_jets(jets, max_jets):
     jets = unwrap_accumulator(jets)
-    
+
     # replace coffea padding to h5 padding
-    jets=ak.where(jets==COFFEA_PADDING_VALUE, H5_PADDING_VALUE, jets)
+    jets = ak.where(jets == COFFEA_PADDING_VALUE, H5_PADDING_VALUE, jets)
 
     # Awkward jagged
     if is_awkward(jets):
@@ -336,6 +330,8 @@ def coffea_to_h5(
     h5_path,
     regions,
     class_labels,
+    jet_collections,
+    global_variables,
     max_jets,
     train_frac,
     do_data_shuffling,
@@ -346,16 +342,16 @@ def coffea_to_h5(
 
     cols = coffea.util.load(coffea_path)[columns_key]
 
-    
-    path_base=os.path.splitext(h5_path)[0]
-    out_dir_name= os.path.dirname(h5_path)
-    os.makedirs(out_dir_name, exist_ok=True)
-    
-    for jet_coll in JET_COLLECTIONS_LIST:
+    path_base = os.path.splitext(h5_path)[0]
+    out_dir_name = os.path.dirname(h5_path)
+    if out_dir_name:
+        os.makedirs(out_dir_name, exist_ok=True)
+
+    for jet_coll in jet_collections:
         # initialize the random numbers for every collection
-        # so that the order remains the same 
+        # so that the order remains the same
         rng = np.random.default_rng(SEED)
-        
+
         h5_tr = f"{path_base}{jet_coll}_train.h5"
         h5_te = f"{path_base}{jet_coll}_test.h5"
 
@@ -385,13 +381,12 @@ def coffea_to_h5(
                         raise ValueError(
                             f"Region '{region}' not found for dataset '{skey}' dataset '{dataset}'"
                         )
-                    
+
                     if args.novars:
                         payload = cols[skey][dataset][region]
                     else:
-                        variation="nominal"
+                        variation = "nominal"
                         payload = cols[skey][dataset][region][variation]
-                        
 
                     w = to_numpy_event_vector(payload[weight_name])
                     N = len(w)
@@ -415,13 +410,21 @@ def coffea_to_h5(
 
                     cls = np.full(N, class_idx, dtype=np.int64)
                     write_block_split(
-                        tr_c, te_c, ["EVENT", "class"], cls, train_mask, test_mask, shuffle
+                        tr_c,
+                        te_c,
+                        ["EVENT", "class"],
+                        cls,
+                        train_mask,
+                        test_mask,
+                        shuffle,
                     )
 
                     jet_counts = None
                     jetN = f"{jet_coll}_N"
                     if jetN in payload:
-                        jet_counts = to_numpy_event_vector(payload[jetN]).astype(np.int64)
+                        jet_counts = to_numpy_event_vector(payload[jetN]).astype(
+                            np.int64
+                        )
 
                     jet_pt = unflatten_to_jagged(
                         unwrap_accumulator(payload[f"{jet_coll}_pt"]), jet_counts
@@ -461,12 +464,18 @@ def coffea_to_h5(
                         )
 
                         for (r, q), arr in targets_tr.items():
-                            ensure_resizable_dataset(tr_t, [r, q], cast_int64(arr), shuffle)
+                            ensure_resizable_dataset(
+                                tr_t, [r, q], cast_int64(arr), shuffle
+                            )
 
                         for (r, q), arr in targets_te.items():
-                            ensure_resizable_dataset(te_t, [r, q], cast_int64(arr), shuffle)
+                            ensure_resizable_dataset(
+                                te_t, [r, q], cast_int64(arr), shuffle
+                            )
                     else:
-                        create_dummy_targets(N, tr_t, te_t, train_mask, test_mask, shuffle)
+                        create_dummy_targets(
+                            N, tr_t, te_t, train_mask, test_mask, shuffle
+                        )
 
                     for name, arr in payload.items():
                         if name == weight_name:
@@ -475,10 +484,10 @@ def coffea_to_h5(
                         coll, var = infer_collection_and_var(name)
                         arr_u = unwrap_accumulator(arr)
                         is_jet = coll == jet_coll and var != "N"
-                        is_global = var in GLOBAL_VARIABLES or (
-                            not is_jet and "all" in GLOBAL_VARIABLES and coll == "events"
+                        is_global = name in global_variables or (
+                            "all" in global_variables and f"{coll}_N" not in payload
                         )
-                        
+
                         if is_jet or is_global:
                             print(
                                 f"Processing {skey} {dataset} {region} variable {name} with shape {arr_u.shape} (jet: {is_jet}, global: {is_global})"
@@ -514,6 +523,10 @@ def coffea_to_h5(
                                 jet_mask_written = True
                         elif is_global:
                             arr_ev = to_numpy_event_vector(arr_u)
+                            # replace coffea padding to h5 padding
+                            arr_ev = ak.where(
+                                arr_ev == COFFEA_PADDING_VALUE, H5_PADDING_VALUE, arr_ev
+                            )
                             write_block_split(
                                 tr_in,
                                 te_in,
@@ -523,12 +536,13 @@ def coffea_to_h5(
                                 test_mask,
                                 shuffle,
                             )
-                            
 
                     # Get the various k-values for each dataset
                     if "GluGlu" in dataset:
                         kl_val = extract_param_value(dataset, "kl")
-                        kl_val_array = kl_val * ak.ones_like(to_numpy_event_vector(payload[weight_name]))
+                        kl_val_array = kl_val * ak.ones_like(
+                            to_numpy_event_vector(payload[weight_name])
+                        )
                         write_block_split(
                             tr_in,
                             te_in,
@@ -538,12 +552,14 @@ def coffea_to_h5(
                             test_mask,
                             shuffle,
                         )
-                    
+
                     if "VBF" in dataset:
-                        # Get the C2V and not the k_lambda because the c2v is unique for each dataset of vbf 
+                        # Get the C2V and not the k_lambda because the c2v is unique for each dataset of vbf
                         # while the k_lambda is not
                         c2v_val = extract_param_value(dataset, "C2V")
-                        c2v_val_array = c2v_val * ak.ones_like(to_numpy_event_vector(payload[weight_name]))
+                        c2v_val_array = c2v_val * ak.ones_like(
+                            to_numpy_event_vector(payload[weight_name])
+                        )
                         write_block_split(
                             tr_in,
                             te_in,
@@ -566,7 +582,12 @@ def parse_args():
     p = argparse.ArgumentParser("coffea → HDF5 converter")
 
     p.add_argument("-i", "--input", required=True, help="Input coffea file path")
-    p.add_argument("-o", "--output", required=True, help="Output HDF5 file path prefix (e.g. path/to/file/prefix_name)")
+    p.add_argument(
+        "-o",
+        "--output",
+        required=True,
+        help="Output HDF5 file path prefix (e.g. path/to/file/prefix_name)",
+    )
     p.add_argument(
         "-r",
         "--regions",
@@ -574,7 +595,6 @@ def parse_args():
         default=["2b_signal_region_postW", "4b_signal_region"],
         help="Regions to use for each class label",
     )
-
     p.add_argument(
         "-cl",
         "--class-labels",
@@ -582,7 +602,20 @@ def parse_args():
         default=["DATA", "GluGlu"],
         help="Class labels to use for classification",
     )
-
+    p.add_argument(
+        "-j",
+        "--jets",
+        nargs="+",
+        default=["JetTotalSPANetPtFlattenPadded", "JetTotalSPANetPadded"],
+        help="Jet collections to process (must match keys in coffea file)",
+    )
+    p.add_argument(
+        "-g",
+        "--global-vars",
+        nargs="+",
+        default=["all"],
+        help="Global variables to save, or 'all' to save all non-jet variables as global variables",
+    )
     p.add_argument("-m", "--max-jets", type=int, default=5, help="Max jets to keep")
     p.add_argument(
         "-tf", "--train-frac", type=float, default=0.8, help="Train fraction"
@@ -597,7 +630,6 @@ def parse_args():
         default=False,
     )
 
-
     return p.parse_args()
 
 
@@ -609,6 +641,8 @@ if __name__ == "__main__":
         h5_path=args.output,
         regions=args.regions,
         class_labels=args.class_labels,
+        jet_collections=args.jets,
+        global_variables=args.global_vars,
         max_jets=args.max_jets,
         train_frac=args.train_frac,
         do_data_shuffling=not args.no_shuffle,

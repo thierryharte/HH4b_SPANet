@@ -69,13 +69,16 @@ python -m spanet.train --help
 To convert the coffea files outputs of [PocketCoffea](https://pocketcoffea.readthedocs.io/en/latest/?badge=latest) (see [HH4b README](https://github.com/matteomalucchi/AnalysisConfigs/blob/main/configs/HH4b_common/README.md) for further information) into h5 files used as input for SPNANet, you can use `utils/dataset/coffea_to_h5_direct.py` script with the following instructions:
 
 ```bash
-python utils/dataset/coffea_to_h5_direct.py --input <input_coffea_file> --output <output_h5_file>  --regions <list_of_regions_per_class> --class-labels <list_of_classes> --max-jets <max_num_jets_or_pairing> --train-frac <fraction_used_for_training> [--no-shuffle] 
+python utils/dataset/coffea_to_h5_direct.py --input <input_coffea_file> --output <output_h5_file>  --regions <list_of_regions_per_class> --class-labels <list_of_classes> --jets <jet_collections_to_convert> --max-jets <max_num_jets_or_pairing> --train-frac <fraction_used_for_training> [--no-shuffle] 
+
+# example for ggf spanet training
+python utils/dataset/coffea_to_h5_direct.py --input output_all.coffea --output spanet_training_input.h5  --regions 4b_region --class-labels GluGlu --jets JetTotalSPANetPtFlattenPadded JetTotalSPANetPadded --max-jets 5
 
 # example for vbf ggf spanet training
-python utils/dataset/coffea_to_h5_direct.py --input output_all.coffea --output spanet_training_input.h5  --regions 4b_region 4b_region --class-labels GluGlu VBF --max-jets 9
+python utils/dataset/coffea_to_h5_direct.py --input output_all.coffea --output spanet_training_input.h5  --regions 4b_region 4b_region --class-labels GluGlu VBF --jets JetTotalSPANetPtFlattenPadded JetTotalSPANetPadded --max-jets 9
 
 # example for HH4b vs Bkg spanet classification 
-python utils/dataset/coffea_to_h5_direct.py --input output_all.coffea --output spanet_training_input.h5  --regions 2b_signal_region_postW 4b_signal_region --class-labels DATA GluGlu --max-jets 5
+python utils/dataset/coffea_to_h5_direct.py --input output_all.coffea --output spanet_training_input.h5  --regions 2b_signal_region_postW 4b_signal_region --class-labels DATA GluGlu --jets JetGoodFromHiggsOrdered --max-jets 5
 ```
 
 > [!IMPORTANT]
