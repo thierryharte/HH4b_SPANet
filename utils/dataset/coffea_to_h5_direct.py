@@ -407,6 +407,19 @@ def coffea_to_h5(
                         test_mask,
                         shuffle,
                     )
+                else:
+                    kl_padding = H5_PADDING_VALUE * ak.ones_like(to_numpy_event_vector(payload[weight_name]))
+                    write_block_split(
+                        tr_in,
+                        te_in,
+                        ["Event", "kl"],
+                        cast_floats32(kl_padding),
+                        train_mask,
+                        test_mask,
+                        shuffle,
+                    )
+
+
 
                     cls = np.full(N, class_idx, dtype=np.int64)
                     write_block_split(
