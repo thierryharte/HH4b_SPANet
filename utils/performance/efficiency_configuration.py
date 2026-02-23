@@ -139,6 +139,12 @@ spanet_dict = {
         "label": "SPANet btag 5 WP - Flattened pt [0.3,1.7] - 3L1 triggers",
         "color": "firebrick",
     },
+    "5_jets_ptvary_nobtag_5wp_300e_3L1cuts_allklambda": {
+        "file": f"{spanet_dir}1_14_8_h4b_5jets_ptvary_loose_300_nobtag_newLeptonVeto_3L1Cut_UpdateJetVetoMap.h5",
+        "true": "5_jets_pt_true_5wp_3L1cuts_allklambda",
+        "label": "SPANet no-btag - Flattened pt [0.3,1.7] - 3L1 triggers",
+        "color": "forestgreen",
+    },
     # '5_jets_ptvary_btag_5wp_300e_NoL1cuts_allklambda': {
     #     'file': f'{spanet_dir}1_13_2_spanet_loose_MC_postEE_pt_vary_btagWP_s100_newLeptonVeto_NoL1Cut_UpdateJetVetoMap_MC.h5',
     #     'true': '5_jets_pt_true_5wp_NoL1cuts_allklambda',
