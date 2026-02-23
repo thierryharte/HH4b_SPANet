@@ -9,13 +9,13 @@ import h5py
 import numpy as np
 
 
-JET_COLLECTIONS_LIST = ["JetTotalSPANetPtFlattenPadded","JetTotalSPANetPadded"]
-
+# JET_COLLECTIONS_LIST = ["JetTotalSPANetPtFlattenPadded","JetTotalSPANetPadded"]
+JET_COLLECTIONS_LIST = [ "JetGoodFromHiggsOrdered"]
 KEEP_TOGETHER_COLLECTIONS = ["add_jet1pt"]
 
 # "all" means all non-jet variables are saved as global variables
 # leave empty list to disable global variables
-GLOBAL_VARIABLES = [""]
+GLOBAL_VARIABLES = ["all"]
 
 COFFEA_PADDING_VALUE = -999.0
 H5_PADDING_VALUE = 9999.0
@@ -412,6 +412,19 @@ def coffea_to_h5(
                         test_mask,
                         shuffle,
                     )
+                else:
+                    kl_padding = H5_PADDING_VALUE * ak.ones_like(to_numpy_event_vector(payload[weight_name]))
+                    write_block_split(
+                        tr_in,
+                        te_in,
+                        ["Event", "kl"],
+                        cast_floats32(kl_padding),
+                        train_mask,
+                        test_mask,
+                        shuffle,
+                    )
+
+
 
                     cls = np.full(N, class_idx, dtype=np.int64)
                     write_block_split(
