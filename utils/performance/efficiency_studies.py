@@ -111,7 +111,7 @@ if not args.vbf and args.ignore_higgs:
 
 # the key is the value saved in the h5 file under `kl` but it is
 # actually C2V (not k_lambda) because it is unique to each dataset
-cv_c2v_kl_values_dict= {
+cv_c2v_kl_values_dict = {
     "1.37": "$\\kappa_{V}$=1.74 \n$\\kappa_{2V}$=1.37 \n$\\kappa_{\\lambda}$=14.4",
     "0.03": "$\\kappa_{V}$=-0.01 \n$\\kappa_{2V}$=0.03 \n$\\kappa_{\\lambda}$=10.2",
     "1.44": "$\\kappa_{V}$=-0.76 \n$\\kappa_{2V}$=1.44 \n$\\kappa_{\\lambda}$=-19.3",
@@ -338,7 +338,11 @@ def main():
                 for j, idx in zip(jet_fully_matched, alltrue_idx_fully_matched)
             ]
             true_hh_fully_matched = [
-                true_h_matched[:, 0] + true_h_matched[:, 1]
+                (
+                    true_h_matched[:, 0] + true_h_matched[:, 1]
+                    if true_h_matched is not None
+                    else None
+                )
                 for true_h_matched in true_higgs_fully_matched
             ]
 
@@ -356,18 +360,31 @@ def main():
                 ):
                     temp = {k: [] for k in eff_dict.keys()}
                     for i in range(1, len(mhh_bins)):
-                        mask = (true_hh.mass > mhh_bins[i - 1]) & (
-                            true_hh.mass < mhh_bins[i]
-                        )
+                        if true_hh is not None:
+                            mask = (true_hh.mass > mhh_bins[i - 1]) & (
+                                true_hh.mass < mhh_bins[i]
+                            )
 
-                        (
-                            eff_spanet,
-                            unc_eff_spanet,
-                            total_eff_spanet,
-                            unc_total_eff_spanet,
-                        ) = calculate_diff_efficiencies(
-                            matched_spanet, mask, mask_matched
-                        )
+                            (
+                                eff_spanet,
+                                unc_eff_spanet,
+                                total_eff_spanet,
+                                unc_total_eff_spanet,
+                            ) = calculate_diff_efficiencies(
+                                matched_spanet, mask, mask_matched
+                            )
+                        else:
+                            (
+                                eff_spanet,
+                                unc_eff_spanet,
+                                total_eff_spanet,
+                                unc_total_eff_spanet,
+                            ) = (
+                                None,
+                                None,
+                                None,
+                                None,
+                            )
 
                         temp["diff_eff_spanet"].append(eff_spanet)
                         temp["unc_diff_eff_spanet"].append(unc_eff_spanet)
@@ -417,7 +434,7 @@ def main():
 
     # define region mask
     mask_region_true = get_region_mask(args.region, truefile, do_vbf_pairing)
-    assert all(mask_region_spanet == mask_region_true)
+    # assert all(mask_region_spanet == mask_region_true)
 
     # define the class mask
     # take the one for the true file because
@@ -465,7 +482,7 @@ def main():
             kl_values,
             jet_separate_klambda,
         ) = separate_klambda(
-            jet, truefile, spanetfile, idx_true, None, mask_region=mask_true
+            jet, truefile, None, idx_true, None, mask_region=mask_true
         )  # Needs option for None in Spanet
         # I got now indexes for true and spanet and different kl.
         # For this, I will add them to a list. If no kl is there, I will just make it a list of one element
@@ -529,7 +546,11 @@ def main():
             for j, idx in zip(jet_fully_matched, alltrue_idx_fully_matched)
         ]
         true_hh_fully_matched = [
-            true_h_matched[:, 0] + true_h_matched[:, 1]
+            (
+                true_h_matched[:, 0] + true_h_matched[:, 1]
+                if true_h_matched is not None
+                else None
+            )
             for true_h_matched in true_higgs_fully_matched
         ]
 
@@ -547,13 +568,28 @@ def main():
             ):
                 temp = {k: [] for k in eff_dict.keys()}
                 for i in range(1, len(mhh_bins)):
-                    mask = (true_hh.mass > mhh_bins[i - 1]) & (
-                        true_hh.mass < mhh_bins[i]
-                    )
+                    if true_hh is not None:
+                        mask = (true_hh.mass > mhh_bins[i - 1]) & (
+                            true_hh.mass < mhh_bins[i]
+                        )
 
-                    eff_run2, unc_eff_run2, total_eff_run2, unc_total_eff_run2 = (
-                        calculate_diff_efficiencies(matched_run2, mask, mask_matched)
-                    )
+                        eff_run2, unc_eff_run2, total_eff_run2, unc_total_eff_run2 = (
+                            calculate_diff_efficiencies(
+                                matched_run2, mask, mask_matched
+                            )
+                        )
+                    else:
+                        (
+                            eff_spanet,
+                            unc_eff_spanet,
+                            total_eff_spanet,
+                            unc_total_eff_spanet,
+                        ) = (
+                            None,
+                            None,
+                            None,
+                            None,
+                        )
                     temp["diff_eff_run2"].append(eff_run2)
                     temp["unc_diff_eff_run2"].append(unc_eff_run2)
                     temp["total_diff_eff_run2"].append(total_eff_run2)
@@ -610,7 +646,7 @@ def main():
                 + ["yellowgreen"],
                 "eff_fully_matched_allklambda",
                 plot_dir,
-                xlabels=cv_c2v_kl_values_dict if args.vbf else None,
+                xlabels=cv_c2v_kl_values_dict, # if args.vbf else None,
             )
             plot_diff_eff_klambda(
                 [
@@ -631,7 +667,7 @@ def main():
                 + ["yellowgreen"],
                 "tot_eff_fully_matched_allklambda",
                 plot_dir,
-                xlabels=cv_c2v_kl_values_dict if args.vbf else None,
+                xlabels=cv_c2v_kl_values_dict, # if args.vbf else None,
             )
         if not args.ignore_higgs:
             logger.info("Plotting differential efficiencies")

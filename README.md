@@ -340,12 +340,16 @@ This repo contains also a script to determine the pairing efficiency of the mode
 To add a new model, you just have to add a sub-dictionary to the `spanet_dict` in the configuration for the efficiency script you want to use (e.g. `utils/performance/efficiency_configuration.py`)
 
 ```python
-#e.g.
-'5_jets_pt_btag_wp_300e_allklambda':{
-    'file': '/eos/user/t/tharte/Analysis_data/predictions/spanet_hh4b_5jets_300_ptreg_loose_s100_btag_wp.h5',
-    'true': '5_jets_pt_true_wp_allklambda',
-    'label': 'SPANet btag WP',
-    'color': 'orange',
+# e.g.
+spanet_dict = {
+    ...
+    '5_jets_pt_btag_wp_300e_allklambda':{
+        'file': '/eos/user/t/tharte/Analysis_data/predictions/spanet_hh4b_5jets_300_ptreg_loose_s100_btag_wp.h5',
+        'true': '5_jets_pt_true_wp_allklambda',
+        'label': 'SPANet btag WP',
+        'color': 'orange',
+    },
+    ...
 }
 ```
 
@@ -353,16 +357,20 @@ and then add the corresponding item in the `true_dict` (if not already present)
 
 ```python
 #e.g.
-"5_jets_pt_true_wp_allklambda": {
-    "name": "/eos/user/t/tharte/Analysis_data/spanet_samples/loose_MC_postEE_btagWP/output_JetGood_test.h5",
-    "klambda": "postEE",
-},
+true_dict = {
+    ...
+    "5_jets_pt_true_wp_allklambda": {
+        "name": "/eos/user/t/tharte/Analysis_data/spanet_samples/loose_MC_postEE_btagWP/output_JetGood_test.h5",
+        "klambda": "postEE",
+    },
+    ...
+}
 ```
 
 > [!IMPORTANT]
 > When evaluating the performance of a model trained on a file where the jet pT was flattened, remember to put here the files where the pT is not flattened for both the prediction and true files!
 
-And then in the target folder, you can run this inside the singularity.
+And then in the target folder, you can run this inside the singularity to plot the efficiency for different configurations.
 
 ```bash
 #Enter the singularity
@@ -379,18 +387,29 @@ python utils/performance/efficiency_studies.py -pd <plot_dir> -k [-conf <relativ
 # Alternatively just run on the data samples, to analyse the mass sculpting:
 python utils/performance/efficiency_studies.py -pd <plot_dir> -d --histo-mass
 
+# To only on ggF events (if the file has a mixture of ggF and VBF events where the class indicating the VBF is 1):
+python3 utils/performance/efficiency_studies.py -pd <plot_dir> -c 0 -k
+
+## VBF configurations ##
+
 # To compute the efficiency also for vbf jets on actual vbf events (if the file has a mixture of ggF and VBF events where the class indicating the VBF is 1):
-python utils/performance/efficiency_studies.py -pd <plot_dir> --vbf -c 1 -conf utils/performance/efficiency_configuration_vbf_ggf.py
+python utils/performance/efficiency_studies.py -pd <plot_dir> --vbf -c 1 -conf utils/performance/efficiency_configuration_vbf_ggf.py  -k
 
 # compute only vbf pairing (ignore higgs pairing) for vbf events with the vbf preselection  (mjj>400 and delta eta<3.5)
-python3 utils/performance/efficiency_studies.py -pd <plot_dir> --vbf -c 1 -ih -r vbf_presel  -conf utils/performance/efficiency_configuration_vbf_ggf.py
+python utils/performance/efficiency_studies.py -pd <plot_dir> --vbf -c 1 -ih -r vbf_presel  -conf utils/performance/efficiency_configuration_vbf_ggf.py  -k
  
 # compute only vbf pairing (ignore higgs pairing) for vbf events with the vbf jets requirement (ask just that there are additional jets but w/o kin cuts)
-python3 utils/performance/efficiency_studies.py -pd <plot_dir> --vbf -c 1 -ih -r vbf_no_kin_cuts  -conf utils/performance/efficiency_configuration_vbf_ggf.py
+python utils/performance/efficiency_studies.py -pd <plot_dir> --vbf -c 1 -ih -r vbf_no_kin_cuts  -conf utils/performance/efficiency_configuration_vbf_ggf.py  -k
 
+# run Higgs pairing (without VBF pairing) on ggF events
+python utils/performance/efficiency_studies.py -pd <plot_dir>  -c 0 -conf utils/performance/efficiency_configuration_vbf_ggf.py --histo-mass  -k
 
-# To ignore the vbf events (if the file has a mixture of ggF and VBF events where the class indicating the VBF is 1):
-python utils/performance/efficiency_studies.py -pd <plot_dir> -c 0
+# run Higgs pairing (without VBF pairing) on VBF events
+python utils/performance/efficiency_studies.py -pd <plot_dir>  -c 1 -conf utils/performance/efficiency_configuration_vbf_ggf.py --histo-mass  -k
+
+# run Higgs pairing (without VBF pairing) on ggF+VBF events
+python utils/performance/efficiency_studies.py -pd <plot_dir>  -conf utils/performance/efficiency_configuration_vbf_ggf.py --histo-mass  -k
+
 ```
 
 > [!TIP]

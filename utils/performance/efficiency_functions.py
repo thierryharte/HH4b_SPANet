@@ -111,18 +111,21 @@ def get_class_mask(class_label, column_file):
             )
             mask = class_array == int(class_label)
         except KeyError:
-            logger.info(
-                'The file doesn\'t contain an "EVENT" array, so trying with "Event" instead'
-            )
-            class_array = column_file["CLASSIFICATIONS"]["Event"]["class"][()].astype(
-                np.int64
-            )
-            mask = class_array == int(class_label)
-        except KeyError:
-            logger.warning(
-                "The file doesn't contain a class array. Setting the mask for the class to True ..."
-            )
-            mask = ak.ones_like(column_file["INPUTS"]["Jet"]["MASK"][:, 0])
+            try:
+                logger.info(
+                    'The file doesn\'t contain an "EVENT" array, so trying with "Event" instead'
+                )
+                class_array = column_file["CLASSIFICATIONS"]["Event"]["class"][
+                    ()
+                ].astype(np.int64)
+                mask = class_array == int(class_label)
+            except KeyError:
+                logger.warning(
+                    "The file doesn't contain a class array. Setting the mask for the class to True ..."
+                )
+                mask = ak.ones_like(column_file["INPUTS"]["Jet"]["MASK"][:, 0])
+    else:
+        mask = ak.ones_like(column_file["INPUTS"]["Jet"]["MASK"][:, 0])
 
     return mask
 
@@ -459,38 +462,41 @@ def reco_higgs(jet_collection, idx_collection):
 
 
 def best_reco_higgs(jet_collection, idx_collection, higgs=True):
-    if higgs:
-        higgs_1 = ak.unflatten(
-            jet_collection[np.arange(len(idx_collection)), idx_collection[:, 0, 0]]
-            + jet_collection[np.arange(len(idx_collection)), idx_collection[:, 0, 1]],
-            1,
-        )
-        higgs_2 = ak.unflatten(
-            jet_collection[np.arange(len(idx_collection)), idx_collection[:, 1, 0]]
-            + jet_collection[np.arange(len(idx_collection)), idx_collection[:, 1, 1]],
-            1,
-        )
-
-        higgs_pair = ak.concatenate([higgs_1, higgs_2], axis=1)
-
-        # order the higgs candidates by pt
-        higgs_candidates_unflatten_order_idx = ak.argsort(
-            higgs_pair.pt, axis=1, ascending=False
-        )
-        higgs_candidates_unflatten_order = higgs_pair[
-            higgs_candidates_unflatten_order_idx
-        ]
-    else:
-        # if we don't reconstruct the higgs, put a dummy output
-        higgs_candidates_unflatten_order = ak.ones_like(
-            ak.concatenate(
-                [
-                    ak.unflatten(idx_collection[:, 0, 0], 1),
-                    ak.unflatten(idx_collection[:, 0, 0], 1),
-                ],
-                axis=1,
+    if len(jet_collection)>0:
+        if higgs:
+            higgs_1 = ak.unflatten(
+                jet_collection[np.arange(len(idx_collection)), idx_collection[:, 0, 0]]
+                + jet_collection[np.arange(len(idx_collection)), idx_collection[:, 0, 1]],
+                1,
             )
-        )
+            higgs_2 = ak.unflatten(
+                jet_collection[np.arange(len(idx_collection)), idx_collection[:, 1, 0]]
+                + jet_collection[np.arange(len(idx_collection)), idx_collection[:, 1, 1]],
+                1,
+            )
+
+            higgs_pair = ak.concatenate([higgs_1, higgs_2], axis=1)
+
+            # order the higgs candidates by pt
+            higgs_candidates_unflatten_order_idx = ak.argsort(
+                higgs_pair.pt, axis=1, ascending=False
+            )
+            higgs_candidates_unflatten_order = higgs_pair[
+                higgs_candidates_unflatten_order_idx
+            ]
+        else:
+            # if we don't reconstruct the higgs, put a dummy output
+            higgs_candidates_unflatten_order = ak.ones_like(
+                ak.concatenate(
+                    [
+                        ak.unflatten(idx_collection[:, 0, 0], 1),
+                        ak.unflatten(idx_collection[:, 0, 0], 1),
+                    ],
+                    axis=1,
+                )
+            )
+    else:
+        higgs_candidates_unflatten_order=None
 
     return higgs_candidates_unflatten_order
 
@@ -1014,12 +1020,8 @@ def separate_klambda(
     except KeyError:
         logger.info("Did not find Event/kl in kl_array_true, will try EVENT/kl")
         kl_array_true = df_true["INPUTS"]["EVENT"]["kl"][()][mask_region]
-    try:
-        kl_array_spanet = df_spanet_pred["INPUTS"]["Event"]["kl"][()][mask_region]
-    except KeyError:
-        logger.info("Did not find Event/kl in kl_array_spanet, will try EVENT/kl")
-        kl_array_spanet = df_spanet_pred["INPUTS"]["EVENT"]["kl"][()][mask_region]
-    logger.info(f"kl_arrays {kl_array_spanet}")
+
+    logger.info(f"kl_arrays {kl_array_true}")
 
     # for each kl_array, separate the array based on the kl value
     # and create a list of arrays with the same kl value
@@ -1043,7 +1045,13 @@ def separate_klambda(
         kl_values.append(kl)
         jet_separate_klambda.append(jet[mask])
 
-    if idx_spanet_pred is not None:
+    if df_spanet_pred is not None and idx_spanet_pred is not None:
+        try:
+            kl_array_spanet = df_spanet_pred["INPUTS"]["Event"]["kl"][()][mask_region]
+        except KeyError:
+            logger.info("Did not find Event/kl in kl_array_spanet, will try EVENT/kl")
+            kl_array_spanet = df_spanet_pred["INPUTS"]["EVENT"]["kl"][()][mask_region]
+
         kl_unique_spanet = np.unique(kl_array_spanet)
         spanet_kl_idx_list = []
         for kl in kl_unique_spanet:

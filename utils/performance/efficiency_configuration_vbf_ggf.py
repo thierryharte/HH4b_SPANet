@@ -41,16 +41,29 @@ spanet_dict = {
     # 'hh4b_pairing_vbf_ggf_pairing_classification': {
     #     'file': f'{new_spanet_dir_matteo}/out_hh4b_pairing_vbf_ggf_pairing_classification/out_seed_trainings_100/version_2/predicitons.h5',
     #     'true': '9_jets_vbf_ggf_SM',
-    #     'label': 'SPANet - VBF/ggF',
+    #     'label': 'SPANet - VBF/ggF - pairing+classification',
     #     'color': 'orange',
     #     'vbf': True,
     # },
-    'hh4b_pairing_vbf_ggf_pairing_classification_allKalmbda': {
+    'hh4b_pairing_vbf_ggf_pairing_allKalmbda': {
         'file': f'{new_spanet_dir_matteo}/out_hh4b_pairing_vbf_ggf_pairing_classification_allKlambda/out_seed_trainings_100/version_1/JetTotalSPANetPadded_kl_combined_test_vbf_all_Klambda_predicitons.h5',
         'true': '9_jets_vbf_ggf_all_Klambda',
-        'label': 'SPANet - VBF/ggF',
+        'label': 'SPANet - VBF/ggF - pairing',
         'color': 'orange',
         'vbf': True,
+    },
+    'hh4b_pairing_vbf_ggf_pairing_classification_allKalmbda': {
+        'file': f'{new_spanet_dir_matteo}/out_hh4b_pairing_vbf_ggf_pairing_classification_allKlambda/out_seed_trainings_100/version_2/JetTotalSPANetPadded_kl_combined_EVENT_AllKlambda_classification_ptvarytraining_reverse_test.h5',
+        'true': '9_jets_vbf_ggf_all_Klambda',
+        'label': 'SPANet - VBF/ggF - pairing+classification',
+        'color': 'blue',
+        'vbf': True,
+    },
+    "5_jets_ptvary_btag_5wp_300e_3L1cuts_allklambda": {
+        "file": f"/eos/user/t/tharte/Analysis_data/predictions/1_13_2_spanet_loose_MC_postEE_pt_vary_btagWP_s100_newLeptonVeto_3L1Cut_UpdateJetVetoMap_MC.h5",
+        "true": "5_jets_pt_true_5wp_3L1cuts_allklambda",
+        "label": "SPANet btag 5 WP - Flattened pt [0.3,1.7] - 3L1 triggers",
+        "color": "firebrick",
     },
     # ============================================= DATA ===========================================================
 }
@@ -67,5 +80,9 @@ true_dict = {
         "name": f"{new_true_dir_matteo}/vbf/vbf_all_Klambda/JetTotalSPANetPadded_kl_combined_test.h5",
         "klambda": "postEE",
         "vbf": True,
+    },
+    "5_jets_pt_true_5wp_3L1cuts_allklambda": {
+        "name": f"{true_dir_thierry}/1_13_2_loose_MC_postEE_pt_nominal_btagWP_newLeptonVeto_3L1Cut_UpdateJetVetoMap/output_JetGood_test.h5",
+        "klambda": "postEE",
     },
 }
