@@ -29,6 +29,14 @@ arg_parser.add_argument(
     help="number of trainings with random seeds",
 )
 arg_parser.add_argument(
+    "-cf",
+    "--checkpoint",
+    type=str,
+    default=None,
+    help="Optional checkpoint to load the training state from. "
+    "Fully restores model weights and optimizer state.",
+)
+arg_parser.add_argument(
     "-a",
     "--add_args",
     type=str,
@@ -62,12 +70,13 @@ if args.seeds:
 dir_name = os.path.splitext(os.path.basename(args.option))[0] + args.suffix
 add_args = f'--args "{args.add_args}"' if args.add_args else ""
 interactive_str = "--interactive" if args.interactive else ""
+checkpoint_str = f"--checkpoint {args.checkpoint}" if args.checkpoint else ""
 
 print(add_args)
 
 if args.seeds:
     for seed in range(seed_start, seed_end + 1):
-        cmd = "python3 {}/submit_to_condor.py --cfg {} -of {} -l out_spanet_outputs/out_{}/out_seed_trainings_{} --seed {} --outputdir {} {} {}".format(
+        cmd = "python3 {}/submit_to_condor.py --cfg {} -of {} -l out_spanet_outputs/out_{}/out_seed_trainings_{} --seed {} --outputdir {} {} {} {}".format(
             script_dir,
             args.config,
             args.option,
@@ -76,12 +85,13 @@ if args.seeds:
             seed,
             args.output_folder,
             interactive_str,
+            checkpoint_str,
             add_args,
         )
         subprocess.run(cmd, shell=True)
 else:
     for i in range(args.num):
-        cmd = "python3 {}/submit_to_condor.py --cfg {} -of {} -l out_spanet_outputs/out_{}/out_no_seed_trainings_{} --outputdir {} {} {}".format(
+        cmd = "python3 {}/submit_to_condor.py --cfg {} -of {} -l out_spanet_outputs/out_{}/out_no_seed_trainings_{} --outputdir {} {} {} {}".format(
             script_dir,
             args.config,
             args.option,
@@ -89,6 +99,7 @@ else:
             i,
             args.output_folder,
             interactive_str,
+            checkpoint_str,
             add_args,
         )
         subprocess.run(cmd, shell=True)

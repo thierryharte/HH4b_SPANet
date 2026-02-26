@@ -25,7 +25,7 @@ true_dir_matteo = (
 
 # uncomment the configurations that you want to use
 
-run2_dataset_MC = "5_jets_pt_true_5wp_3L1cuts_allklambda"
+run2_dataset_MC = "5_jets_pt_true_5wp_AN23_151_cuts_allklambda"
 run2_dataset_DATA = "5_jets_pt_true_wp_DATA_oldWP"
 
 spanet_dict = {
@@ -100,12 +100,12 @@ spanet_dict = {
     #     'true': '5_jets_pt_true_wp_allklambda_oldWP',
     #     'label': 'SPANet btag 3 WP - Flattened pt [0.3,1.7]',
     #     'color': 'coral'},
-    "5_jets_ptvary_btag_1wp_300e_allklambda": {
-        "file": f"{spanet_dir}spanet_hh4b_5jets_300_ptvary_loose_s100_btag_1wp.h5",
-        "true": "5_jets_pt_true_wp_allklambda_oldWP",
-        "label": "SPANet btag dummy WP - Flattened pt [0.3,1.7]",
-        "color": "orange",
-    },
+    # "5_jets_ptvary_btag_1wp_300e_allklambda": {
+    #     "file": f"{spanet_dir}spanet_hh4b_5jets_300_ptvary_loose_s100_btag_1wp.h5",
+    #     "true": "5_jets_pt_true_wp_allklambda_oldWP",
+    #     "label": "SPANet btag dummy WP - Flattened pt [0.3,1.7]",
+    #     "color": "orange",
+    # },
     # '5_jets_pt_btag_300e_allklambda_eval_on_WPfile': {
     #     'file': f'{spanet_dir}spanet_hh4b_5jets_300_predict_s160_btag_eval_on_btagWP.h5',
     #     'true': '5_jets_pt_true_wp_allklambda_oldWP',
@@ -121,29 +121,54 @@ spanet_dict = {
     #     'true': '5_jets_pt_true_wp_allklambda',
     #     'label': 'SPANet btag 5 DeltaWP - Flattened pt [0.3,1.7] - inclusive',
     #     'color': 'mediumseagreen'},
-    "5_jets_ptvary_btag_wp_inclusive_300e_allklambda": {
-        "file": f"{spanet_dir}spanet_hh4b_5jets_300_ptvary_loose_s100_btag_wp_inclusive.h5",
-        "true": "5_jets_pt_true_wp_allklambda",
-        "label": "SPANet btag 5 WP - Flattened pt [0.3,1.7] - inclusive",
-        "color": "deepskyblue",
-    },
+    # "5_jets_ptvary_btag_wp_inclusive_300e_allklambda": {
+    #     "file": f"{spanet_dir}spanet_hh4b_5jets_300_ptvary_loose_s100_btag_wp_inclusive.h5",
+    #     "true": "5_jets_pt_true_wp_allklambda",
+    #     "label": "SPANet btag 5 WP - Flattened pt [0.3,1.7] - inclusive",
+    #     "color": "deepskyblue",
+    # },
     # New cuts
     # '5_jets_ptvary_btag_wp_300e_allklambda': {
     #     'file': f'{spanet_dir}spanet_hh4b_5jets_300_ptvary_loose_s100_btag_wp.h5',
     #     'true': '5_jets_pt_true_wp_allklambda',
     #     'label': 'SPANet btag 5 WP - Flattened pt [0.3,1.7]',
     #     'color': 'orange'},
-    "5_jets_ptvary_btag_5wp_300e_3L1cuts_allklambda": {
-        "file": f"{spanet_dir}1_13_2_spanet_loose_MC_postEE_pt_vary_btagWP_s100_newLeptonVeto_3L1Cut_UpdateJetVetoMap_MC.h5",
-        "true": "5_jets_pt_true_5wp_3L1cuts_allklambda",
-        "label": "SPANet btag 5 WP - Flattened pt [0.3,1.7] - 3L1 triggers",
-        "color": "firebrick",
+    # "5_jets_ptvary_btag_5wp_300e_3L1cuts_allklambda": {
+    #     "file": f"{spanet_dir}1_13_2_spanet_loose_MC_postEE_pt_vary_btagWP_s100_newLeptonVeto_3L1Cut_UpdateJetVetoMap_MC.h5",
+    #     "true": "5_jets_pt_true_5wp_3L1cuts_allklambda",
+    #     "label": "SPANet btag 5 WP - Flattened pt [0.3,1.7] - 3L1 triggers",
+    #     "color": "firebrick",
+    # },
+    # "5_jets_ptvary_nobtag_5wp_300e_3L1cuts_allklambda": {
+    #     "file": f"{spanet_dir}1_14_8_h4b_5jets_ptvary_loose_300_nobtag_newLeptonVeto_3L1Cut_UpdateJetVetoMap.h5",
+    #     "true": "5_jets_pt_true_5wp_3L1cuts_allklambda",
+    #     "label": "SPANet no-btag - Flattened pt [0.3,1.7] - 3L1 triggers",
+    #     "color": "forestgreen",
+    # },
+    # ================== Cuts AN23-151 ======================
+    "5_jets_ptvary_btag_5wp_300e_AN23_151_cuts_4b_region_allklambda": {
+        "file": f"{spanet_dir}1_18_1_loose_postEE_pt_nominal_btagWP_newLeptonVeto_3L1Cut_UpdateJetVetoMap_AN23_151_cuts.h5",
+        "true": "5_jets_pt_true_5wp_AN23_151_cuts_allklambda",
+        "label": "SPANet btag5WP ptFlat - AN23_151 cuts 4b region",
+        "color": "royalblue",
     },
-    "5_jets_ptvary_nobtag_5wp_300e_3L1cuts_allklambda": {
-        "file": f"{spanet_dir}1_14_8_h4b_5jets_ptvary_loose_300_nobtag_newLeptonVeto_3L1Cut_UpdateJetVetoMap.h5",
-        "true": "5_jets_pt_true_5wp_3L1cuts_allklambda",
-        "label": "SPANet no-btag - Flattened pt [0.3,1.7] - 3L1 triggers",
-        "color": "forestgreen",
+    "5_jets_ptvary_btag_5wp_300e_AN23_151_cuts_inclusive_allklambda": {
+        "file": f"{spanet_dir}1_18_2_loose_postEE_ptvary_btagWP_newLeptonVeto_3L1Cut_UpdateJetVetoMap_AN23_151_cuts_inclusive_eval_4b_region.h5",
+        "true": "5_jets_pt_true_5wp_AN23_151_cuts_allklambda",
+        "label": "SPANet btag5WP ptFlat - AN23_151 cuts inclusive region eval 4b",
+        "color": "orange",
+    },
+    "5_jets_ptvary_btag_wp_inclusive_300e_allklambda": {
+        "file": f"{spanet_dir}spanet_hh4b_5jets_300_ptvary_loose_s100_btag_wp_inclusive_eval_AN23_151.h5",
+        "true": "5_jets_pt_true_5wp_AN23_151_cuts_allklambda",
+        "label": "SPANet btag5WP ptFlat - 3L1 inclusive eval AN23_151 4b",
+        "color": "deepskyblue",
+    },
+    "5_jets_ptvary_btag_5wp_300e_3L1cuts_allklambda": {
+        "file": f"{spanet_dir}1_13_2_spanet_loose_MC_postEE_pt_vary_btagWP_s100_newLeptonVeto_3L1Cut_UpdateJetVetoMap_MC_eval_AN23_151.h5",
+        "true": "5_jets_pt_true_5wp_AN23_151_cuts_allklambda",
+        "label": "SPANet btag5WP ptFlat - 3L1 eval AN23_151 4b",
+        "color": "firebrick",
     },
     # '5_jets_ptvary_btag_5wp_300e_NoL1cuts_allklambda': {
     #     'file': f'{spanet_dir}1_13_2_spanet_loose_MC_postEE_pt_vary_btagWP_s100_newLeptonVeto_NoL1Cut_UpdateJetVetoMap_MC.h5',
@@ -528,6 +553,14 @@ true_dict = {
     },
     "5_jets_pt_true_5wp_NoL1cuts_allklambda": {
         "name": f"{true_dir_thierry}../spanet_samples/1_13_2_loose_MC_postEE_pt_nominal_btagWP_newLeptonVeto_NoL1Cut_UpdateJetVetoMap/output_JetGood_test.h5",
+        "klambda": "postEE",
+    },
+    "5_jets_pt_true_5wp_AN23_151_cuts_allklambda": {
+        "name": f"{true_dir_thierry}../spanet_samples/1_18_1_loose_postEE_pt_nominal_btagWP_newLeptonVeto_3L1Cut_UpdateJetVetoMap_AN23_151_cuts/output_JetGood_test.h5",
+        "klambda": "postEE",
+    },
+    "5_jets_pt_true_5wp_AN23_151_cuts_inclusive_allklambda": {
+        "name": f"{true_dir_thierry}../spanet_samples/1_18_2_loose_postEE_pt_nominal_btagWP_newLeptonVeto_3L1Cut_UpdateJetVetoMap_AN23_151_cuts_inclusive/output_JetGood_test.h5",
         "klambda": "postEE",
     },
 }
