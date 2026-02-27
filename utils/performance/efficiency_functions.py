@@ -1,6 +1,6 @@
 import logging
 from math import sqrt
-
+import copy
 import awkward
 import awkward as ak
 import matplotlib as mpl
@@ -462,16 +462,31 @@ def reco_higgs(jet_collection, idx_collection):
 
 
 def best_reco_higgs(jet_collection, idx_collection, higgs=True):
-    if len(jet_collection)>0:
+    idx_collection_noNone = np.asarray(
+        ak.fill_none(copy.copy(idx_collection), -1), dtype=np.int64
+    )
+    if len(jet_collection) > 0:
         if higgs:
             higgs_1 = ak.unflatten(
-                jet_collection[np.arange(len(idx_collection)), idx_collection[:, 0, 0]]
-                + jet_collection[np.arange(len(idx_collection)), idx_collection[:, 0, 1]],
+                jet_collection[
+                    np.arange(len(idx_collection_noNone)),
+                    idx_collection_noNone[:, 0, 0],
+                ]
+                + jet_collection[
+                    np.arange(len(idx_collection_noNone)),
+                    idx_collection_noNone[:, 0, 1],
+                ],
                 1,
             )
             higgs_2 = ak.unflatten(
-                jet_collection[np.arange(len(idx_collection)), idx_collection[:, 1, 0]]
-                + jet_collection[np.arange(len(idx_collection)), idx_collection[:, 1, 1]],
+                jet_collection[
+                    np.arange(len(idx_collection_noNone)),
+                    idx_collection_noNone[:, 1, 0],
+                ]
+                + jet_collection[
+                    np.arange(len(idx_collection_noNone)),
+                    idx_collection_noNone[:, 1, 1],
+                ],
                 1,
             )
 
@@ -489,14 +504,14 @@ def best_reco_higgs(jet_collection, idx_collection, higgs=True):
             higgs_candidates_unflatten_order = ak.ones_like(
                 ak.concatenate(
                     [
-                        ak.unflatten(idx_collection[:, 0, 0], 1),
-                        ak.unflatten(idx_collection[:, 0, 0], 1),
+                        ak.unflatten(idx_collection_noNone[:, 0, 0], 1),
+                        ak.unflatten(idx_collection_noNone[:, 0, 0], 1),
                     ],
                     axis=1,
                 )
             )
     else:
-        higgs_candidates_unflatten_order=None
+        higgs_candidates_unflatten_order = None
 
     return higgs_candidates_unflatten_order
 
