@@ -407,19 +407,6 @@ def coffea_to_h5(
                         test_mask,
                         shuffle,
                     )
-                else:
-                    kl_padding = H5_PADDING_VALUE * ak.ones_like(to_numpy_event_vector(payload[weight_name]))
-                    write_block_split(
-                        tr_in,
-                        te_in,
-                        ["Event", "kl"],
-                        cast_floats32(kl_padding),
-                        train_mask,
-                        test_mask,
-                        shuffle,
-                    )
-
-
 
                     cls = np.full(N, class_idx, dtype=np.int64)
                     write_block_split(
@@ -565,8 +552,7 @@ def coffea_to_h5(
                             test_mask,
                             shuffle,
                         )
-
-                    if "VBF" in dataset:
+                    elif "VBF" in dataset:
                         # Get the C2V and not the k_lambda because the c2v is unique for each dataset of vbf
                         # while the k_lambda is not
                         c2v_val = extract_param_value(dataset, "C2V")
@@ -582,6 +568,17 @@ def coffea_to_h5(
                             test_mask,
                             shuffle,
                         )
+                    else:
+                        kl_padding = H5_PADDING_VALUE * ak.ones_like(to_numpy_event_vector(payload[weight_name]))
+                        write_block_split(
+                            tr_in,
+                            te_in,
+                            ["Event", "kl"],
+                            cast_floats32(kl_padding),
+                            train_mask,
+                            test_mask,
+                            shuffle,
+                        )
 
         print(f"Wrote: {h5_tr}, {h5_te}")
 
@@ -592,7 +589,7 @@ def coffea_to_h5(
 
 
 def parse_args():
-    p = argparse.ArgumentParser("coffea → HDF5 converter")
+    p = argparse.ArgumentParser("coffea → HDF5 converter", formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
     p.add_argument("-i", "--input", required=True, help="Input coffea file path")
     p.add_argument(
