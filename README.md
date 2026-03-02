@@ -398,6 +398,9 @@ python3 utils/performance/efficiency_studies.py -pd <plot_dir> -c 0 -k
 # To compute the efficiency also for vbf jets on actual vbf events (if the file has a mixture of ggF and VBF events where the class indicating the VBF is 1):
 python utils/performance/efficiency_studies.py -pd <plot_dir> --vbf -c 1 -conf utils/performance/efficiency_configuration_vbf_ggf.py  -k
 
+# compute only vbf pairing (ignore higgs pairing) for vbf events 
+python utils/performance/efficiency_studies.py -pd <plot_dir> --vbf -c 1 -ih -conf utils/performance/efficiency_configuration_vbf_ggf.py  -k
+
 # compute only vbf pairing (ignore higgs pairing) for vbf events with the vbf preselection  (mjj>400 and delta eta<3.5)
 python utils/performance/efficiency_studies.py -pd <plot_dir> --vbf -c 1 -ih -r vbf_presel  -conf utils/performance/efficiency_configuration_vbf_ggf.py  -k
  
