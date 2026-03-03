@@ -11,6 +11,45 @@ import numpy as np
 
 KEEP_TOGETHER_COLLECTIONS = ["add_jet1pt"]
 
+JET_COLLECTIONS_SEPARATE_HIGGS_VBF = [
+    {
+        "JetGoodProvHiggsPadded": {
+            "saved_jet_name": "JetHiggs",
+            "max_num_jets": 4,
+            "resonances": ["h1", "h2"],
+        },
+        "JetGoodVBFMergedProvVBFPadded": {
+            "saved_jet_name": "JetVBF",
+            "max_num_jets": 5,
+            "resonances": ["vbf"],
+        },
+    },
+    {
+        "JetGoodProvHiggsPtFlattenPadded": {
+            "saved_jet_name": "JetHiggs",
+            "max_num_jets": 4,
+            "resonances": ["h1", "h2"],
+        },
+        "JetGoodVBFMergedProvVBFPtFlattenPadded": {
+            "saved_jet_name": "JetVBF",
+            "max_num_jets": 5,
+            "resonances": ["vbf"],
+        },
+    },
+    {
+        "JetGoodProvHiggsPtFlattenPadded": {
+            "saved_jet_name": "JetHiggs",
+            "max_num_jets": 4,
+            "resonances": ["h1", "h2"],
+        },
+        "JetGoodVBFMergedProvVBFPadded": {
+            "saved_jet_name": "JetVBF",
+            "max_num_jets": 5,
+            "resonances": ["vbf"],
+        },
+    },
+]
+
 COFFEA_PADDING_VALUE = -999.0
 H5_PADDING_VALUE = 9999.0
 SEED = 9999
@@ -31,7 +70,7 @@ def is_awkward(x):
     return isinstance(x, (ak.Array, ak.Record))
 
 
-def create_resonances_targets_from_provenance(jets_prov, max_jets):
+def create_resonances_targets_from_provenance(jets_prov, max_jets, resonances=None):
     """
     Parameters
     ----------
@@ -56,6 +95,8 @@ def create_resonances_targets_from_provenance(jets_prov, max_jets):
     targets = {}
 
     for resonance, (prov_id, labels) in RESONANCES.items():
+        if resonances is not None and resonance not in resonances:
+            continue
 
         # mask jets belonging to this resonance
         mask = jets_prov == prov_id
@@ -73,6 +114,7 @@ def create_resonances_targets_from_provenance(jets_prov, max_jets):
         targets[(resonance, labels[0])] = ak.to_numpy(idx1)
         targets[(resonance, labels[1])] = ak.to_numpy(idx2)
 
+    # breakpoint()
     return targets
 
 
@@ -151,7 +193,9 @@ def to_numpy_event_vector(x):
         arr = np.asarray(unwrap_accumulator(arr.item()))
 
     if arr.ndim != 1:
-        raise ValueError(f"Expected 1D event vector, got shape {arr.shape}")
+        arr = arr.flatten()
+        print("WARNING: Flattening the array for global variables")
+        # raise ValueError(f"Expected 1D event vector, got shape {arr.shape}")
     if arr.dtype == object:
         raise TypeError("Object dtype after unwrapping")
     return arr
@@ -347,13 +391,29 @@ def coffea_to_h5(
     if out_dir_name:
         os.makedirs(out_dir_name, exist_ok=True)
 
-    for jet_coll in jet_collections:
+    if jet_collections[0] == "separate_higgs_vbf":
+        jet_collections = JET_COLLECTIONS_SEPARATE_HIGGS_VBF
+
+    for j, jet_coll_group in enumerate(jet_collections):
+
         # initialize the random numbers for every collection
         # so that the order remains the same
         rng = np.random.default_rng(SEED)
+        
+        # make sure jet_coll_group is a dictionary and put default values
+        if type(jet_coll_group) != dict:
+            jet_coll_group = {
+                jet_coll_group: {
+                    "saved_jet_name": "Jet",
+                    "max_num_jets": max_jets[j],
+                    "resonances": None,
+                }
+            }
 
-        h5_tr = f"{path_base}{jet_coll}_train.h5"
-        h5_te = f"{path_base}{jet_coll}_test.h5"
+        jet_coll_group_str = "_".join(list(jet_coll_group.keys()))
+
+        h5_tr = f"{path_base}{jet_coll_group_str}_train.h5"
+        h5_te = f"{path_base}{jet_coll_group_str}_test.h5"
 
         with h5py.File(h5_tr, "w") as ftr, h5py.File(h5_te, "w") as fte:
 
@@ -418,124 +478,156 @@ def coffea_to_h5(
                         test_mask,
                         shuffle,
                     )
+                    for jet_i, (jet_coll, jet_info_dict) in enumerate(
+                        jet_coll_group.items()
+                    ):
 
-                    jet_counts = None
-                    jetN = f"{jet_coll}_N"
-                    if jetN in payload:
-                        jet_counts = to_numpy_event_vector(payload[jetN]).astype(
-                            np.int64
-                        )
-
-                    jet_pt = unflatten_to_jagged(
-                        unwrap_accumulator(payload[f"{jet_coll}_pt"]), jet_counts
-                    )
-                    mask_jet_pt = (
-                        ak.to_numpy(
-                            ak.fill_none(
-                                ak.pad_none(
-                                    jet_pt,
-                                    max_jets,
-                                    clip=True,
-                                ),
-                                COFFEA_PADDING_VALUE,
-                            )
-                        )
-                        != COFFEA_PADDING_VALUE
-                    )
-
-                    jet_mask_written = False
-
-                    # Create the Targets
-                    prov_key = f"{jet_coll}_provenance"
-                    if prov_key in payload:
-                        jets_prov = unflatten_to_jagged(
-                            unwrap_accumulator(payload[prov_key]), jet_counts
-                        )
-
-                        # Split train / test *before* creating targets
-                        prov_tr = jets_prov[train_mask]
-                        prov_te = jets_prov[test_mask]
-
-                        targets_tr = create_resonances_targets_from_provenance(
-                            prov_tr, max_jets
-                        )
-                        targets_te = create_resonances_targets_from_provenance(
-                            prov_te, max_jets
-                        )
-
-                        for (r, q), arr in targets_tr.items():
-                            ensure_resizable_dataset(
-                                tr_t, [r, q], cast_int64(arr), shuffle
+                        jet_counts = None
+                        jetN = f"{jet_coll}_N"
+                        if jetN in payload:
+                            jet_counts = to_numpy_event_vector(payload[jetN]).astype(
+                                np.int64
                             )
 
-                        for (r, q), arr in targets_te.items():
-                            ensure_resizable_dataset(
-                                te_t, [r, q], cast_int64(arr), shuffle
+                        jet_pt = unflatten_to_jagged(
+                            unwrap_accumulator(payload[f"{jet_coll}_pt"]), jet_counts
+                        )
+                        # Define the jet mask
+                        mask_jet_pt = (
+                            ak.to_numpy(
+                                ak.fill_none(
+                                    ak.pad_none(
+                                        jet_pt,
+                                        jet_info_dict["max_num_jets"],
+                                        clip=True,
+                                    ),
+                                    COFFEA_PADDING_VALUE,
+                                )
                             )
-                    else:
-                        create_dummy_targets(
-                            N, tr_t, te_t, train_mask, test_mask, shuffle
+                            != COFFEA_PADDING_VALUE
                         )
 
-                    for name, arr in payload.items():
-                        if name == weight_name:
-                            continue
+                        jet_mask_written = False
 
-                        coll, var = infer_collection_and_var(name)
-                        arr_u = unwrap_accumulator(arr)
-                        is_jet = coll == jet_coll and var != "N"
-                        is_global = name in global_variables or (
-                            "all" in global_variables and f"{coll}_N" not in payload
-                        )
-
-                        if is_jet or is_global:
-                            print(
-                                f"Processing {skey} {dataset} {region} variable {name} with shape {arr_u.shape} (jet: {is_jet}, global: {is_global})"
+                        # Create the Targets
+                        prov_key = f"{jet_coll}_provenance"
+                        if prov_key in payload:
+                            jets_prov = unflatten_to_jagged(
+                                unwrap_accumulator(payload[prov_key]), jet_counts
                             )
 
-                        if is_jet:
-                            arr_np = np.asarray(arr_u)
-                            jets = (
-                                unflatten_to_jagged(arr_u, jet_counts)
-                                if arr_np.ndim == 1 and jet_counts is not None
-                                else arr_u
-                            )
+                            # Split train / test *before* creating targets
+                            prov_tr = jets_prov[train_mask]
+                            prov_te = jets_prov[test_mask]
 
-                            jtr, jte = jets[train_mask], jets[test_mask]
-                            mtr, mte = mask_jet_pt[train_mask], mask_jet_pt[test_mask]
-                            dtr = pad_clip_jets(jtr, max_jets)
-                            dte = pad_clip_jets(jte, max_jets)
-
-                            ensure_resizable_dataset(
-                                tr_in, ["Jet", var], cast_floats32(dtr), shuffle
+                            targets_tr = create_resonances_targets_from_provenance(
+                                prov_tr,
+                                jet_info_dict["max_num_jets"],
+                                jet_info_dict["resonances"],
                             )
-                            ensure_resizable_dataset(
-                                te_in, ["Jet", var], cast_floats32(dte), shuffle
+                            targets_te = create_resonances_targets_from_provenance(
+                                prov_te,
+                                jet_info_dict["max_num_jets"],
+                                jet_info_dict["resonances"],
                             )
-
-                            if not jet_mask_written:
+                            # breakpoint()
+                            for (r, q), arr in targets_tr.items():
                                 ensure_resizable_dataset(
-                                    tr_in, ["Jet", "MASK"], mtr, shuffle
+                                    tr_t, [r, q], cast_int64(arr), shuffle
+                                )
+
+                            for (r, q), arr in targets_te.items():
+                                ensure_resizable_dataset(
+                                    te_t, [r, q], cast_int64(arr), shuffle
+                                )
+                        else:
+                            create_dummy_targets(
+                                N, tr_t, te_t, train_mask, test_mask, shuffle
+                            )
+
+                        for name, arr in payload.items():
+                            if name == weight_name:
+                                continue
+
+                            coll, var = infer_collection_and_var(name)
+                            arr_u = unwrap_accumulator(arr)
+                            is_jet = coll == jet_coll and var != "N"
+                            is_global = (
+                                name in global_variables
+                                or (
+                                    "all" in global_variables
+                                    and f"{coll}_N" not in payload
+                                )
+                            ) and jet_i == 0
+
+                            if is_jet or is_global:
+                                print(
+                                    f"Processing {skey} {dataset} {region} variable {name} with shape {arr_u.shape} (jet: {is_jet}, global: {is_global})"
+                                )
+
+                            if is_jet:
+                                arr_np = np.asarray(arr_u)
+                                jets = (
+                                    unflatten_to_jagged(arr_u, jet_counts)
+                                    if arr_np.ndim == 1 and jet_counts is not None
+                                    else arr_u
+                                )
+
+                                jtr, jte = jets[train_mask], jets[test_mask]
+                                mtr, mte = (
+                                    mask_jet_pt[train_mask],
+                                    mask_jet_pt[test_mask],
+                                )
+                                dtr = pad_clip_jets(jtr, jet_info_dict["max_num_jets"])
+                                dte = pad_clip_jets(jte, jet_info_dict["max_num_jets"])
+
+                                ensure_resizable_dataset(
+                                    tr_in,
+                                    [jet_info_dict["saved_jet_name"], var],
+                                    cast_floats32(dtr),
+                                    shuffle,
                                 )
                                 ensure_resizable_dataset(
-                                    te_in, ["Jet", "MASK"], mte, shuffle
+                                    te_in,
+                                    [jet_info_dict["saved_jet_name"], var],
+                                    cast_floats32(dte),
+                                    shuffle,
                                 )
-                                jet_mask_written = True
-                        elif is_global:
-                            arr_ev = to_numpy_event_vector(arr_u)
-                            # replace coffea padding to h5 padding
-                            arr_ev = ak.where(
-                                arr_ev == COFFEA_PADDING_VALUE, H5_PADDING_VALUE, arr_ev
-                            )
-                            write_block_split(
-                                tr_in,
-                                te_in,
-                                [coll, var],
-                                cast_floats32(arr_ev),
-                                train_mask,
-                                test_mask,
-                                shuffle,
-                            )
+                                # if jet_coll == "JetGoodVBFMergedProvVBFPadded":
+                                #     breakpoint()
+
+                                if not jet_mask_written:
+                                    ensure_resizable_dataset(
+                                        tr_in,
+                                        [jet_info_dict["saved_jet_name"], "MASK"],
+                                        mtr,
+                                        shuffle,
+                                    )
+                                    ensure_resizable_dataset(
+                                        te_in,
+                                        [jet_info_dict["saved_jet_name"], "MASK"],
+                                        mte,
+                                        shuffle,
+                                    )
+                                    jet_mask_written = True
+
+                            elif is_global:
+                                arr_ev = to_numpy_event_vector(arr_u)
+                                # replace coffea padding to h5 padding
+                                arr_ev = ak.where(
+                                    arr_ev == COFFEA_PADDING_VALUE,
+                                    H5_PADDING_VALUE,
+                                    arr_ev,
+                                )
+                                write_block_split(
+                                    tr_in,
+                                    te_in,
+                                    [coll, var],
+                                    cast_floats32(arr_ev),
+                                    train_mask,
+                                    test_mask,
+                                    shuffle,
+                                )
 
                     # Get the various k-values for each dataset
                     if "GluGlu" in dataset:
@@ -569,7 +661,9 @@ def coffea_to_h5(
                             shuffle,
                         )
                     else:
-                        kl_padding = H5_PADDING_VALUE * ak.ones_like(to_numpy_event_vector(payload[weight_name]))
+                        kl_padding = H5_PADDING_VALUE * ak.ones_like(
+                            to_numpy_event_vector(payload[weight_name])
+                        )
                         write_block_split(
                             tr_in,
                             te_in,
@@ -589,7 +683,10 @@ def coffea_to_h5(
 
 
 def parse_args():
-    p = argparse.ArgumentParser("coffea → HDF5 converter", formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    p = argparse.ArgumentParser(
+        "coffea → HDF5 converter",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+    )
 
     p.add_argument("-i", "--input", required=True, help="Input coffea file path")
     p.add_argument(
@@ -626,7 +723,9 @@ def parse_args():
         default=["all"],
         help="Global variables to save, or 'all' to save all non-jet variables as global variables",
     )
-    p.add_argument("-m", "--max-jets", type=int, default=5, help="Max jets to keep")
+    p.add_argument(
+        "-m", "--max-jets", nargs="+", type=int, default=[5, 5], help="Max jets to keep"
+    )
     p.add_argument(
         "-tf", "--train-frac", type=float, default=0.8, help="Train fraction"
     )
