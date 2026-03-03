@@ -76,30 +76,32 @@ print(add_args)
 
 if args.seeds:
     for seed in range(seed_start, seed_end + 1):
-        cmd = "python3 {}/submit_to_condor.py --cfg {} -of {} -l out_spanet_outputs/out_{}/out_seed_trainings_{} --seed {} --outputdir {} {} {} {}".format(
+        cmd = "python3 {}/submit_to_condor.py --cfg {} -of {} -l out_spanet_outputs/out_{}/out_seed_trainings_{} --seed {} {} --outputdir {} {} {}".format(
             script_dir,
             args.config,
             args.option,
             dir_name,
             seed,
             seed,
+            checkpoint_str,
             args.output_folder,
             interactive_str,
-            checkpoint_str,
             add_args,
         )
+        print(cmd)
         subprocess.run(cmd, shell=True)
 else:
     for i in range(args.num):
-        cmd = "python3 {}/submit_to_condor.py --cfg {} -of {} -l out_spanet_outputs/out_{}/out_no_seed_trainings_{} --outputdir {} {} {} {}".format(
+        cmd = "python3 {}/submit_to_condor.py --cfg {} -of {} -l out_spanet_outputs/out_{}/out_no_seed_trainings_{} {} --outputdir {} {} {}".format(
             script_dir,
             args.config,
             args.option,
             dir_name,
             i,
+            checkpoint_str,
             args.output_folder,
             interactive_str,
-            checkpoint_str,
             add_args,
         )
+        print(cmd)
         subprocess.run(cmd, shell=True)

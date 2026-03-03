@@ -54,6 +54,8 @@ def roc_curve_compare_weights(
         true_class = truefile["CLASSIFICATIONS"]["EVENT"]["class"][()]
         weights = truefile["WEIGHTS"]["weight"][()]
 
+
+
         if no_weights:
             fpr, tpr, threshold = roc_curve(true_class, spanet_class)
         else:
@@ -73,8 +75,8 @@ def roc_curve_compare_weights(
         logger.info(f"AUC total: {auc_score}")
 
         # Add to figures
-        ax_zoom.plot(tpr, fpr, label=f"{model_dict['label']} | AUC(fpr[0,{fpr_cutoff:.0e}])={auc_score_zoom:.2e}", color=model_dict["color"])
-        ax_full.plot(tpr, fpr, label=f"{model_dict['label']} | AUC(fpr[0,1])={auc_score:.2e}", color=model_dict["color"])
+        ax_zoom.plot(tpr, fpr, label=f"Model {model_dict['label']} | AUC(fpr[0,{fpr_cutoff:.0e}])={auc_score_zoom:.2e}", color=model_dict["color"])
+        ax_full.plot(tpr, fpr, label=f"Model {model_dict['label']} | AUC(fpr[0,1])={auc_score:.2e}", color=model_dict["color"])
 
         for fig, ax, figname in zip([fig_zoom, fig_full], [ax_zoom, ax_full], [f"{title}_zoomed" if title else "roc_plot_zoomed", title if title else "roc_plot"]):
             ax.legend(fontsize="small")
@@ -83,6 +85,18 @@ def roc_curve_compare_weights(
                     fig.savefig(f"{plot_dir}/{figname}.{suffix}", dpi=300, bbox_inches="tight")
                 else:
                     fig.savefig(f"{plot_dir}/{figname}.{suffix}", dpi=300, bbox_inches="tight")
+        
+        # Background vs signal classification score histogram
+        mask_background = (true_class == 0)
+        plt.figure(figsize=(6, 6))
+        plt.hist(spanet_class[mask_background], bins=50, alpha=0.5, label="Background", color="tab:blue")
+        plt.hist(spanet_class[~mask_background], bins=50, alpha=0.5, label="Signal", color="tab:orange")
+        plt.xlabel("SPANet Classification Score")
+        plt.ylabel("Count")
+        plt.title(f"B/S histogram for model '{model_dict['label']}'")
+        plt.legend()
+        for suffix in ["pdf", "svg", "png"]:
+            plt.savefig(f"{plot_dir}/background_signal_hist.{suffix}", dpi=300, bbox_inches="tight")
 
 
 def build_fig_ax(title, x_lims=[0, 1], y_lims=[1e-6, 1]):
