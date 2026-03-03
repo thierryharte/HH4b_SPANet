@@ -37,7 +37,14 @@ run2_dataset_MC = "9_jets_vbf_ggf_all_Klambda"
 run2_dataset_DATA = ""
 
 spanet_dict = {
-    # --- VBF pairing ---
+    # --- ggF pairing ---
+    # "5_jets_ptvary_btag_5wp_300e_3L1cuts_allklambda": {
+    #     "file": f"/eos/user/t/tharte/Analysis_data/predictions/1_13_2_spanet_loose_MC_postEE_pt_vary_btagWP_s100_newLeptonVeto_3L1Cut_UpdateJetVetoMap_MC.h5",
+    #     "true": "5_jets_pt_true_5wp_3L1cuts_allklambda",
+    #     "label": "SPANet btag 5 WP - Flattened pt [0.3,1.7] - 3L1 triggers",
+    #     "color": "firebrick",
+    # },
+    # --- VBF/ggF pairing ---
     # 'hh4b_pairing_vbf_ggf_pairing_classification': {
     #     'file': f'{new_spanet_dir_matteo}/out_hh4b_pairing_vbf_ggf_pairing_classification/out_seed_trainings_100/version_2/predicitons.h5',
     #     'true': '9_jets_vbf_ggf_SM',
@@ -59,18 +66,25 @@ spanet_dict = {
         'color': 'blue',
         'vbf': True,
     },
-    "5_jets_ptvary_btag_5wp_300e_3L1cuts_allklambda": {
-        "file": f"/eos/user/t/tharte/Analysis_data/predictions/1_13_2_spanet_loose_MC_postEE_pt_vary_btagWP_s100_newLeptonVeto_3L1Cut_UpdateJetVetoMap_MC.h5",
-        "true": "5_jets_pt_true_5wp_3L1cuts_allklambda",
-        "label": "SPANet btag 5 WP - Flattened pt [0.3,1.7] - 3L1 triggers",
-        "color": "firebrick",
-    },
+    # 'hh4b_pairing_vbf_ggf_pairing_classification_allKalmbda_SeparateHiggsVBF': {
+    #     'file': f'{new_spanet_dir_matteo}/out_hh4b_pairing_vbf_ggf_pairing_classification_allKlambda_SeparateHiggsVBF/out_seed_trainings_100/version_0/hh4b_pairing_vbf_ggf_pairing_classification_AllKlambda_SeparateHiggsVBF_JetGoodProvHiggsPadded_JetGoodVBFMergedProvVBFPadded_test_eval.h5',
+    #     'true': '9_jets_vbf_ggf_all_Klambda_SeparateHiggsVBF',
+    #     'label': 'SPANet - VBF/ggF - pairing+classification SeparateHiggsVBF',
+    #     'color': 'green',
+    #     'vbf': True,
+    # },
     # ============================================= DATA ===========================================================
 }
 
 
 # The `klambda` parameter so far only determines, if there is different klambdas or not. The type if not `none` doesn't matter.
 true_dict = {
+    # --- ggF pairing ---
+    "5_jets_pt_true_5wp_3L1cuts_allklambda": {
+        "name": f"{true_dir_thierry}/1_13_2_loose_MC_postEE_pt_nominal_btagWP_newLeptonVeto_3L1Cut_UpdateJetVetoMap/output_JetGood_test.h5",
+        "klambda": "postEE",
+    },
+    # --- VBF/ggF pairing ---
     "9_jets_vbf_ggf_SM": {
         "name": f"{new_true_dir_matteo}/vbf/vbf_SM/JetTotalSPANetPtFlattenPadded_pad9999_test.h5",
         "klambda": "postEE",
@@ -81,8 +95,8 @@ true_dict = {
         "klambda": "postEE",
         "vbf": True,
     },
-    "5_jets_pt_true_5wp_3L1cuts_allklambda": {
-        "name": f"{true_dir_thierry}/1_13_2_loose_MC_postEE_pt_nominal_btagWP_newLeptonVeto_3L1Cut_UpdateJetVetoMap/output_JetGood_test.h5",
+    "9_jets_vbf_ggf_all_Klambda_SeparateHiggsVBF": {
+        "name": f"{new_true_dir_matteo}/vbf/vbf_ptFlattenMatchedHiggs_all_Klambda_DetaMjj_SeparateHiggsVBF/AllKlambda_DetaMjj_SeparateHiggsVBF_JetGoodProvHiggsPadded_JetGoodVBFMergedProvVBFPadded_test.h5",
         "klambda": "postEE",
     },
 }

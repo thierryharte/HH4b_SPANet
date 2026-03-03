@@ -55,6 +55,13 @@ parser.add_argument(
     help="Directory to save the plots",
 )
 parser.add_argument(
+    "-n",
+    "--num-events",
+    default=None,
+    type=int,
+    help="Consider only a limited number of events",
+)
+parser.add_argument(
     "-k",
     "--klambda",
     default=False,
@@ -80,6 +87,13 @@ parser.add_argument(
     default=False,
     action="store_true",
     help="Compute efficiency also for vbf jets",
+)
+parser.add_argument(
+    "-vl",
+    "--vbf-labels",
+    default=False,
+    action="store_true",
+    help="Use vbf labels for k-values",
 )
 parser.add_argument(
     "-ih",
@@ -139,9 +153,13 @@ def import_module_from_path(module_path):
     return module
 
 
+os.makedirs(args.plot_dir, exist_ok=True)
+setup_logging(args.plot_dir)
+logger = logging.getLogger(__name__)
+
 if args.configuration:
     config = import_module_from_path(args.configuration)
-    print("Imported configuration:", config)
+    logger.info("Imported configuration:", config)
     run2_dataset_DATA = config.run2_dataset_DATA
     run2_dataset_MC = config.run2_dataset_MC
     spanet_dict = config.spanet_dict
@@ -154,12 +172,6 @@ else:
         spanet_dict,
         true_dict,
     )
-
-
-os.makedirs(args.plot_dir, exist_ok=True)
-setup_logging(args.plot_dir)
-logger = logging.getLogger(__name__)
-
 
 if args.data:
     # remove non data samples
@@ -217,8 +229,18 @@ def main():
         # and not the original one
         mask_class_true = get_class_mask(args.class_label, truefile)
 
-        mask_spanet = mask_region_spanet & mask_class_true
-        mask_true = mask_region_true & mask_class_true
+        if args.num_events:
+            mask_num_events = get_region_mask(
+                f"test_{args.num_events}", truefile, False
+            )
+            logger.info(f"max num events {ak.sum(mask_num_events)}")
+        else:
+            mask_num_events = ak.ones_like(truefile["INPUTS"]["Jet"]["MASK"][:, 0])
+
+        mask_spanet = mask_region_spanet & mask_class_true & mask_num_events
+        mask_true = mask_region_true & mask_class_true & mask_num_events
+
+        logger.info(f"Number of events after the masks : {ak.sum(mask_true)}")
 
         jet = get_jet_4vec(truefile, mask_true)
 
@@ -646,7 +668,7 @@ def main():
                 + ["yellowgreen"],
                 "eff_fully_matched_allklambda",
                 plot_dir,
-                xlabels=cv_c2v_kl_values_dict, # if args.vbf else None,
+                xlabels=cv_c2v_kl_values_dict if (args.vbf or args.vbf_labels) else None,
             )
             plot_diff_eff_klambda(
                 [
@@ -667,7 +689,7 @@ def main():
                 + ["yellowgreen"],
                 "tot_eff_fully_matched_allklambda",
                 plot_dir,
-                xlabels=cv_c2v_kl_values_dict, # if args.vbf else None,
+                xlabels=cv_c2v_kl_values_dict if (args.vbf or args.vbf_labels) else None,
             )
         if not args.ignore_higgs:
             logger.info("Plotting differential efficiencies")

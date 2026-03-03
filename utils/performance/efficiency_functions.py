@@ -1,13 +1,12 @@
 import logging
 from math import sqrt
 import copy
-import awkward
 import awkward as ak
-import matplotlib as mpl
-import matplotlib.pyplot as plt
-import mplhep as hep
 import numpy as np
 import vector
+
+from hist import Hist
+from utils.plot.HEPPlotter import HEPPlotter
 
 logger = logging.getLogger(__name__)
 
@@ -24,6 +23,18 @@ H5_PADDING_VALUE = 9999.0
 def get_region_mask(region, column_file, do_vbf_pairing):
     if region == "inclusive":
         return ak.ones_like(column_file["INPUTS"]["Jet"]["MASK"][:, 0])
+
+    if "test" in region:
+        # keep only the first N events
+        num_events = int(region.split("test_")[-1])
+        logger.info(f"Keeping only the first {num_events} events!")
+        mask = ak.concatenate(
+            (
+                ak.ones_like(column_file["INPUTS"]["Jet"]["MASK"][:, 0])[:num_events],
+                ak.zeros_like(column_file["INPUTS"]["Jet"]["MASK"][:, 0])[num_events:],
+            ),
+        )
+        return mask
 
     jet_btag = column_file["INPUTS"]["Jet"]["btagPNetB"]
     if region == "4b" or region == "4M":
@@ -517,6 +528,7 @@ def best_reco_higgs(jet_collection, idx_collection, higgs=True):
 
 
 def run2_algorithm(jet, mask_fully_matched, higgs=True, vbf=False):
+    logger.info("Running Run 2 algorithm...")
     comb_idx_min_list = []
     if higgs:
         # implement the Run 2 pairing algorithm
@@ -563,6 +575,8 @@ def run2_algorithm(jet, mask_fully_matched, higgs=True, vbf=False):
         ak.Array(comb)[m] for comb, m in zip(comb_idx_min_conc, mask_fully_matched)
     ]
 
+    logger.info("Finished running Run 2 algorithm!")
+
     return allrun2_idx_fully_matched
 
 
@@ -581,449 +595,6 @@ def calculate_diff_efficiencies(matched, mask, mask_matched):
     total_eff = eff * frac_fully_matched
     unc_total_eff = sqrt((total_eff * (1 - total_eff)) / len(mask_matched[mask]))
     return eff, unc_eff, total_eff, unc_total_eff
-
-
-def plot_histos_1d(
-    bins, spanet, run2, true, labels, color, num, name="", plot_dir="plots"
-):
-    # First create a big list with also the run2 and true values:
-    values = spanet
-    spanet_labels = labels
-    spanet_color = color
-    if isinstance(run2, awkward.highlevel.Array):
-        values.append(run2)
-        labels.append(r"$D_{HH}$-method")
-        color.append("yellowgreen")
-    if isinstance(
-        true, awkward.highlevel.Array
-    ):  # Meaning, if we have a "true" dataset
-        values.append(true)
-        labels.append("True pairing")
-        color.append("black")
-
-    # We want to add a ratio plot with run2 ratios. Basically to see the difference between the SPANet and Dhh pairings.
-    if not isinstance(
-        true, awkward.highlevel.Array
-    ):  # Meaning, if we have a "true" dataset
-        compare_run2 = True
-    else:
-        compare_run2 = False
-    if compare_run2 and isinstance(run2, awkward.highlevel.Array):
-        fig, (ax, ax_residuals) = plt.subplots(
-            figsize=(6, 6), nrows=2, sharex=True, gridspec_kw={"height_ratios": [3, 1]}
-        )
-        ax_residuals.set_xlabel(
-            r"Leading $m_{H}$ [GeV]" if num == 1 else r"Subleading $m_{H}$ [GeV]"
-        )
-    # This would be the normal ratio with comparison to true values
-    elif isinstance(
-        true, awkward.highlevel.Array
-    ):  # Meaning, if we have a "true" dataset
-        fig, (ax, ax_residuals) = plt.subplots(
-            figsize=(6, 6), nrows=2, sharex=True, gridspec_kw={"height_ratios": [3, 1]}
-        )
-        ax_residuals.set_xlabel(
-            r"Leading $m_{H}$ [GeV]" if num == 1 else r"Subleading $m_{H}$ [GeV]"
-        )
-    # Otherwise we would have baseline
-    else:
-        fig, ax = plt.subplots(figsize=(6, 6))
-        ax.set_xlabel(
-            r"Leading $m_{H}$ [GeV]" if num == 1 else r"Subleading $m_{H}$ [GeV]"
-        )
-    ax.set_ylabel("Normalized events")
-
-    for sn, label, color in zip(values, labels, color):
-        # counts, edges = np.histogram(sn, bins=bins)
-        # total_width = max(sn)-min(sn)
-        # norm_counts = counts / (total_width * np.sum(counts))
-        # ax.bar(edges[:-1], norm_counts, width=np.diff(edges), align="edge", alpha=0.7)
-        ax.hist(
-            sn,
-            bins,
-            label=label,
-            histtype="step",
-            linewidth=1,
-            density=False,
-            # weights=np.repeat(1.0 / (len(sn) * np.diff(bins)[0]), len(sn)),
-            weights=np.repeat(1.0 / (len(sn)), len(sn)),
-            color=color,
-        )
-    ax.grid(linestyle=":")
-    if isinstance(true, awkward.highlevel.Array):
-        true_hist = np.histogram(true, bins)
-        true_norm = len(true)
-    if isinstance(run2, awkward.highlevel.Array):
-        run2_hist = np.histogram(run2, bins)
-        run2_norm = len(run2)
-    spanet_hists = [
-        # np.histogram(spanet[i], bins, weights=np.ones_like(spanet[i]) / len(spanet[i]))
-        np.histogram(span, bins)
-        for span in spanet
-    ]
-    spanet_norm = [len(i) for i in spanet]
-    ax.set_ylim(
-        0,
-        max(
-            np.histogram(
-                spanet[0],
-                bins,
-                density=False,
-                # weights=np.repeat(1.0 / (len(spanet[0]) * np.diff(bins)[0]), len(spanet[0])),
-                weights=np.repeat(1.0 / (len(spanet[0])), len(spanet[0])),
-            )[0]
-        )
-        * (1.2 if "peak" not in name else 1.6),
-    )
-    if "peak" not in name:
-        ax.set_xlim(50, 300)
-    if compare_run2 and isinstance(run2, awkward.highlevel.Array):
-        # Plot the residuals with respect to Run2
-        res_spanet_run2 = [
-            (histo[0] / norm) / (run2_hist[0] / run2_norm)
-            for histo, norm in zip(spanet_hists, spanet_norm)
-        ]
-
-        err_spanet = [
-            np.sqrt(histo[0]) / norm for histo, norm in zip(spanet_hists, spanet_norm)
-        ]
-        err_run2 = np.sqrt(run2_hist[0]) / run2_norm
-        res_spanet_run2_err = [
-            np.sqrt(
-                (err / (run2_hist[0]) / run2_norm) ** 2
-                + ((err_run2 * (histo[0] / norm)) / (run2_hist[0] / run2_norm) ** 2)
-                ** 2
-            )
-            for histo, norm, err in zip(spanet_hists, spanet_norm, err_spanet)
-        ]
-        for sn, label, sn_err, col in zip(
-            res_spanet_run2, spanet_labels, res_spanet_run2_err, spanet_color
-        ):
-            ax_residuals.errorbar(
-                run2_hist[1][:-1],
-                sn,
-                yerr=sn_err,
-                marker=".",
-                # markersize=1,
-                label=label,
-                linestyle="None",
-                color=col,
-            )
-
-        # plot zero line
-        ax_residuals.set_ylim(0, 3)
-        ax_residuals.axhline(1, color="black", linewidth=1)
-        ax_residuals.set_ylabel("SPANet / $D_{HH}$")
-
-        ax_residuals.grid()
-
-    elif isinstance(
-        true, awkward.highlevel.Array
-    ):  # Meaning, if we have a "true" dataset
-        # Plot the residuals with respect to Run2
-        res_spanet_true = [
-            (histo[0] / norm) / (true_hist[0] / true_norm)
-            for histo, norm in zip(spanet_hists, spanet_norm)
-        ]
-
-        err_spanet = [
-            np.sqrt(histo[0]) / norm for histo, norm in zip(spanet_hists, spanet_norm)
-        ]
-        err_run2 = np.sqrt(run2_hist[0]) / run2_norm
-        err_true = np.sqrt(true_hist[0]) / true_norm
-
-        res_spanet_true_err = [
-            np.sqrt(
-                (err / (true_hist[0]) / true_norm) ** 2
-                + ((err_true * (histo[0] / norm)) / (true_hist[0] / true_norm) ** 2)
-                ** 2
-            )
-            for histo, norm, err in zip(spanet_hists, spanet_norm, err_spanet)
-        ]
-        for sn, label, sn_err, col in zip(
-            res_spanet_true, spanet_labels, res_spanet_true_err, spanet_color
-        ):
-            ax_residuals.errorbar(
-                run2_hist[1][:-1],
-                sn,
-                yerr=sn_err,
-                marker=".",
-                # markersize=1,
-                label=label,
-                linestyle="None",
-                color=col,
-            )
-
-        # plot zero line
-        ax_residuals.set_ylim(0, 3)
-        ax_residuals.axhline(1, color="black", linewidth=1)
-        ax_residuals.set_ylabel("SPANet / true pairing")
-
-        ax_residuals.grid()
-
-    # elif true: # meaning true pairing file
-    #    # plot the residuals respect to true
-    #    residuals_run2 = [
-    #        (r[0] / np.sum(r[0])) / (t[0] / np.sum(t[0]))
-    #        for r, t in zip(run2_hist, true_hist)
-    #    ]
-    #    logger.info(len(spanet_labels))
-    #    logger.info(len(spanet_hists[0][0]))
-    #    logger.info(len(spanet_hists[0][0]))
-
-    #    residuals_spanet = [
-    #        (spanet_hists[i][0] / np.sum(spanet_hists[i][0]))
-    #        / (
-    #            true_hist[check_names(spanet_labels[i])][0]
-    #            / np.sum(true_hist[check_names(spanet_labels[i])][0])
-    #        )
-    #        for i in range(len(spanet_labels))
-    #    ]
-
-    #    residual_run2_err = (
-    #        [
-    #            np.sqrt(
-    #                (np.sqrt(r[0]) / t[0]) ** 2 + ((np.sqrt(t[0]) * r[0]) / t[0] ** 2) ** 2
-    #            )
-    #            * (np.sum(t[0]) / np.sum(r[0]))
-    #            for r, t in zip(run2_hist, true_hist)
-    #        ]
-    #        if run2
-    #        else []
-    #    )
-
-    #  # residual_spanet_err = [
-    #  #     np.sqrt(sn[0]) / true_hist[check_names(label)][0]
-    #  #     for sn, label in zip(spanet_hists, spanet_labels)
-    #  # ]
-    #    residual_spanet_err = [
-    #        np.sqrt(
-    #            (np.sqrt(sn[0]) / true_hist[check_names(label)][0]) ** 2
-    #            + (
-    #                (np.sqrt(true_hist[check_names(label)][0]) * sn[0])
-    #                / true_hist[check_names(label)][0] ** 2
-    #            )
-    #            ** 2
-    #        )
-    #        * (np.sum(true_hist[check_names(label)][0]) / np.sum(sn[0]))
-    #        for sn, label in zip(spanet_hists, spanet_labels)
-    #    ]
-
-    #    for sn, label, sn_err in zip(
-    #        residuals_spanet, spanet_labels, residual_spanet_err
-    #    ):
-    #        ax_residuals.errorbar(
-    #            true_hist[check_names(label)][1][:-1],
-    #            sn,
-    #            yerr=sn_err,
-    #            marker=".",
-    #            # markersize=1,
-    #            label=f"{names_dict[label]}" if label in names_dict else label,
-    #            linestyle="None",
-    #        )
-    #        if check_names(label) in labels_list:
-    #            continue
-    #        if run2 and len(labels_list) == 0:
-    #            which_run2 = (
-    #                check_names(label) if ("data" in label or "klambda" in label) else 0
-    #            )
-    #            ax_residuals.errorbar(
-    #                true_hist[check_names(label)][1][:-1],
-    #                residuals_run2[which_run2],
-    #                yerr=residual_run2_err[which_run2],
-    #                marker=".",
-    #                # markersize=1,
-    #                label=f"D$_{{{HH}}}$ - method", #({true_labels[which_run2]})",
-    #                color="red",
-    #                linestyle="None",
-    #            )
-    #        labels_list.append(check_names(label))
-
-    #    # plot zero line
-    #    ax_residuals.axhline(1, color="black", linewidth=1)
-    #    ax_residuals.set_xlabel(
-    #        r"Leading $m_{H}$ [GeV]" if num == 1 else r"Subleading $m_{H}$ [GeV]"
-    #    )
-    #    ax_residuals.set_ylabel("Predicted / True")
-
-    #    ax_residuals.grid()
-
-    ax.legend(loc="upper right", frameon=False)
-
-    hep.cms.label(year="2022", com="13.6", label="Private Work", ax=ax, data=True)
-    plt.savefig(f"{plot_dir}/higgs_mass_{num}{name}.png", dpi=300, bbox_inches="tight")
-    plt.savefig(f"{plot_dir}/higgs_mass_{num}{name}.pdf", dpi=300, bbox_inches="tight")
-    plt.savefig(f"{plot_dir}/higgs_mass_{num}{name}.svg", bbox_inches="tight")
-    plt.close()
-
-
-def plot_mhh(bins, mhh, plot_dir="plots", name="mhh"):
-    fig, ax = plt.subplots(figsize=(6, 6))
-    ax.hist(
-        mhh,
-        bins,
-        label="mhh",
-        histtype="step",
-        linewidth=1,
-        density=True,
-    )
-    ax.set_xlabel(r"$m_{HH}$ [GeV]")
-    ax.set_ylabel("Normalized events")
-    ax.grid()
-
-    hep.cms.label(
-        year="2022",
-        com="13.6",
-        label="Private Work",
-        ax=ax,
-    )
-    plt.savefig(f"{plot_dir}/{name}.png", dpi=300, bbox_inches="tight")
-    plt.savefig(f"{plot_dir}/{name}.pdf", bbox_inches="tight")
-    plt.savefig(f"{plot_dir}/{name}.svg", dpi=300, bbox_inches="tight")
-    plt.close()
-
-
-def plot_histos_2d(mh_bins, higgs, label, name, plot_dir="plots"):
-    fig, ax = plt.subplots(figsize=(6, 6))
-    ax.hist2d(
-        np.array(higgs[:, 0].mass),
-        np.array(higgs[:, 1].mass),
-        bins=[mh_bins, mh_bins],
-        label=f"{name} {label}",
-        density=True,
-        # yellow and green colors
-        cmap=plt.cm.GnBu,
-        # alpha=0.5,
-    )
-    cmap = mpl.cm.get_cmap("GnBu")
-    norm = mpl.colors.Normalize(vmin=0, vmax=1.0)
-    plt.colorbar(mpl.cm.ScalarMappable(norm=norm, cmap=cmap), ax=ax).set_label(
-        "Normalized counts", loc="center", fontsize=10
-    )
-    # plot two lines at 125 GeV
-    ax.plot([mh_bins, mh_bins], [120, 120], color="black")
-    ax.plot([125, 125], [mh_bins, mh_bins], color="black")
-    # draw a circle at 125 GeV or radius 5 GeV
-    circle = plt.Circle((125, 120), 30, color="black", fill=False)
-    ax.add_artist(circle)
-
-    ax.set_xlabel(r"Leading $m_{H}$ [GeV]")
-    ax.set_ylabel(r"Subleading $m_{H}$ [GeV]")
-    ax.grid()
-    # TODO: change title
-    # ax.set_title(f"2D Higgs Mass {name} {label}", pad=20)
-
-    hep.cms.label(year="2022", com="13.6", label="Private Work", ax=ax, data=True)
-    plt.savefig(
-        f"{plot_dir}/higgs_mass_2d_{name}_{label}.png", dpi=300, bbox_inches="tight"
-    )
-    plt.savefig(
-        f"{plot_dir}/higgs_mass_2d_{name}_{label}.pdf", dpi=300, bbox_inches="tight"
-    )
-    plt.savefig(f"{plot_dir}/higgs_mass_2d_{name}_{label}.svg", bbox_inches="tight")
-    plt.close()
-
-
-def plot_diff_eff(
-    mhh_bins,
-    efficiency,
-    unc_efficiency,
-    labels,
-    color,
-    plot_dir,
-    file_name,
-):
-    fig, ax = plt.subplots(figsize=(6, 6))
-
-    labels_list = []
-    for eff, unc_eff, label, col in zip(efficiency, unc_efficiency, labels, color):
-        ax.errorbar(
-            0.5 * (mhh_bins[:-1] + mhh_bins[1:]),
-            eff,
-            yerr=unc_eff,
-            label=label,
-            marker="o",
-            color=col,
-        )
-
-    ax.legend(frameon=False, loc="lower right")
-    ax.set_xlabel(r"$m_{HH}$ [GeV]")
-    ax.set_ylabel(file_name)
-    ax.grid(linestyle=":")
-    hep.cms.label(
-        year="2022",
-        com="13.6",
-        label="Private Work",
-        ax=ax,
-    )
-    plt.savefig(f"{plot_dir}/{file_name}.png", dpi=300, bbox_inches="tight")
-    plt.savefig(f"{plot_dir}/{file_name}.pdf", dpi=300, bbox_inches="tight")
-    plt.savefig(f"{plot_dir}/{file_name}.svg", bbox_inches="tight")
-    plt.close()
-
-
-def plot_true_higgs(true_higgs_fully_matched, mh_bins, num, plot_dir="plots"):
-
-    fig, (ax, ax_ratio) = plt.subplots(
-        2, 1, figsize=(6, 6), gridspec_kw={"height_ratios": [3, 1]}, sharex=True
-    )
-    ax.hist(
-        true_higgs_fully_matched[0][:, num - 1].mass,
-        bins=mh_bins,
-        histtype="step",
-        label="True 4 jets",
-        color="blue",
-    )
-    ax.hist(
-        true_higgs_fully_matched[1][:, num - 1].mass,
-        bins=mh_bins,
-        histtype="step",
-        label="True 5 jets",
-        color="red",
-    )
-    hist_4 = np.histogram(true_higgs_fully_matched[0][:, num - 1].mass, bins=mh_bins)
-    hist_5 = np.histogram(true_higgs_fully_matched[1][:, num - 1].mass, bins=mh_bins)
-
-    hist_4_norm = hist_4[0] / np.sum(hist_4[0])
-    hist_5_norm = hist_5[0] / np.sum(hist_5[0])
-
-    ax_ratio.plot(
-        mh_bins[:-1],
-        hist_5[0] / hist_4[0],
-        label="5 jets / 4 jets",
-        color="green",
-        linestyle=None,
-        marker=".",
-    )
-    ax_ratio.plot(
-        mh_bins[:-1],
-        hist_5_norm / hist_4_norm,
-        label="5 jets / 4 jets (norm)",
-        color="purple",
-        linestyle=None,
-        marker=".",
-    )
-    ax_ratio.grid()
-    ax.grid()
-
-    hep.cms.label(
-        year="2022",
-        com="13.6",
-        label="Private Work",
-        ax=ax,
-    )
-
-    ax.legend()
-    ax_ratio.legend()
-    ax_ratio.set_xlabel(
-        r"Leading $m_{H}$ [GeV]" if num == 1 else r"Subleading $m_{H}$ [GeV]"
-    )
-    ax.set_ylabel("Events")
-
-    plt.savefig(f"{plot_dir}/true_higgs_mass_{num}.png", dpi=300, bbox_inches="tight")
-    plt.savefig(f"{plot_dir}/true_higgs_mass_{num}.pdf", dpi=300, bbox_inches="tight")
-    plt.savefig(f"{plot_dir}/true_higgs_mass_{num}.svg", bbox_inches="tight")
-    plt.close()
 
 
 def separate_klambda(
@@ -1053,7 +624,7 @@ def separate_klambda(
     kl_values = []
     for kl in kl_unique_true:
         mask = kl_array_true == kl
-        logger.info(f"mask {mask}")
+        # logger.info(f"mask {mask}")
         logger.info(f"kl_array_true[mask] {kl_array_true[mask]}")
         logger.info(f"kl {kl}")
         true_kl_idx_list.append(idx_true[mask])
@@ -1071,7 +642,7 @@ def separate_klambda(
         spanet_kl_idx_list = []
         for kl in kl_unique_spanet:
             mask = kl_array_spanet == kl
-            logger.info(f"mask {mask}")
+            # logger.info(f"mask {mask}")
             logger.info(f"kl_array_spanet[mask] {kl_array_spanet[mask]}")
             logger.info(f"kl {kl}")
             spanet_kl_idx_list.append(idx_spanet_pred[mask])
@@ -1090,12 +661,312 @@ def separate_klambda(
     )
 
 
+##################
+# PLOT FUNCTIONS #
+##################
+def plot_histos_1d(
+    bins,
+    spanet,
+    run2=None,
+    true=None,
+    labels=None,
+    colors=None,
+    num=1,
+    name="",
+    plot_dir="plots",
+):
+
+    xlabel = r"Leading $m_{H}$ [GeV]" if num == 1 else r"Subleading $m_{H}$ [GeV]"
+
+    output_base = f"{plot_dir}/higgs_mass_{num}{name}"
+
+    # ---------------------------------------------------------
+    # Determine reference histogram
+    # priority: true > run2 > first spanet
+    # ---------------------------------------------------------
+
+    reference_source = None
+    reference_label = None
+
+    if isinstance(true, ak.Array):
+        reference_source = true
+        reference_label = "True pairing"
+        ratio_label = "Predicted / True"
+
+    elif isinstance(run2, ak.Array):
+        reference_source = run2
+        reference_label = r"$D_{HH}$-method"
+        ratio_label = r"Predicted / $D_{HH}$"
+
+    else:
+        reference_source = spanet[0]
+        reference_label = labels[0]
+        ratio_label = "Ratio"
+
+    # ---------------------------------------------------------
+    # helper to convert array -> hist.Hist normalized
+    # ---------------------------------------------------------
+
+    def make_hist(array):
+        h = Hist.new.Variable(bins, name="mass", flow=False).Weight()
+        weights = np.ones(len(array)) / len(array)
+        h.fill(array, weight=weights)
+        return h
+
+    # ---------------------------------------------------------
+    # Build series_dict
+    # ---------------------------------------------------------
+
+    series_dict = {}
+
+    # reference first
+    series_dict[reference_label] = {
+        "data": make_hist(reference_source),
+        "style": {
+            "color": "black",
+            "histtype": "step",
+            "is_reference": True,
+        },
+    }
+
+    # spanet entries
+    for arr, label, color in zip(spanet, labels, colors):
+
+        # avoid duplicating reference
+        if label == reference_label:
+            continue
+
+        series_dict[label] = {
+            "data": make_hist(arr),
+            "style": {
+                "color": color,
+                "histtype": "step",
+            },
+        }
+
+    # add run2 if not reference
+    if isinstance(run2, ak.Array) and reference_source is not run2:
+
+        series_dict[r"$D_{HH}$-method"] = {
+            "data": make_hist(run2),
+            "style": {
+                "color": "yellowgreen",
+                "histtype": "step",
+            },
+        }
+
+    # add true if not reference
+    if isinstance(true, ak.Array) and reference_source is not true:
+
+        series_dict["True pairing"] = {
+            "data": make_hist(true),
+            "style": {
+                "color": "black",
+                "histtype": "step",
+            },
+        }
+
+    # ---------------------------------------------------------
+    # Axis limits
+    # ---------------------------------------------------------
+
+    xlim = (None, None) if "peak" in name else (50, 300)
+
+    # ---------------------------------------------------------
+    # Run plot
+    # ---------------------------------------------------------
+
+    (
+        HEPPlotter("CMS")
+        .set_output(output_base)
+        .set_labels(
+            xlabel=xlabel,
+            ylabel="Normalized events",
+            ratio_label=ratio_label,
+        )
+        .set_data(series_dict, plot_type="1d")
+        .set_options(
+            legend_loc="upper right",
+            grid=True,
+            set_xlim=True,
+            set_ylim_ratio=1,
+            xlim_left_value=xlim[0],
+            xlim_right_value=xlim[1],
+            ylim_top_factor=1.6 if "peak" in name else 1.2,
+        )
+        .run()
+    )
+
+
+def plot_mhh(bins, mhh, plot_dir="plots", name="mhh"):
+
+    # ---------------------------------------------------------
+    # Create normalized histogram
+    # ---------------------------------------------------------
+
+    h = Hist.new.Variable(bins, name="mhh", flow=False).Weight()
+
+    # density=True equivalent
+    weights = np.ones(len(mhh)) / len(mhh)
+    h.fill(mhh, weight=weights)
+
+    series_dict = {
+        "mhh": {
+            "data": h,
+            "style": {
+                "histtype": "step",
+                "linewidth": 1,
+            },
+        }
+    }
+
+    # ---------------------------------------------------------
+    # Run plot
+    # ---------------------------------------------------------
+
+    (
+        HEPPlotter("CMS")
+        .set_output(f"{plot_dir}/{name}")
+        .set_labels(
+            xlabel=r"$m_{HH}$ [GeV]",
+            ylabel="Normalized events",
+        )
+        .set_data(series_dict, plot_type="1d")
+        .set_options(
+            grid=True,
+            legend=False,  # matches your original (only 1 entry)
+        )
+        .run()
+    )
+
+
+def plot_histos_2d(mh_bins, higgs, label, name, plot_dir="plots"):
+    # NOTE: not tested
+
+    # ---------------------------------------------------------
+    # Extract masses
+    # ---------------------------------------------------------
+
+    m_lead = np.array(higgs[:, 0].mass)
+    m_sub = np.array(higgs[:, 1].mass)
+
+    # ---------------------------------------------------------
+    # Create normalized 2D histogram
+    # ---------------------------------------------------------
+
+    h2 = (
+        Hist.new.Variable(mh_bins, name="m_lead")
+        .Variable(mh_bins, name="m_sub")
+        .Weight()
+    )
+
+    weights = np.ones(len(m_lead)) / len(m_lead)
+    h2.fill(m_lead, m_sub, weight=weights)
+
+    series_dict = {
+        f"{name} {label}": {
+            "data": h2,
+            "style": {
+                "cmap": "GnBu",
+            },
+        }
+    }
+
+    # ---------------------------------------------------------
+    # Run plot
+    # ---------------------------------------------------------
+
+    (
+        HEPPlotter("CMS")
+        .set_output(f"{plot_dir}/higgs_mass_2d_{name}_{label}")
+        .set_labels(
+            xlabel=r"Leading $m_{H}$ [GeV]",
+            ylabel=r"Subleading $m_{H}$ [GeV]",
+            cbar_label="Normalized counts",
+        )
+        .set_data(series_dict, plot_type="2d")
+        .set_options(
+            grid=True,
+        )
+        # 125 GeV cross lines
+        .add_line("v", x=125, color="black", linewidth=1)
+        .add_line("h", y=120, color="black", linewidth=1)
+        # # circle around Higgs mass region
+        # .add_circle(
+        #     x=125,
+        #     y=120,
+        #     radius=30,
+        #     edgecolor="black",
+        #     facecolor="none",
+        #     linewidth=1,
+        # )
+        .run()
+    )
+
+
+def plot_diff_eff(
+    mhh_bins,
+    efficiency,
+    unc_efficiency,
+    labels,
+    colors,
+    plot_dir,
+    file_name,
+):
+
+    # ---------------------------------------------------------
+    # Bin centers
+    # ---------------------------------------------------------
+
+    x = 0.5 * (mhh_bins[:-1] + mhh_bins[1:])
+
+    # ---------------------------------------------------------
+    # Build series_dict for graph plot
+    # ---------------------------------------------------------
+
+    series_dict = {}
+
+    for eff, unc_eff, label, col in zip(efficiency, unc_efficiency, labels, colors):
+
+        series_dict[label] = {
+            "data": {
+                "x": [x, None],
+                "y": [eff, unc_eff],
+            },
+            "style": {
+                "marker": ".",
+                "linestyle": "-",
+                "color": col,
+            },
+        }
+
+    # ---------------------------------------------------------
+    # Run plot
+    # ---------------------------------------------------------
+    (
+        HEPPlotter("CMS")
+        .set_output(f"{plot_dir}/{file_name}")
+        .set_labels(
+            xlabel=r"$m_{HH}$ [GeV]",
+            ylabel=file_name,
+        )
+        .set_data(series_dict, plot_type="graph")
+        .set_options(
+            legend=True,
+            legend_loc="lower right",
+            grid=True,
+            set_ylim=False,
+        )
+        .run()
+    )
+
+
 def plot_diff_eff_klambda(
     effs,
     unc_effs,
     kl_values,
     labels,
-    color,
+    colors,
     name,
     plot_dir="plots",
     xlabels=None,  # dict: {kl_value: "label"}
@@ -1108,11 +979,13 @@ def plot_diff_eff_klambda(
         Example: { -1.0: "SM", 0.0: "BSM 1", 2.0: "BSM 2" }
     """
 
-    fig, ax = plt.subplots(figsize=(6, 6))
+    # ---------------------------------------------------------
+    # Build x-axis mapping if categorical mode
+    # ---------------------------------------------------------
 
-    # Create mapping kl_value -> equidistant position
     if xlabels is not None:
-        # preserve order based on first appearance in kl_values
+
+        # preserve order of first appearance
         all_kls = []
         for kls in kl_values:
             for kl in kls:
@@ -1122,45 +995,66 @@ def plot_diff_eff_klambda(
         kl_to_pos = {kl: i for i, kl in enumerate(all_kls)}
         positions = np.arange(len(all_kls))
 
-    # Plot
-    for label, kls, eff, unc_eff, col in zip(labels, kl_values, effs, unc_effs, color):
+        # final tick labels
+        tick_labels = [xlabels.get(str(kl), str(kl)) for kl in all_kls]
+
+        xlabel = ""  # categorical → no numeric xlabel
+
+    else:
+        xlabel = r"$\kappa_{\lambda}$"
+        tick_labels = None
+        positions = None
+
+    # ---------------------------------------------------------
+    # Build series_dict for graph plotting
+    # ---------------------------------------------------------
+
+    series_dict = {}
+
+    for label, kls, eff, unc_eff, col in zip(labels, kl_values, effs, unc_effs, colors):
 
         if xlabels is None:
             x = kls
         else:
             x = [kl_to_pos[kl] for kl in kls]
 
-        ax.errorbar(
-            x,
-            eff,
-            yerr=unc_eff,
-            linestyle="-",
-            marker=".",
-            label=label,
-            color=col,
+        series_dict[label] = {
+            "data": {
+                "x": [np.array(x), None],
+                "y": [np.array(eff), np.array(unc_eff)],
+            },
+            "style": {
+                "linestyle": "-",
+                "marker": ".",
+                "color": col,
+            },
+        }
+    
+    # ---------------------------------------------------------
+    # Create plotter
+    # ---------------------------------------------------------
+
+    plotter = (
+        HEPPlotter("CMS")
+        .set_output(f"{plot_dir}/{name}")
+        .set_labels(
+            xlabel=xlabel,
+            ylabel=name,
+            xticklabels=tick_labels,
+            label_pos=positions,
+            xtick_fontsize=11,
         )
-
-    # Apply custom tick labels
-    if xlabels is not None:
-        tick_labels = [xlabels.get(str(kl), str(kl)) for kl in all_kls]
-        ax.set_xticks(positions)
-        ax.set_xticklabels(tick_labels, ha="center", fontsize=5)
-    else:
-        ax.set_xlabel(r"$\kappa_{\lambda}$")
-
-    ax.set_ylabel(name)
-    ax.legend(frameon=False, loc="lower left")
-    ax.grid(linestyle=":")
-
-    hep.cms.label(
-        year="2022",
-        com="13.6",
-        label="Private Work",
-        ax=ax,
+        .set_data(series_dict, plot_type="graph")
+        .set_options(
+            legend=True,
+            legend_loc="lower left",
+            grid=True,
+            set_ylim=False,
+        )
     )
 
-    plt.savefig(f"{plot_dir}/{name}.png", dpi=300, bbox_inches="tight")
-    plt.savefig(f"{plot_dir}/{name}.pdf", dpi=300, bbox_inches="tight")
-    plt.savefig(f"{plot_dir}/{name}.svg", dpi=300, bbox_inches="tight")
+    # ---------------------------------------------------------
+    # Run
+    # ---------------------------------------------------------
 
-    plt.close()
+    plotter.run()
