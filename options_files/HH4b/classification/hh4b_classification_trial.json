@@ -30,7 +30,7 @@
     "skip_connections": true,
     "initial_embedding_skip_connections": true,
     "event_info_file": "/afs/cern.ch/user/t/tharte/public/Software/HH4b_SPANet/event_files/HH4b/classification/hh4b_classification_trial.yaml",
-    "training_file": "/eos/user/t/tharte/Analysis_data/spanet_samples/classification/conversion_with_vbf/columns_for_classifier_train.h5",
+    "training_file": "/eos/user/t/tharte/Analysis_data/spanet_samples/classification/1_15_9_jetgoodfromhiggsordered5jets_additional_parameters/columns_for_sig_bkg_classifierJetGoodFromHiggsOrdered5Jets_train.h5",
 
     "normalize_features": true,
     "limit_to_num_jets": 0,
@@ -39,6 +39,7 @@
     "partial_events": true,
     "balance_particles": false,
     "balance_classifications": true,
+	"signal_class_weight_factor": 1,
     "balance_events": true,
     "balance_losses": false,
 
@@ -54,7 +55,7 @@
     "focal_gamma": 0.0,
     "learning_rate": 0.0001,
     "learning_rate_cycles": 0,
-    "learning_rate_warmup_epochs": 0.0,
+    "learning_rate_warmup_epochs": 1.0,
 
     "assignment_loss_scale": 0.0,
     "detection_loss_scale": 0.0,
@@ -66,7 +67,7 @@
     "gradient_clip": 0.425,
     "dropout": 0.0059,
 
-    "metric": "CLASSIFICATION/EVENT/class_accuracy",
+    "metric": "CLASSIFICATION/EVENT/class_accuracy_event_and_class_weight",
     "epochs": 100,
     "num_gpu": 1,
     "verbose_output": true
