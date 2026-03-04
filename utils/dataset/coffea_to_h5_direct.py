@@ -14,38 +14,61 @@ KEEP_TOGETHER_COLLECTIONS = ["add_jet1pt"]
 JET_COLLECTIONS_SEPARATE_HIGGS_VBF = [
     {
         "JetGoodProvHiggsPadded": {
-            "saved_jet_name": "JetHiggs",
+            "saved_name": "JetHiggs",
             "max_num_jets": 4,
             "resonances": ["h1", "h2"],
         },
         "JetGoodVBFMergedProvVBFPadded": {
-            "saved_jet_name": "JetVBF",
+            "saved_name": "JetVBF",
             "max_num_jets": 5,
             "resonances": ["vbf"],
         },
     },
     {
         "JetGoodProvHiggsPtFlattenPadded": {
-            "saved_jet_name": "JetHiggs",
+            "saved_name": "JetHiggs",
             "max_num_jets": 4,
             "resonances": ["h1", "h2"],
         },
         "JetGoodVBFMergedProvVBFPtFlattenPadded": {
-            "saved_jet_name": "JetVBF",
+            "saved_name": "JetVBF",
             "max_num_jets": 5,
             "resonances": ["vbf"],
         },
     },
     {
         "JetGoodProvHiggsPtFlattenPadded": {
-            "saved_jet_name": "JetHiggs",
+            "saved_name": "JetHiggs",
             "max_num_jets": 4,
             "resonances": ["h1", "h2"],
         },
         "JetGoodVBFMergedProvVBFPadded": {
-            "saved_jet_name": "JetVBF",
+            "saved_name": "JetVBF",
             "max_num_jets": 5,
             "resonances": ["vbf"],
+        },
+    },
+]
+
+GLOBAL_COLLECTIONS_VBF = [
+    {
+        "events_mjjJetTotalSPANetPtFlattenPadded": {
+            "saved_name_coll": "Event",
+            "saved_name_var": "mjjVBF",
+        },
+        "events_detaJetTotalSPANetPtFlattenPadded": {
+            "saved_name_coll": "Event",
+            "saved_name_var": "detaVBF",
+        },
+    },
+    {
+        "events_mjjJetTotalSPANetPadded": {
+            "saved_name_coll": "Event",
+            "saved_name_var": "mjjVBF",
+        },
+        "events_detaJetTotalSPANetPadded": {
+            "saved_name_coll": "Event",
+            "saved_name_var": "detaVBF",
         },
     },
 ]
@@ -60,6 +83,74 @@ RESONANCES = {
     "h2": (2, ("b3", "b4")),
     "vbf": (3, ("q1", "q2")),
 }
+
+
+
+# -----------------------------------------------------------------------------
+# CLI
+# -----------------------------------------------------------------------------
+
+
+p = argparse.ArgumentParser(
+    "coffea → HDF5 converter",
+    formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+)
+
+p.add_argument("-i", "--input", required=True, help="Input coffea file path")
+p.add_argument(
+    "-o",
+    "--output",
+    required=True,
+    help="Output HDF5 file path prefix (e.g. path/to/file/prefix_name)",
+)
+p.add_argument(
+    "-r",
+    "--regions",
+    nargs="+",
+    default=["2b_signal_region_postW", "4b_signal_region"],
+    help="Regions to use for each class label",
+)
+p.add_argument(
+    "-cl",
+    "--class-labels",
+    nargs="+",
+    default=["DATA", "GluGlu"],
+    help="Class labels to use for classification",
+)
+p.add_argument(
+    "-j",
+    "--jets",
+    nargs="+",
+    default=["JetTotalSPANetPtFlattenPadded", "JetTotalSPANetPadded"],
+    help="Jet collections to process (must match keys in coffea file)",
+)
+p.add_argument(
+    "-g",
+    "--global-vars",
+    nargs="+",
+    default=["all"],
+    help="Global variables to save, or 'all' to save all non-jet variables as global variables",
+)
+p.add_argument(
+    "-m", "--max-jets", nargs="+", type=int, default=[5, 5], help="Max jets to keep"
+)
+p.add_argument(
+    "-tf", "--train-frac", type=float, default=0.8, help="Train fraction"
+)
+p.add_argument(
+    "-ns", "--no-shuffle", action="store_true", help="Disable data shuffling"
+)
+p.add_argument(
+    "-n", "--norm-weights", action="store_true", help="Normalize weights divided by sum_genweights"
+)
+p.add_argument(
+    "--novars",
+    action="store_true",
+    help="If true, old save format without saved variations is expected",
+    default=False,
+)
+
+args = p.parse_args()
 
 # -----------------------------------------------------------------------------
 # Utilities
@@ -114,7 +205,6 @@ def create_resonances_targets_from_provenance(jets_prov, max_jets, resonances=No
         targets[(resonance, labels[0])] = ak.to_numpy(idx1)
         targets[(resonance, labels[1])] = ak.to_numpy(idx2)
 
-    # breakpoint()
     return targets
 
 
@@ -383,15 +473,16 @@ def coffea_to_h5(
     weight_name="weight",
 ):
     """Convert the columns from coffea to h5 format to use as SPANet inputs."""
-
-    cols = coffea.util.load(coffea_path)[columns_key]
+    accumulator= coffea.util.load(coffea_path)
+    cols = accumulator[columns_key]
+    sum_genweights = accumulator["sum_genweights"]
 
     path_base = os.path.splitext(h5_path)[0]
     out_dir_name = os.path.dirname(h5_path)
     if out_dir_name:
         os.makedirs(out_dir_name, exist_ok=True)
 
-    if jet_collections[0] == "separate_higgs_vbf":
+    if jet_collections[0] == "JET_COLLECTIONS_SEPARATE_HIGGS_VBF":
         jet_collections = JET_COLLECTIONS_SEPARATE_HIGGS_VBF
 
     for j, jet_coll_group in enumerate(jet_collections):
@@ -399,12 +490,12 @@ def coffea_to_h5(
         # initialize the random numbers for every collection
         # so that the order remains the same
         rng = np.random.default_rng(SEED)
-        
+
         # make sure jet_coll_group is a dictionary and put default values
         if type(jet_coll_group) != dict:
             jet_coll_group = {
                 jet_coll_group: {
-                    "saved_jet_name": "Jet",
+                    "saved_name": "Jet",
                     "max_num_jets": max_jets[j],
                     "resonances": None,
                 }
@@ -412,8 +503,8 @@ def coffea_to_h5(
 
         jet_coll_group_str = "_".join(list(jet_coll_group.keys()))
 
-        h5_tr = f"{path_base}{jet_coll_group_str}_train.h5"
-        h5_te = f"{path_base}{jet_coll_group_str}_test.h5"
+        h5_tr = f"{path_base}_{jet_coll_group_str}_train.h5"
+        h5_te = f"{path_base}_{jet_coll_group_str}_test.h5"
 
         with h5py.File(h5_tr, "w") as ftr, h5py.File(h5_te, "w") as fte:
 
@@ -449,6 +540,15 @@ def coffea_to_h5(
                         payload = cols[skey][dataset][region][variation]
 
                     w = to_numpy_event_vector(payload[weight_name])
+                    if args.norm_weights:
+                        print(
+                            f"weights before norm = {np.mean(w):.3f}, {np.std(w):.3f}"
+                        )
+                        w = w / sum_genweights[dataset]
+                        print(
+                            f"Dividing by sum_genweights = {sum_genweights[dataset]:.3f}",
+                            f"weights after norm = {np.mean(w):.8f}, {np.std(w):.8f}"
+                        )
                     N = len(w)
 
                     train_mask = (
@@ -530,7 +630,7 @@ def coffea_to_h5(
                                 jet_info_dict["max_num_jets"],
                                 jet_info_dict["resonances"],
                             )
-                            # breakpoint()
+
                             for (r, q), arr in targets_tr.items():
                                 ensure_resizable_dataset(
                                     tr_t, [r, q], cast_int64(arr), shuffle
@@ -552,13 +652,37 @@ def coffea_to_h5(
                             coll, var = infer_collection_and_var(name)
                             arr_u = unwrap_accumulator(arr)
                             is_jet = coll == jet_coll and var != "N"
-                            is_global = (
+                            
+                            if (
                                 name in global_variables
                                 or (
                                     "all" in global_variables
                                     and f"{coll}_N" not in payload
                                 )
-                            ) and jet_i == 0
+                            ) and jet_i == 0:
+                                is_global = True
+                                glob_coll = coll
+                                glob_var = var
+                            elif (
+                                "GLOBAL_COLLECTIONS_VBF" in global_variables
+                                and name in GLOBAL_COLLECTIONS_VBF[j]
+                            ) and jet_i == 0:
+                                if ("PtFlatten" in jet_coll and "PtFlatten" not in name) or ("PtFlatten" not in jet_coll and "PtFlatten" in name):
+                                    raise ValueError(
+                                        f"Mixing pt-flatten and non-pt-flatten collections! \nChange the global variable configuration, maybe you just need to reorder the global variables."
+                                    )
+                                    
+                                is_global = True
+                                glob_coll = GLOBAL_COLLECTIONS_VBF[j][name][
+                                    "saved_name_coll"
+                                ]
+                                glob_var = GLOBAL_COLLECTIONS_VBF[j][name][
+                                    "saved_name_var"
+                                ]
+                            else:
+                                is_global = False
+                                glob_coll = None
+                                glob_var = None
 
                             if is_jet or is_global:
                                 print(
@@ -583,29 +707,27 @@ def coffea_to_h5(
 
                                 ensure_resizable_dataset(
                                     tr_in,
-                                    [jet_info_dict["saved_jet_name"], var],
+                                    [jet_info_dict["saved_name"], var],
                                     cast_floats32(dtr),
                                     shuffle,
                                 )
                                 ensure_resizable_dataset(
                                     te_in,
-                                    [jet_info_dict["saved_jet_name"], var],
+                                    [jet_info_dict["saved_name"], var],
                                     cast_floats32(dte),
                                     shuffle,
                                 )
-                                # if jet_coll == "JetGoodVBFMergedProvVBFPadded":
-                                #     breakpoint()
 
                                 if not jet_mask_written:
                                     ensure_resizable_dataset(
                                         tr_in,
-                                        [jet_info_dict["saved_jet_name"], "MASK"],
+                                        [jet_info_dict["saved_name"], "MASK"],
                                         mtr,
                                         shuffle,
                                     )
                                     ensure_resizable_dataset(
                                         te_in,
-                                        [jet_info_dict["saved_jet_name"], "MASK"],
+                                        [jet_info_dict["saved_name"], "MASK"],
                                         mte,
                                         shuffle,
                                     )
@@ -622,7 +744,7 @@ def coffea_to_h5(
                                 write_block_split(
                                     tr_in,
                                     te_in,
-                                    [coll, var],
+                                    [glob_coll, glob_var],
                                     cast_floats32(arr_ev),
                                     train_mask,
                                     test_mask,
@@ -677,73 +799,8 @@ def coffea_to_h5(
         print(f"Wrote: {h5_tr}, {h5_te}")
 
 
-# -----------------------------------------------------------------------------
-# CLI
-# -----------------------------------------------------------------------------
-
-
-def parse_args():
-    p = argparse.ArgumentParser(
-        "coffea → HDF5 converter",
-        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
-    )
-
-    p.add_argument("-i", "--input", required=True, help="Input coffea file path")
-    p.add_argument(
-        "-o",
-        "--output",
-        required=True,
-        help="Output HDF5 file path prefix (e.g. path/to/file/prefix_name)",
-    )
-    p.add_argument(
-        "-r",
-        "--regions",
-        nargs="+",
-        default=["2b_signal_region_postW", "4b_signal_region"],
-        help="Regions to use for each class label",
-    )
-    p.add_argument(
-        "-cl",
-        "--class-labels",
-        nargs="+",
-        default=["DATA", "GluGlu"],
-        help="Class labels to use for classification",
-    )
-    p.add_argument(
-        "-j",
-        "--jets",
-        nargs="+",
-        default=["JetTotalSPANetPtFlattenPadded", "JetTotalSPANetPadded"],
-        help="Jet collections to process (must match keys in coffea file)",
-    )
-    p.add_argument(
-        "-g",
-        "--global-vars",
-        nargs="+",
-        default=["all"],
-        help="Global variables to save, or 'all' to save all non-jet variables as global variables",
-    )
-    p.add_argument(
-        "-m", "--max-jets", nargs="+", type=int, default=[5, 5], help="Max jets to keep"
-    )
-    p.add_argument(
-        "-tf", "--train-frac", type=float, default=0.8, help="Train fraction"
-    )
-    p.add_argument(
-        "-ns", "--no-shuffle", action="store_true", help="Disable data shuffling"
-    )
-    p.add_argument(
-        "--novars",
-        action="store_true",
-        help="If true, old save format without saved variations is expected",
-        default=False,
-    )
-
-    return p.parse_args()
-
 
 if __name__ == "__main__":
-    args = parse_args()
 
     coffea_to_h5(
         coffea_path=args.input,
