@@ -46,6 +46,9 @@ pip install -r requirements.txt
 # Install in EDITABLE mode
 cd ../SPANet
 pip install -e .
+
+# Install the HEPPlotter class
+pip install --upgrade  --no-cache-dir git+https://github.com/matteomalucchi/AnalysisConfigs.git
 ```
 
 The next time the user enters in the apptainer the virtual environment needs to be activated.
@@ -63,6 +66,16 @@ To check that SPANet is correctly installed in the environment, run the followin
 ```bash
 python -m spanet.train --help
 ```
+
+
+> [!IMPORTANT]
+> To Install the `HEPPlotter` class you can use
+> ```
+> pip install --upgrade  --no-cache-dir git+https://github.com/matteomalucchi/AnalysisConfigs.git
+> ```
+> This command should be executed every time you want to pull from the AnalysisConfigs repository and update the `HEPPlotter`.
+> If it doesn't update, you should first uninstall it with `pip uninstall configs` and then install it again with the command above.
+
 
 ## Dataset creation
 
@@ -83,8 +96,6 @@ python utils/dataset/coffea_to_h5_direct.py --input output_all.coffea --output s
 
 > [!IMPORTANT]
 > When creating on a file for training where pT of the jets is flattened, remember to also create the corresponding file where pT is not flattened to later evaluate the model!
-
-
 
 <details>
 <summary> Legacy dataset creation (outdated instructions)  </summary>
@@ -397,6 +408,9 @@ python3 utils/performance/efficiency_studies.py -pd <plot_dir> -c 0 -k
 
 # To compute the efficiency also for vbf jets on actual vbf events (if the file has a mixture of ggF and VBF events where the class indicating the VBF is 1):
 python utils/performance/efficiency_studies.py -pd <plot_dir> --vbf -c 1 -conf utils/performance/efficiency_configuration_vbf_ggf.py  -k
+
+# compute only vbf pairing (ignore higgs pairing) for vbf events 
+python utils/performance/efficiency_studies.py -pd <plot_dir> --vbf -c 1 -ih -conf utils/performance/efficiency_configuration_vbf_ggf.py  -k
 
 # compute only vbf pairing (ignore higgs pairing) for vbf events with the vbf preselection  (mjj>400 and delta eta<3.5)
 python utils/performance/efficiency_studies.py -pd <plot_dir> --vbf -c 1 -ih -r vbf_presel  -conf utils/performance/efficiency_configuration_vbf_ggf.py  -k
