@@ -113,7 +113,7 @@ else:
 
 # Load checkpoint
 if args.checkpoint:
-    sub["arguments"] += f" {args.checkpoint}"
+    sub["arguments"] += f" -cf {args.checkpoint}"
 
 # GPU and CPU requirements
 sub["request_cpus"] = f"{args.ncpu}"

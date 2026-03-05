@@ -7,7 +7,7 @@ import h5py
 import matplotlib
 import matplotlib.pyplot as plt
 import vector
-from sklearn.metrics import auc, roc_auc_score, roc_curve
+from sklearn.metrics import auc, roc_auc_score, roc_curve, precision_recall_curve, average_precision_score
 
 # from matplotlib.colors import LogNorm
 # import mplhep as hep
@@ -35,13 +35,13 @@ def setup_logging(logpath):
 
 
 def roc_curve_compare_weights(
-    spanet_dict, title, plot_dir, fpr_cutoff, no_weights
+    spanet_dict, plot_dir, fpr_cutoff, no_weights, log=False
 ):
     """Plot ROC curves from a dictionary fed into this function."""
     assert fpr_cutoff > 1e-6 and fpr_cutoff < 1e-1
     # Creating the figures:
-    fig_zoom, ax_zoom = build_fig_ax(f"{title} zoomed in", [0, 0.4], [1e-6, 1e-1])
-    fig_full, ax_full = build_fig_ax(title, [0, 1], [1e-6, 1])
+    fig_zoom, ax_zoom = build_fig_ax("ROC curve zoomed in", [0, 0.4], [1e-6, 1e-1], log)
+    fig_full, ax_full = build_fig_ax("ROC curve", [0, 1], [1e-6, 1], log)
 
     for model_name, model_dict in spanet_dict.items():
         spanetfile = h5py.File(model_dict["file"], "r")
@@ -73,25 +73,24 @@ def roc_curve_compare_weights(
         logger.info(f"AUC total: {auc_score}")
 
         # Add to figures
-        ax_zoom.plot(tpr, fpr, label=f"{model_dict['label']} | AUC(fpr[0,{fpr_cutoff:.0e}])={auc_score_zoom:.2e}", color=model_dict["color"])
-        ax_full.plot(tpr, fpr, label=f"{model_dict['label']} | AUC(fpr[0,1])={auc_score:.2e}", color=model_dict["color"])
+        ax_zoom.plot(tpr, fpr, label=f"Model {model_dict['label']} | AUC(fpr[0,{fpr_cutoff:.0e}])={auc_score_zoom:.2e}", color=model_dict["color"])
+        ax_full.plot(tpr, fpr, label=f"Model {model_dict['label']} | AUC(fpr[0,1])={auc_score:.2e}", color=model_dict["color"])
 
-        for fig, ax, figname in zip([fig_zoom, fig_full], [ax_zoom, ax_full], [f"{title}_zoomed" if title else "roc_plot_zoomed", title if title else "roc_plot"]):
+        for fig, ax, figname in zip([fig_zoom, fig_full], [ax_zoom, ax_full], ["ROC_curve_zoomed", "ROC_curve"]):
             ax.legend(fontsize="small")
+            os.makedirs(f"{plot_dir}/roc_curves", exist_ok=True)
             for suffix in ["pdf", "svg", "png"]:
-                if title:
-                    fig.savefig(f"{plot_dir}/{figname}.{suffix}", dpi=300, bbox_inches="tight")
-                else:
-                    fig.savefig(f"{plot_dir}/{figname}.{suffix}", dpi=300, bbox_inches="tight")
+                fig.savefig(f"{plot_dir}/roc_curves/{figname}{'_log' if log else ''}.{suffix}", dpi=300, bbox_inches="tight")
 
 
-def build_fig_ax(title, x_lims=[0, 1], y_lims=[1e-6, 1]):
+def build_fig_ax(title, x_lims=[0, 1], y_lims=[1e-6, 1], log=False):
     """Build fig and ax objects to create plots."""
     assert len(x_lims) == len(y_lims) and len(x_lims) == 2
     fig, ax = plt.subplots(figsize=(6, 6))
     ax.set_xlabel("True positive rate")
     ax.set_ylabel("False positive rate")
-    ax.set_yscale("log")
+    if log:
+        ax.set_yscale("log")
     ax.set_xlim(*x_lims)
     ax.set_ylim(*y_lims)
     ax.grid(linestyle=":")
@@ -100,10 +99,91 @@ def build_fig_ax(title, x_lims=[0, 1], y_lims=[1e-6, 1]):
     return fig, ax
 
 
+def precision_recall_curve_function(
+    spanet_dict, plot_dir, no_weights, log=False
+):
+    """Plot precision/recall curve from a dictionary fed into this function."""
+    # Creating the figure:
+    fig, ax = plt.subplots(figsize=(6, 6))
+    ax.set_xlabel("Recall")
+    ax.set_ylabel("Precision")
+    if log:
+        ax.set_yscale("log")
+    ax.set_xlim(0, 1)
+    ax.set_ylim(0, 1)
+    ax.set_title("Precision/Recall Curve", fontsize="small")
+    ax.grid(linestyle=":")
+
+    for model_name, model_dict in spanet_dict.items():
+        spanetfile = h5py.File(model_dict["file"], "r")
+        truefile = h5py.File(true_dict[model_dict["true"]]["name"], "r")
+        # do the full chain per dataset
+        logger.info(f"loading new file {model_name}")
+        for key, val in model_dict.items():
+            logger.info(f"{key}: {val}")
+        spanet_class = spanetfile["CLASSIFICATIONS"]["EVENT"]["class"][:, 1][()]
+        true_class = truefile["CLASSIFICATIONS"]["EVENT"]["class"][()]
+        weights = truefile["WEIGHTS"]["weight"][()]
+
+        if no_weights:
+            precision, recall, threshold = precision_recall_curve(true_class, spanet_class)
+            ap_score = average_precision_score(true_class, spanet_class)
+        else:
+            precision, recall, threshold = precision_recall_curve(true_class, spanet_class, sample_weight=weights)
+            ap_score = average_precision_score(true_class, spanet_class, sample_weight=weights)
+
+        logger.debug(f"precision: {precision}")
+        logger.debug(f"recall: {recall}")
+        logger.debug(f"thresholds: {threshold}")
+        logger.info(f"Average Precision: {ap_score}")
+
+        # Add to figures
+        ax.plot(recall, precision, label=f"Model {model_dict['label']} | AP={ap_score:.2e}", color=model_dict["color"])
+
+        ax.legend(fontsize="small")
+        os.makedirs(f"{plot_dir}/precision_recall_curve", exist_ok=True)
+        for suffix in ["pdf", "svg", "png"]:
+            fig.savefig(f"{plot_dir}/precision_recall_curve/precision_recall_curve{'_log' if log else ''}.{suffix}", dpi=300, bbox_inches="tight")
+
+
+def signal_background_hist(
+    spanet_dict, plot_dir, no_weights, log=False
+):
+    """Plot background/signal histogram from a dictionary fed into this function."""
+    # Creating the figure:
+    for model_name, model_dict in spanet_dict.items():
+        fig, ax = plt.subplots(figsize=(6, 6))
+        ax.set_xlabel("SPANet Classification Score")
+        ax.set_ylabel("Count")
+        if log:
+            ax.set_yscale("log")
+        ax.set_xlim(0, 1)
+        ax.set_title(f"Background/Signal Histogram {model_dict['label']}", fontsize="small")
+        ax.grid(linestyle=":")
+
+        spanetfile = h5py.File(model_dict["file"], "r")
+        truefile = h5py.File(true_dict[model_dict["true"]]["name"], "r")
+        # do the full chain per dataset
+        logger.info(f"loading new file {model_name}")
+        for key, val in model_dict.items():
+            logger.info(f"{key}: {val}")
+        spanet_class = spanetfile["CLASSIFICATIONS"]["EVENT"]["class"][:, 1][()]
+        true_class = truefile["CLASSIFICATIONS"]["EVENT"]["class"][()]
+        weights = truefile["WEIGHTS"]["weight"][()]
+
+        mask_background = (true_class == 0)
+
+        # Add to figures
+        ax.hist(spanet_class[mask_background], bins=50, alpha=0.5, label="Background", color="tab:blue", weights=weights[mask_background])
+        ax.hist(spanet_class[~mask_background], bins=50, alpha=0.5, label="Signal for model", color="tab:orange", weights=weights[~mask_background])
+
+        ax.legend(fontsize="small")
+        os.makedirs(f"{plot_dir}/background_signal_hist", exist_ok=True)
+        for suffix in ["pdf", "svg", "png"]:
+            fig.savefig(f"{plot_dir}/background_signal_hist/background_signal_hist{'_'.join(model_dict['label'].split(' '))}{'_log' if log else ''}.{suffix}", dpi=300, bbox_inches="tight")
+
+
 arg_parser = argparse.ArgumentParser()
-arg_parser.add_argument(
-    "-l", "--title", type=str, default="", help="Title of the plot"
-)
 arg_parser.add_argument(
     "-pd",
     "--plot-dir",
@@ -134,4 +214,9 @@ logger.debug(spanet_dict)
 logger.debug(true_dict)
 # Load datatasets
 
-roc_curve_compare_weights(spanet_dict, args.title, args.plot_dir, args.fpr_cutoff, args.no_weights)
+roc_curve_compare_weights(spanet_dict, args.plot_dir, args.fpr_cutoff, args.no_weights)
+precision_recall_curve_function(spanet_dict, args.plot_dir, args.no_weights)
+signal_background_hist(spanet_dict, args.plot_dir, args.no_weights)
+roc_curve_compare_weights(spanet_dict, args.plot_dir, args.fpr_cutoff, args.no_weights, log=True)
+precision_recall_curve_function(spanet_dict, args.plot_dir, args.no_weights, log=True)
+signal_background_hist(spanet_dict, args.plot_dir, args.no_weights, log=True)
