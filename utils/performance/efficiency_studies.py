@@ -105,7 +105,7 @@ parser.add_argument(
 parser.add_argument(
     "-hm",
     "--histo-mass",
-    default=True,
+    default=False,
     action="store_true",
     help="Plot the Higgs mass histograms",
 )
