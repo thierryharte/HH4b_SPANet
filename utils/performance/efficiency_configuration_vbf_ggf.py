@@ -3,16 +3,6 @@
 There are two dictionaries; one is a dictionary showing the actual datasets and the other is a list of true data, to which compare the predictions.
 """
 
-import logging
-
-# logger = logging.getLogger(__name__)
-# logging.basicConfig(
-#     level=logging.INFO,
-#     format="%(asctime)s | %(levelname)s | %(funcName)s | %(message)s",
-#     datefmt="%d-%b-%y %H-%M-%S",
-# )
-logger = logging.getLogger(__name__)
-
 spanet_dir = "/eos/user/t/tharte/Analysis_data/predictions/"
 spanet_dir_matteo = (
     "/eos/user/m/mmalucch/spanet_infos/spanet_inputs/out_prediction_files/"
@@ -48,7 +38,7 @@ spanet_dict = {
     # 'hh4b_pairing_vbf_ggf_pairing_classification': {
     #     'file': f'{new_spanet_dir_matteo}/out_hh4b_pairing_vbf_ggf_pairing_classification/out_seed_trainings_100/version_2/predicitons.h5',
     #     'true': '9_jets_vbf_ggf_SM',
-    #     'label': 'SPANet - VBF/ggF - pairing+classification',
+    #     'label': 'SPANet - VBF/ggF SM - pairing+classification',
     #     'color': 'orange',
     #     'vbf': True,
     # },

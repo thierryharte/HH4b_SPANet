@@ -4,204 +4,18 @@ import copy
 import awkward as ak
 import numpy as np
 import vector
-
+import sys
+import os
 from hist import Hist
 from utils.plot.HEPPlotter import HEPPlotter
+
+sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
+import helpers
 
 logger = logging.getLogger(__name__)
 
 vector.register_awkward()
 vector.register_numba()
-
-from efficiency_configuration import *
-
-TRUE_PAIRING = False
-H5_PADDING_VALUE = 9999.0
-
-
-# TODO: Currently we only have the values for postEE!!!!
-def get_region_mask(region, column_file, do_vbf_pairing):
-    if region == "inclusive":
-        return ak.ones_like(column_file["INPUTS"]["Jet"]["MASK"][:, 0])
-
-    if "test" in region:
-        # keep only the first N events
-        num_events = int(region.split("test_")[-1])
-        logger.info(f"Keeping only the first {num_events} events!")
-        mask = ak.concatenate(
-            (
-                ak.ones_like(column_file["INPUTS"]["Jet"]["MASK"][:, 0])[:num_events],
-                ak.zeros_like(column_file["INPUTS"]["Jet"]["MASK"][:, 0])[num_events:],
-            ),
-        )
-        return mask
-
-    jet_btag = column_file["INPUTS"]["Jet"]["btagPNetB"]
-    if region == "4b" or region == "4M":
-        mask = (
-            (jet_btag[:, 0] > 0.2605)
-            & (jet_btag[:, 1] > 0.2605)
-            & (jet_btag[:, 2] > 0.2605)
-            & (jet_btag[:, 3] > 0.2605)
-        )
-    elif region == "3M":
-        mask = (
-            (jet_btag[:, 0] > 0.2605)
-            & (jet_btag[:, 1] > 0.2605)
-            & (jet_btag[:, 2] > 0.2605)
-            & (jet_btag[:, 3] < 0.2605)
-        )
-    elif region == "2M":
-        mask = (
-            (jet_btag[:, 0] > 0.2605)
-            & (jet_btag[:, 1] > 0.2605)
-            & (jet_btag[:, 2] < 0.2605)
-            & (jet_btag[:, 3] < 0.2605)
-        )
-    elif region == "3T1M":
-        mask = (
-            (jet_btag[:, 0] > 0.6915)
-            & (jet_btag[:, 1] > 0.6915)
-            & (jet_btag[:, 2] > 0.6915)
-            & (jet_btag[:, 3] > 0.2605)
-        )
-    elif region == "3T1L":
-        mask = (
-            (jet_btag[:, 0] > 0.6915)
-            & (jet_btag[:, 1] > 0.6915)
-            & (jet_btag[:, 2] > 0.6915)
-            & (jet_btag[:, 3] > 0.0499)
-            & (jet_btag[:, 3] < 0.2605)
-        )
-    elif region == "vbf_presel" and do_vbf_pairing:
-        mask = get_mask_vbf_region(column_file, 400, 3.5)
-    elif region == "vbf_no_kin_cuts" and do_vbf_pairing:
-        mask = get_mask_vbf_region(column_file, 0, 0)
-    else:
-        raise ValueError("Undefined region")
-    return mask
-
-
-def get_mask_vbf_region(column_file, mjj_cut, delta_eta_cut):
-    jet_list = [
-        get_jet_4vec(
-            column_file, ak.ones_like(column_file["INPUTS"]["Jet"]["MASK"][:, 0])
-        )
-    ]
-    jet_vbf = [j[:, 4:] for j in jet_list]
-    idx_vbf_lead_mjj = get_lead_mjj_jet_idx(jet_vbf)[0]
-    jet = jet_list[0]
-    vbf_jets_max_mjj_0 = ak.unflatten(
-        jet[
-            ak.local_index(jet, axis=0),
-            idx_vbf_lead_mjj[:, 0],
-        ],
-        1,
-    )
-    vbf_jets_max_mjj_1 = ak.unflatten(
-        jet[
-            ak.local_index(jet, axis=0),
-            idx_vbf_lead_mjj[:, 1],
-        ],
-        1,
-    )
-    delta_eta = abs(vbf_jets_max_mjj_0.eta - vbf_jets_max_mjj_1.eta)
-    mjj = (vbf_jets_max_mjj_0 + vbf_jets_max_mjj_1).mass
-
-    mask = ak.flatten((mjj > mjj_cut) & (delta_eta > delta_eta_cut))
-    mask = ak.where(ak.is_none(mask), False, mask)
-
-    return mask
-
-
-def get_class_mask(class_label, column_file):
-    if class_label:
-        try:
-            class_array = column_file["CLASSIFICATIONS"]["EVENT"]["class"][()].astype(
-                np.int64
-            )
-            mask = class_array == int(class_label)
-        except KeyError:
-            try:
-                logger.info(
-                    'The file doesn\'t contain an "EVENT" array, so trying with "Event" instead'
-                )
-                class_array = column_file["CLASSIFICATIONS"]["Event"]["class"][
-                    ()
-                ].astype(np.int64)
-                mask = class_array == int(class_label)
-            except KeyError:
-                logger.warning(
-                    "The file doesn't contain a class array. Setting the mask for the class to True ..."
-                )
-                mask = ak.ones_like(column_file["INPUTS"]["Jet"]["MASK"][:, 0])
-    else:
-        mask = ak.ones_like(column_file["INPUTS"]["Jet"]["MASK"][:, 0])
-
-    return mask
-
-
-def get_lead_mjj_jet_idx(jet):
-    # choose vbf jets as the two jets with the highest mjj that are not from higgs decay
-
-    jet_combinations = [ak.combinations(j, 2) for j in jet]
-    jet_combinations_mass = [(jc["0"] + jc["1"]).mass for jc in jet_combinations]
-    jet_combinations_mass_max_idx_ak = [
-        ak.firsts(ak.argsort(jcm, axis=1, ascending=False))
-        for jcm in jet_combinations_mass
-    ]
-    assert all([ak.all(~ak.is_none(jcm)) for jcm in jet_combinations_mass_max_idx_ak])
-    jet_combinations_mass_max_idx = [
-        ak.to_numpy(ak.fill_none(jcm, -1)) for jcm in jet_combinations_mass_max_idx_ak
-    ]
-    jets_max_mass = [
-        jc[ak.local_index(jc, axis=0), jcm]
-        for jc, jcm in zip(jet_combinations, jet_combinations_mass_max_idx)
-    ]
-    comb_idx_min_vbf = [
-        ak.to_numpy(
-            ak.concatenate(
-                [
-                    ak.unflatten(jmm["0"].index, 1),
-                    ak.unflatten(jmm["1"].index, 1),
-                ],
-                axis=1,
-            ),
-        )
-        for jmm in jets_max_mass
-    ]
-
-    return comb_idx_min_vbf
-
-
-def get_jet_4vec(truefile, mask_true):
-    # load jet information
-    try:
-        jet_pt = truefile["INPUTS"]["Jet"]["ptPnetRegNeutrino"][()][mask_true]
-    except KeyError:
-        logger.warning("Did not find ptPnetRegNeutrino, will try to load pt normal")
-        jet_pt = truefile["INPUTS"]["Jet"]["pt"][()][mask_true]
-
-    jet_eta = truefile["INPUTS"]["Jet"]["eta"][()][mask_true]
-    jet_phi = truefile["INPUTS"]["Jet"]["phi"][()][mask_true]
-    jet_mass = truefile["INPUTS"]["Jet"]["mass"][()][mask_true]
-
-    jet_infos = [jet_pt, jet_eta, jet_phi, jet_mass]
-    for i in range(len(jet_infos)):
-        jet_infos[i] = ak.mask(jet_infos[i], jet_infos[i] != H5_PADDING_VALUE)
-
-    # create a LorentzVector for the jets
-    jet = ak.zip(
-        {
-            "pt": jet_infos[0],
-            "eta": jet_infos[1],
-            "phi": jet_infos[2],
-            "mass": jet_infos[3],
-            "index": ak.local_index(jet_infos[0], axis=1),
-        },
-        with_name="Momentum4D",
-    )
-    return jet
 
 
 def check_double_assignment_vectorized(full_idx_list, label):
@@ -564,7 +378,7 @@ def run2_algorithm(jet, mask_fully_matched, higgs=True, vbf=False):
     if vbf:
         # choose higgs jets as the two jets with the highest mjj that are not from higgs decay
         jet_vbf = [j[:, 4:] for j in jet]
-        comb_idx_min_vbf = get_lead_mjj_jet_idx(jet_vbf)
+        comb_idx_min_vbf = helpers.get_lead_mjj_jet_idx(jet_vbf)
         comb_idx_min_vbf = [np.expand_dims(ci, 1) for ci in comb_idx_min_vbf]
 
         comb_idx_min_list.append(comb_idx_min_vbf)
@@ -948,7 +762,7 @@ def plot_diff_eff(
         .set_output(f"{plot_dir}/{file_name}")
         .set_labels(
             xlabel=r"$m_{HH}$ [GeV]",
-            ylabel=file_name,
+            ylabel="$\\varepsilon^{tot}$" if "tot" in file_name else "$\\varepsilon$",
         )
         .set_data(series_dict, plot_type="graph")
         .set_options(
@@ -1029,7 +843,7 @@ def plot_diff_eff_klambda(
                 "color": col,
             },
         }
-    
+
     # ---------------------------------------------------------
     # Create plotter
     # ---------------------------------------------------------
@@ -1039,7 +853,7 @@ def plot_diff_eff_klambda(
         .set_output(f"{plot_dir}/{name}")
         .set_labels(
             xlabel=xlabel,
-            ylabel=name,
+            ylabel="$\\varepsilon^{tot}$" if "tot" in name else "$\\varepsilon$",
             xticklabels=tick_labels,
             label_pos=positions,
             xtick_fontsize=11,

@@ -1,7 +1,6 @@
 import argparse
 import logging
 import os
-
 import awkward as ak
 import h5py
 import numpy as np
@@ -14,7 +13,6 @@ from efficiency_functions import (
     best_reco_higgs,
     calculate_diff_efficiencies,
     calculate_efficiencies,
-    get_jet_4vec,
     run2_algorithm,
     load_jets_and_pairing,
     plot_diff_eff,
@@ -22,24 +20,10 @@ from efficiency_functions import (
     plot_histos_1d,
     plot_mhh,
     separate_klambda,
-    get_region_mask,
-    get_class_mask,
-    get_lead_mjj_jet_idx,
 )
 
-
-def setup_logging(logpath):
-    logging.basicConfig(
-        level=logging.INFO,
-        format="%(asctime)s | %(levelname)s | %(name)s | %(funcName)s | %(message)s",
-        datefmt="%d-%b-%y %H-%M-%S",
-        handlers=[
-            logging.StreamHandler(),
-            logging.FileHandler(
-                f"{logpath}/logger_output.log", mode="a", encoding="utf-8"
-            ),
-        ],
-    )
+sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+import helpers
 
 
 vector.register_numba()
@@ -139,27 +123,13 @@ cv_c2v_kl_values_dict = {
 }
 
 
-def import_module_from_path(module_path):
-    module_path = Path(module_path).resolve()
-
-    module_name = module_path.stem  # filename without .py
-
-    spec = importlib.util.spec_from_file_location(module_name, module_path)
-    module = importlib.util.module_from_spec(spec)
-
-    sys.modules[module_name] = module
-    spec.loader.exec_module(module)
-
-    return module
-
-
 os.makedirs(args.plot_dir, exist_ok=True)
-setup_logging(args.plot_dir)
+helpers.setup_logging(args.plot_dir)
 logger = logging.getLogger(__name__)
 
 if args.configuration:
-    config = import_module_from_path(args.configuration)
-    logger.info("Imported configuration:", config)
+    config = helpers.import_module_from_path(args.configuration)
+    logger.info(f"Imported configuration: {config}")
     run2_dataset_DATA = config.run2_dataset_DATA
     run2_dataset_MC = config.run2_dataset_MC
     spanet_dict = config.spanet_dict
@@ -219,18 +189,18 @@ def main():
         )
 
         # define region mask
-        mask_region_spanet = get_region_mask(args.region, spanetfile, do_vbf_pairing)
-        mask_region_true = get_region_mask(args.region, truefile, do_vbf_pairing)
+        mask_region_spanet = helpers.get_region_mask(args.region, spanetfile, do_vbf_pairing)
+        mask_region_true = helpers.get_region_mask(args.region, truefile, do_vbf_pairing)
         assert all(mask_region_spanet == mask_region_true)
 
         # define the class mask
         # take the one for the true file because
         # the prediction file might have the predicted class
         # and not the original one
-        mask_class_true = get_class_mask(args.class_label, truefile)
+        mask_class_true = helpers.get_class_mask(args.class_label, truefile)
 
         if args.num_events:
-            mask_num_events = get_region_mask(
+            mask_num_events = helpers.get_region_mask(
                 f"test_{args.num_events}", truefile, False
             )
             logger.info(f"max num events {ak.sum(mask_num_events)}")
@@ -242,7 +212,7 @@ def main():
 
         logger.info(f"Number of events after the masks : {ak.sum(mask_true)}")
 
-        jet = get_jet_4vec(truefile, mask_true)
+        jet = helpers.get_jet_4vec(truefile, mask_true)
 
         idx_true = load_jets_and_pairing(
             truefile, "true", higgs=not args.ignore_higgs, vbf=do_vbf_pairing
@@ -455,23 +425,23 @@ def main():
     )
 
     # define region mask
-    mask_region_true = get_region_mask(args.region, truefile, do_vbf_pairing)
+    mask_region_true = helpers.get_region_mask(args.region, truefile, do_vbf_pairing)
     # assert all(mask_region_spanet == mask_region_true)
 
     # define the class mask
     # take the one for the true file because
     # the prediction file might have the predicted class
     # and not the original one
-    mask_class_true = get_class_mask(args.class_label, truefile)
+    mask_class_true = helpers.get_class_mask(args.class_label, truefile)
     mask_true = mask_region_true & mask_class_true
 
-    jet_for_idx = [get_jet_4vec(truefile, ak.ones_like(mask_true))]
+    jet_for_idx = [helpers.get_jet_4vec(truefile, ak.ones_like(mask_true))]
 
     jet_vbf_for_idx = [j[:, 4:] for j in jet_for_idx]
 
     if do_vbf_pairing:
         # get the idx of the 2 leading mjj jets (excluding the 4 jets leading in btag from higgs)
-        allowed_idx_vbf_run2 = get_lead_mjj_jet_idx(jet_vbf_for_idx)[0]
+        allowed_idx_vbf_run2 = helpers.get_lead_mjj_jet_idx(jet_vbf_for_idx)[0]
     else:
         allowed_idx_vbf_run2 = []
 

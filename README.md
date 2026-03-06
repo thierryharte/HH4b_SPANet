@@ -67,15 +67,15 @@ To check that SPANet is correctly installed in the environment, run the followin
 python -m spanet.train --help
 ```
 
-
 > [!IMPORTANT]
 > To Install the `HEPPlotter` class you can use
+>
 > ```
 > pip install --upgrade  --no-cache-dir git+https://github.com/matteomalucchi/AnalysisConfigs.git
 > ```
+>
 > This command should be executed every time you want to pull from the AnalysisConfigs repository and update the `HEPPlotter`.
 > If it doesn't update, you should first uninstall it with `pip uninstall configs` and then install it again with the command above.
-
 
 ## Dataset creation
 
@@ -347,9 +347,11 @@ source spanet_env/bin/activate
 python -m spanet.export <path_to_training>/out_seed_trainings_100/version_0/ <output_file_name>.onnx --gpu
 ```
 
-## Run the efficiency script
+## Performance
 
-This repo contains also a script to determine the pairing efficiency of the models. It runs on the files gained from `spanet.predict`.
+This repo contains also a script to determine the pairing efficiency and the ROC of the models. It runs on the files gained from `spanet.predict`.
+
+### Run the efficiency script
 
 To add a new model, you just have to add a sub-dictionary to the `spanet_dict` in the configuration for the efficiency script you want to use (e.g. `utils/performance/efficiency_configuration.py`)
 
@@ -434,3 +436,19 @@ python utils/performance/efficiency_studies.py -pd <plot_dir>  -conf utils/perfo
 >
 > - ggF analysis: `HH4b_SPANet/utils/performance/efficiency_configuration.py`
 > - VBF vs ggF analysis: `HH4b_SPANet/utils/performance/efficiency_configuration_vbf_ggf.py`
+
+### ROC curve
+
+To plot the ROC of a signal/background classifier you can use the following command. The configuration to decide what to plot is the same as for the efficiency scirpts.
+
+```bash
+# Activate the virtual environment
+source spanet_env/bin/activate
+
+cd HH4b_SPANet
+
+python3 utils/roccurves/ROC_plots.py -pd <plot_dir> -conf  utils/roccurves/roc_configuration_vbfggf.py [--no-weights] [--region <region>]
+
+# e.g. for VBF
+python3 utils/roccurves/ROC_plots.py -pd <plot_dir> -conf  utils/roccurves/roc_configuration_vbfggf.py -r vbf_no_kin_cuts
+```
