@@ -7,7 +7,11 @@ import awkward as ak
 import coffea.util
 import h5py
 import numpy as np
-
+import json
+import pyarrow
+import pyarrow.dataset as ds
+import pathlib
+from collections import defaultdict
 
 KEEP_TOGETHER_COLLECTIONS = ["add_jet1pt"]
 
@@ -85,7 +89,6 @@ RESONANCES = {
 }
 
 
-
 # -----------------------------------------------------------------------------
 # CLI
 # -----------------------------------------------------------------------------
@@ -134,14 +137,15 @@ p.add_argument(
 p.add_argument(
     "-m", "--max-jets", nargs="+", type=int, default=[5, 5], help="Max jets to keep"
 )
-p.add_argument(
-    "-tf", "--train-frac", type=float, default=0.8, help="Train fraction"
-)
+p.add_argument("-tf", "--train-frac", type=float, default=0.8, help="Train fraction")
 p.add_argument(
     "-ns", "--no-shuffle", action="store_true", help="Disable data shuffling"
 )
 p.add_argument(
-    "-n", "--norm-weights", action="store_true", help="Normalize weights divided by sum_genweights"
+    "-n",
+    "--norm-weights",
+    action="store_true",
+    help="Normalize weights divided by sum_genweights",
 )
 p.add_argument(
     "--novars",
@@ -246,6 +250,8 @@ def unwrap_accumulator(x):
             except Exception:
                 pass
 
+    x = np.array(x)
+
     return x
 
 
@@ -283,9 +289,12 @@ def to_numpy_event_vector(x):
         arr = np.asarray(unwrap_accumulator(arr.item()))
 
     if arr.ndim != 1:
-        arr = arr.flatten()
-        print("WARNING: Flattening the array for global variables")
-        # raise ValueError(f"Expected 1D event vector, got shape {arr.shape}")
+        # arr = arr.flatten()
+        # print("WARNING: Flattening the array for global variables")
+        raise ValueError(f"Expected 1D event vector, got shape {arr.shape}")
+
+    arr = np.stack(arr)
+
     if arr.dtype == object:
         raise TypeError("Object dtype after unwrapping")
     return arr
@@ -454,6 +463,42 @@ def write_block_split(tr, te, path, data, train_mask, test_mask, shuffle):
     ensure_resizable_dataset(te, path, data[test_mask], shuffle)
 
 
+def get_parquet_save_directory(input_parquet):
+    config_json_path = os.path.join(os.path.dirname(input_parquet), "config.json")
+
+    with open(config_json_path, "r") as f:
+        config = json.load(f)
+    col_dir = config["workflow"]["workflow_options"]["dump_columns_as_arrays_per_chunk"]
+    # Strip the redirector (e.g. root://t3dcachedb03.psi.ch:1094/) from the path if it exists
+    if col_dir is not None and "://" in col_dir:
+        col_dir = col_dir.split("://")[-1].split("/", 1)[-1]
+        col_dir = "/" + col_dir.split("/", 1)[-1]
+
+    return col_dir
+
+
+def load_cols_parquet(rootdir):
+    cols = defaultdict(lambda: defaultdict(lambda: defaultdict(dict)))
+    rootdir = pathlib.Path(rootdir)
+
+    # Expected structure: rootdir/skey/dataset/region/variation/
+    for dataset_dir in rootdir.iterdir():
+        if not dataset_dir.is_dir():
+            continue
+
+        for region_dir in dataset_dir.iterdir():
+            if not region_dir.is_dir():
+                continue
+
+            for variation_dir in region_dir.iterdir():
+                if not variation_dir.is_dir():
+                    continue
+
+                cols[dataset_dir.name][dataset_dir.name][region_dir.name][
+                    variation_dir.name
+                ] = ds.dataset(variation_dir, format="parquet")
+
+
 # -----------------------------------------------------------------------------
 # Main conversion
 # -----------------------------------------------------------------------------
@@ -473,9 +518,14 @@ def coffea_to_h5(
     weight_name="weight",
 ):
     """Convert the columns from coffea to h5 format to use as SPANet inputs."""
-    accumulator= coffea.util.load(coffea_path)
+    accumulator = coffea.util.load(coffea_path)
     cols = accumulator[columns_key]
     sum_genweights = accumulator["sum_genweights"]
+
+    if cols == {}:
+        rootdir = get_parquet_save_directory(coffea_path)
+        print("Empty columns, trying to read from parquet files from:", rootdir)
+        cols = load_cols_parquet(rootdir)
 
     path_base = os.path.splitext(h5_path)[0]
     out_dir_name = os.path.dirname(h5_path)
@@ -539,6 +589,13 @@ def coffea_to_h5(
                         variation = "nominal"
                         payload = cols[skey][dataset][region][variation]
 
+                    # if pyarrow dataset, convert to table to obtain the arrays
+                    if type(payload) == pyarrow._dataset.FileSystemDataset:
+                        payload = payload.to_table()
+                        payload_columns = payload.schema.names
+                    else:
+                        payload_columns = list(payload.keys())
+
                     w = to_numpy_event_vector(payload[weight_name])
                     if args.norm_weights:
                         print(
@@ -547,7 +604,7 @@ def coffea_to_h5(
                         w = w / sum_genweights[dataset]
                         print(
                             f"Dividing by sum_genweights = {sum_genweights[dataset]:.3f}",
-                            f"weights after norm = {np.mean(w):.8f}, {np.std(w):.8f}"
+                            f"weights after norm = {np.mean(w):.8f}, {np.std(w):.8f}",
                         )
                     N = len(w)
 
@@ -584,14 +641,17 @@ def coffea_to_h5(
 
                         jet_counts = None
                         jetN = f"{jet_coll}_N"
-                        if jetN in payload:
+                        if jetN in payload_columns:
                             jet_counts = to_numpy_event_vector(payload[jetN]).astype(
                                 np.int64
                             )
+                            jet_pt = unflatten_to_jagged(
+                                unwrap_accumulator(payload[f"{jet_coll}_pt"]),
+                                jet_counts,
+                            )
+                        else:
+                            jet_pt = ak.Array(payload[f"{jet_coll}_pt"])
 
-                        jet_pt = unflatten_to_jagged(
-                            unwrap_accumulator(payload[f"{jet_coll}_pt"]), jet_counts
-                        )
                         # Define the jet mask
                         mask_jet_pt = (
                             ak.to_numpy(
@@ -611,10 +671,13 @@ def coffea_to_h5(
 
                         # Create the Targets
                         prov_key = f"{jet_coll}_provenance"
-                        if prov_key in payload:
-                            jets_prov = unflatten_to_jagged(
-                                unwrap_accumulator(payload[prov_key]), jet_counts
-                            )
+                        if prov_key in payload_columns:
+                            if jet_counts is not None:
+                                jets_prov = unflatten_to_jagged(
+                                    unwrap_accumulator(payload[prov_key]), jet_counts
+                                )
+                            else:
+                                jets_prov = ak.Array(payload[prov_key])
 
                             # Split train / test *before* creating targets
                             prov_tr = jets_prov[train_mask]
@@ -645,33 +708,47 @@ def coffea_to_h5(
                                 N, tr_t, te_t, train_mask, test_mask, shuffle
                             )
 
-                        for name, arr in payload.items():
+                        for name in payload_columns:
+                            arr = payload[name]
+
                             if name == weight_name:
                                 continue
 
                             coll, var = infer_collection_and_var(name)
                             arr_u = unwrap_accumulator(arr)
                             is_jet = coll == jet_coll and var != "N"
-                            
+
                             if (
-                                name in global_variables
-                                or (
-                                    "all" in global_variables
-                                    and f"{coll}_N" not in payload
+                                (
+                                    name in global_variables
+                                    or (
+                                        "all" in global_variables
+                                        and f"{coll}_N" not in payload_columns
+                                    )
                                 )
-                            ) and jet_i == 0:
+                                and jet_i == 0
+                                and type(arr_u[0]) is not np.ndarray
+                            ):
                                 is_global = True
                                 glob_coll = coll
                                 glob_var = var
                             elif (
-                                "GLOBAL_COLLECTIONS_VBF" in global_variables
-                                and name in GLOBAL_COLLECTIONS_VBF[j]
-                            ) and jet_i == 0:
-                                if ("PtFlatten" in jet_coll and "PtFlatten" not in name) or ("PtFlatten" not in jet_coll and "PtFlatten" in name):
+                                (
+                                    "GLOBAL_COLLECTIONS_VBF" in global_variables
+                                    and name in GLOBAL_COLLECTIONS_VBF[j]
+                                )
+                                and jet_i == 0
+                                and type(arr_u[0]) is not np.ndarray
+                            ):
+                                if (
+                                    "PtFlatten" in jet_coll and "PtFlatten" not in name
+                                ) or (
+                                    "PtFlatten" not in jet_coll and "PtFlatten" in name
+                                ):
                                     raise ValueError(
                                         f"Mixing pt-flatten and non-pt-flatten collections! \nChange the global variable configuration, maybe you just need to reorder the global variables."
                                     )
-                                    
+
                                 is_global = True
                                 glob_coll = GLOBAL_COLLECTIONS_VBF[j][name][
                                     "saved_name_coll"
@@ -694,7 +771,7 @@ def coffea_to_h5(
                                 jets = (
                                     unflatten_to_jagged(arr_u, jet_counts)
                                     if arr_np.ndim == 1 and jet_counts is not None
-                                    else arr_u
+                                    else ak.Array(arr_u)
                                 )
 
                                 jtr, jte = jets[train_mask], jets[test_mask]
@@ -797,7 +874,6 @@ def coffea_to_h5(
                         )
 
         print(f"Wrote: {h5_tr}, {h5_te}")
-
 
 
 if __name__ == "__main__":
