@@ -141,7 +141,7 @@ def my_roc_auc(
 def roc_curve_compare_weights(class_dict, plot_dir, fpr_cutoff, no_weights, kl):
     """Plot precision/recall curve from a dictionary fed into this function."""
     kl_string = kl if type(kl) == str else f"{kl:.2f}"
-    kl_tag = kl if isinstance(kl, str) else f"{kl:.2f}".replace("-", "m").replace(".", "p")
+    kl_tag = kl_string.replace("-", "m").replace(".", "p")
 
     logger.info(f"Plotting roc curves for kl = {kl_string} ...")
 
@@ -183,13 +183,13 @@ def roc_curve_compare_weights(class_dict, plot_dir, fpr_cutoff, no_weights, kl):
             "style": {"color": sub_dict["color"], "linestyle": "-", "markersize": 0},
         }
     
-    os.makedirs(f"{plot_dir}/roc_curves/kl={kl_tag}", exist_ok=True)
+    os.makedirs(f"{plot_dir}/roc_curves/kl_{kl_tag}", exist_ok=True)
     for log in [False, True]:
         for zoom in [True, False]:
             (
                 HEPPlotter("CMS")
                 .set_output(
-                    f"{plot_dir}/roc_curves/kl={kl_tag}/ROC_curve_kl={kl_tag}{'_zoomed' if zoom else ''}{'_log' if log else ''}"
+                    f"{plot_dir}/roc_curves/kl_{kl_tag}/ROC_curve_kl_{kl_tag}{'_zoomed' if zoom else ''}{'_log' if log else ''}"
                 )
                 .set_data(series, plot_type="graph")
                 .set_labels(
@@ -213,7 +213,7 @@ def roc_curve_compare_weights(class_dict, plot_dir, fpr_cutoff, no_weights, kl):
 def precision_recall_curve_function(class_dict, plot_dir, no_weights, kl):
     """Plot precision/recall curve from a dictionary fed into this function."""
     kl_string = kl if type(kl) == str else f"{kl:.2f}"
-    kl_tag = kl if isinstance(kl, str) else f"{kl:.2f}".replace("-", "m").replace(".", "p")
+    kl_tag = kl_string.replace("-", "m").replace(".", "p")
 
     logger.info(f"Plotting precision-recall curves for kl = {kl_string} ...")
 
@@ -252,12 +252,12 @@ def precision_recall_curve_function(class_dict, plot_dir, no_weights, kl):
             "style": {"color": sub_dict["color"], "linestyle": "-", "markersize": 0},
         }
     
-    os.makedirs(f"{plot_dir}/precision_recall_curve/kl={kl_tag}", exist_ok=True)
+    os.makedirs(f"{plot_dir}/precision_recall_curve/kl_{kl_tag}", exist_ok=True)
     for log in [False, True]:
         (
             HEPPlotter("CMS")
             .set_output(
-                f"{plot_dir}/precision_recall_curve/kl={kl_tag}/precision_recall_curve_kl={kl_tag}{'_log' if log else ''}"
+                f"{plot_dir}/precision_recall_curve/kl_{kl_tag}/precision_recall_curve_kl_{kl_tag}{'_log' if log else ''}"
             )
             .set_data(series, plot_type="graph")
             .set_labels(
@@ -281,7 +281,7 @@ def precision_recall_curve_function(class_dict, plot_dir, no_weights, kl):
 def signal_background_hist(class_dict, plot_dir, no_weights, kl):
     """Plot background/signal histogram from a dictionary fed into this function."""
     kl_string = kl if type(kl) == str else f"{kl:.2f}"
-    kl_tag = kl if isinstance(kl, str) else f"{kl:.2f}".replace("-", "m").replace(".", "p")
+    kl_tag = kl_string.replace("-", "m").replace(".", "p")
 
     logger.info(f"Plotting score histogram for kl = {kl_string}...")
 
@@ -335,12 +335,12 @@ def signal_background_hist(class_dict, plot_dir, no_weights, kl):
             },
         }
         
-        os.makedirs(f"{plot_dir}/background_signal_hist/kl={kl_tag}", exist_ok=True)
+        os.makedirs(f"{plot_dir}/background_signal_hist/kl_{kl_tag}", exist_ok=True)
         for log in [False, True]:
             (
                 HEPPlotter("CMS")
                 .set_output(
-                    f"{plot_dir}/background_signal_hist/kl={kl_tag}/background_signal_hist_kl={kl_tag}{'_log' if log else ''}"
+                    f"{plot_dir}/background_signal_hist/kl_{kl_tag}/background_signal_hist_kl_{kl_tag}{'_log' if log else ''}"
                 )
                 .set_data(series)
                 .set_labels(

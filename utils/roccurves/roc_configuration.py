@@ -39,24 +39,24 @@ spanet_dict = {
 #        "color": "pink",
 #    },
 
-    # "spanet_dict_hh4b_classification_5jetinput_btag_PNetB_5wp_variables": {
-    #     "file": f"{spanet_dir_kevin}hh4b_classification_5jetinput_btag_PNetB_5wp_variables/hh4b_classification_5jetinput_btag_PNetB_5wp_variables.h5",
-    #     "true": "true_dict_hh4b_classification_5jetinput_btag_PNetB_5wp_variables",
-    #     "label": "hh4b_classification_5jetinput_btag_PNetB_5wp_variables",
-    #     "color": "pink",
-    # },
-
-#     "spanet_dict_hh4b_classification_5jetinput_AN23_183_incomplete_variables": {
-#        "file": f"{spanet_dir_kevin}hh4b_classification_5jetinput_AN23_183_incomplete_variables/hh4b_classification_5jetinput_AN23_183_incomplete_variables.h5",
-#        "true": "true_dict_hh4b_classification_5jetinput_AN23_183_incomplete_variables",
-#        "label": "hh4b_classification_5jetinput_AN23_183_incomplete_variables",
+#    "spanet_dict_hh4b_classification_btagPNetB_5wp": {
+#        "file": f"{spanet_dir_kevin}hh4b_classification_btagPNetB_5wp/hh4b_classification_btagPNetB_5wp.h5",
+#        "true": "true_dict_hh4b_classification_btagPNetB_5wp",
+#        "label": "hh4b_classification_btagPNetB_5wp",
 #        "color": "pink",
 #    },
 
-#    "spanet_dict_hh4b_classification_5jetinput_AN23_183_variables": {
-#        "file": f"{spanet_dir_kevin}hh4b_classification_5jetinput_AN23_183_variables/hh4b_classification_5jetinput_AN23_183_variables.h5",
-#        "true": "true_dict_hh4b_classification_5jetinput_AN23_183_variables",
-#        "label": "hh4b_classification_5jetinput_AN23_183_variables",
+    "spanet_dict_hh4b_classification_AN23_184_incomplete": {
+       "file": f"{spanet_dir_kevin}hh4b_classification_AN23_184_incomplete/hh4b_classification_AN23_184_incomplete.h5",
+       "true": "true_dict_hh4b_classification_AN23_184_incomplete",
+       "label": "hh4b_classification_AN23_184_incomplete",
+       "color": "pink",
+   },
+
+#    "spanet_dict_hh4b_classification_AN23_184": {
+#        "file": f"{spanet_dir_kevin}hh4b_classification_AN23_184/hh4b_classification_AN23_184.h5",
+#        "true": "true_dict_hh4b_classification_AN23_184",
+#        "label": "hh4b_classification_AN23_184",
 #        "color": "pink",
 #    },
 
@@ -207,12 +207,12 @@ spanet_dict = {
 #        "color": "pink",
 #    },
 
-    "spanet_dict_hh4b_classification_var000021": {
-        "file": f"{spanet_dir_kevin}hh4b_classification_var000021/hh4b_classification_var000021.h5",
-        "true": "true_dict_hh4b_classification_var0000##",
-        "label": "hh4b_classification_var000021",
-        "color": "pink",
-    },
+#    "spanet_dict_hh4b_classification_var000021": {
+#        "file": f"{spanet_dir_kevin}hh4b_classification_var000021/hh4b_classification_var000021.h5",
+#        "true": "true_dict_hh4b_classification_var0000##",
+#        "label": "hh4b_classification_var000021",
+#        "color": "pink",
+#    },
 }
 
 true_path_thierry = "/eos/user/t/tharte/Analysis_data/spanet_samples/classification/"
@@ -229,15 +229,15 @@ true_dict = {
        "name": f"{true_path_thierry}1_15_8_jetgoodfromhiggsordered5jets/columns_for_classifierJetGoodFromHiggsOrdered5Jets_test.h5"
     },
 
-        "true_dict_hh4b_classification_5jetinput_btag_PNetB_5wp_variables": {
+        "true_dict_hh4b_classification_btagPNetB_5wp": {
         "name": f"{true_path_thierry}1_15_8_jetgoodfromhiggsordered5jets/columns_for_classifierJetGoodFromHiggsOrdered5Jets_test.h5"
        },
 
-       "true_dict_hh4b_classification_5jetinput_AN23_183_incomplete_variables": {
+       "true_dict_hh4b_classification_AN23_184_incomplete": {
        "name": f"{true_path_thierry}1_15_8_jetgoodfromhiggsordered5jets/columns_for_classifierJetGoodFromHiggsOrdered5Jets_test.h5"
    },
 
-    "true_dict_hh4b_classification_5jetinput_AN23_183_variables": {
+    "true_dict_hh4b_classification_AN23_184": {
         "name": f"{true_path_thierry}1_15_9_jetgoodfromhiggsordered5jets_additional_parameters/columns_for_sig_bkg_classifierJetGoodFromHiggsOrdered5Jets_test.h5"
     },
 

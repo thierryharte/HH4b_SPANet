@@ -20,59 +20,59 @@ INPUTS:
   # REQUIRED - GLOBAL - inputs which will have a single vector per event.
   # ---------------------------------------------------------------------
   GLOBAL:
-    # Event:
+    Event:
       # Arctanh_Delta_pairing_probabilities: normalize
       # Binned_Arctanh_Delta_pairing_probabilities: normalize
       # Delta_pairing_probabilities: normalize
-      # HT: log_normalize
+      HT: log_normalize
       # Padded_Arctanh_Delta_pairing_probabilities: normalize
-      # dR_max: normalize
-      # dR_min: normalize
+      dR_max: normalize
+      dR_min: normalize
       # era: normalize
       # event: normalize
       # kl: normalize
       # sig_bkg_dnn_score: normalize
-      # sigma_over_higgs1_reco_mass: normalize
-      # sigma_over_higgs2_reco_mass: normalize
+      sigma_over_higgs1_reco_mass: normalize
+      sigma_over_higgs2_reco_mass: normalize
       # year: normalize
     HiggsLeading:
-      # dEta: normalize
-      # dPhi: normalize
-      # dR: normalize
+      dEta: normalize
+      dPhi: normalize
+      dR: normalize
       eta: normalize
-      # helicityCosTheta: normalize
+      helicityCosTheta: normalize
       phi: normalize
       mass: log_normalize
       pt: log_normalize
     HiggsSubLeading:
-      # dEta: normalize
-      # dPhi: normalize
-      # dR: normalize
+      dEta: normalize
+      dPhi: normalize
+      dR: normalize
       eta: normalize
-      # helicityCosTheta: normalize
+      helicityCosTheta: normalize
       phi: normalize
       mass: log_normalize
       pt: log_normalize
     HH:
-      # Costhetastar_CS: normalize
-      # dEta: normalize
-      # dPhi: normalize
-      # dR: normalize
+      Costhetastar_CS: normalize
+      dEta: normalize
+      dPhi: normalize
+      dR: normalize
       eta: normalize
       mass: log_normalize
       phi: normalize
       pt: log_normalize
-    # add_jet1pt:
-      # LeadingHiggs_dEta: normalize
-      # LeadingHiggs_dPhi: normalize
-      # LeadingHiggs_mass: normalize
-      # SubLeadingHiggs_dEta: normalize
-      # SubLeadingHiggs_dPhi: normalize
-      # SubLeadingHiggs_mass: normalize
-      # eta: normalize
-      # mass: normalize
-      # phi: normalize
-      # pt: normalize
+    add_jet1pt:
+      LeadingHiggs_dEta: normalize
+      LeadingHiggs_dPhi: normalize
+      LeadingHiggs_mass: normalize
+      SubLeadingHiggs_dEta: normalize
+      SubLeadingHiggs_dPhi: normalize
+      SubLeadingHiggs_mass: normalize
+      eta: normalize
+      mass: normalize
+      phi: normalize
+      pt: normalize
     # weight:
       # variation_pileupDown: normalize
       # variation_pileupUp: normalize
