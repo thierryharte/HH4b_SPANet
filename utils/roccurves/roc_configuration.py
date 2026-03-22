@@ -46,12 +46,12 @@ spanet_dict = {
 #        "color": "pink",
 #    },
 
-    "spanet_dict_hh4b_classification_AN23_184_incomplete": {
-       "file": f"{spanet_dir_kevin}hh4b_classification_AN23_184_incomplete/hh4b_classification_AN23_184_incomplete.h5",
-       "true": "true_dict_hh4b_classification_AN23_184_incomplete",
-       "label": "hh4b_classification_AN23_184_incomplete",
-       "color": "pink",
-   },
+#     "spanet_dict_hh4b_classification_AN23_184_incomplete": {
+#        "file": f"{spanet_dir_kevin}hh4b_classification_AN23_184_incomplete/hh4b_classification_AN23_184_incomplete.h5",
+#        "true": "true_dict_hh4b_classification_AN23_184_incomplete",
+#        "label": "hh4b_classification_AN23_184_incomplete",
+#        "color": "pink",
+#    },
 
 #    "spanet_dict_hh4b_classification_AN23_184": {
 #        "file": f"{spanet_dir_kevin}hh4b_classification_AN23_184/hh4b_classification_AN23_184.h5",
@@ -211,6 +211,244 @@ spanet_dict = {
 #        "file": f"{spanet_dir_kevin}hh4b_classification_var000021/hh4b_classification_var000021.h5",
 #        "true": "true_dict_hh4b_classification_var0000##",
 #        "label": "hh4b_classification_var000021",
+#        "color": "pink",
+#    },
+
+#    "spanet_dict_hh4b_classification_var000022": {
+#        "file": f"{spanet_dir_kevin}hh4b_classification_var000022/hh4b_classification_var000022.h5",
+#        "true": "true_dict_hh4b_classification_var0000##",
+#        "label": "hh4b_classification_var000022",
+#        "color": "pink",
+#    },
+
+#    "spanet_dict_hh4b_classification_var000023": {
+#        "file": f"{spanet_dir_kevin}hh4b_classification_var000023/hh4b_classification_var000023.h5",
+#        "true": "true_dict_hh4b_classification_var0000##",
+#        "label": "hh4b_classification_var000023",
+#        "color": "pink",
+#    },
+
+#    "spanet_dict_hh4b_classification_var000024": {
+#        "file": f"{spanet_dir_kevin}hh4b_classification_var000024/hh4b_classification_var000024.h5",
+#        "true": "true_dict_hh4b_classification_var0000##",
+#        "label": "hh4b_classification_var000024",
+#        "color": "pink",
+#    },
+
+#    "spanet_dict_hh4b_classification_var000025": {
+#        "file": f"{spanet_dir_kevin}hh4b_classification_var000025/hh4b_classification_var000025.h5",
+#        "true": "true_dict_hh4b_classification_var0000##",
+#        "label": "hh4b_classification_var000025",
+#        "color": "pink",
+#    },
+
+#    "spanet_dict_hh4b_classification_var000026": {
+#        "file": f"{spanet_dir_kevin}hh4b_classification_var000026/hh4b_classification_var000026.h5",
+#        "true": "true_dict_hh4b_classification_var0000##",
+#        "label": "hh4b_classification_var000026",
+#        "color": "pink",
+#    },
+
+#    "spanet_dict_hh4b_classification_var000027": {
+#        "file": f"{spanet_dir_kevin}hh4b_classification_var000027/hh4b_classification_var000027.h5",
+#        "true": "true_dict_hh4b_classification_var0000##",
+#        "label": "hh4b_classification_var000027",
+#        "color": "pink",
+#    },
+
+#    "spanet_dict_hh4b_classification_var000028": {
+#        "file": f"{spanet_dir_kevin}hh4b_classification_var000028/hh4b_classification_var000028.h5",
+#        "true": "true_dict_hh4b_classification_var0000##",
+#        "label": "hh4b_classification_var000028",
+#        "color": "pink",
+#    },
+
+#    "spanet_dict_hh4b_classification_var000029": {
+#        "file": f"{spanet_dir_kevin}hh4b_classification_var000029/hh4b_classification_var000029.h5",
+#        "true": "true_dict_hh4b_classification_var0000##",
+#        "label": "hh4b_classification_var000029",
+#        "color": "pink",
+#    },
+
+#    "spanet_dict_hh4b_classification_var000030": {
+#        "file": f"{spanet_dir_kevin}hh4b_classification_var000030/hh4b_classification_var000030.h5",
+#        "true": "true_dict_hh4b_classification_var0000##",
+#        "label": "hh4b_classification_var000030",
+#        "color": "pink",
+#    },
+
+#    "spanet_dict_hh4b_classification_var0000231": {
+#        "file": f"{spanet_dir_kevin}hh4b_classification_var000031/hh4b_classification_var000031.h5",
+#        "true": "true_dict_hh4b_classification_var0000##",
+#        "label": "hh4b_classification_var000031",
+#        "color": "pink",
+#    },
+
+#    "spanet_dict_hh4b_classification_var000032": {
+#        "file": f"{spanet_dir_kevin}hh4b_classification_var000032/hh4b_classification_var000032.h5",
+#        "true": "true_dict_hh4b_classification_var0000##",
+#        "label": "hh4b_classification_var000032",
+#        "color": "pink",
+#    },
+
+#    "spanet_dict_hh4b_classification_var000033": {
+#        "file": f"{spanet_dir_kevin}hh4b_classification_var000033/hh4b_classification_var000033.h5",
+#        "true": "true_dict_hh4b_classification_var0000##",
+#        "label": "hh4b_classification_var000033",
+#        "color": "pink",
+#    },
+
+#    "spanet_dict_hh4b_classification_var000034": {
+#        "file": f"{spanet_dir_kevin}hh4b_classification_var000034/hh4b_classification_var000034.h5",
+#        "true": "true_dict_hh4b_classification_var0000##",
+#        "label": "hh4b_classification_var000034",
+#        "color": "pink",
+#    },
+
+#    "spanet_dict_hh4b_classification_var000035": {
+#        "file": f"{spanet_dir_kevin}hh4b_classification_var000035/hh4b_classification_var000035.h5",
+#        "true": "true_dict_hh4b_classification_var0000##",
+#        "label": "hh4b_classification_var000035",
+#        "color": "pink",
+#    },
+
+#    "spanet_dict_hh4b_classification_var000036": {
+#        "file": f"{spanet_dir_kevin}hh4b_classification_var000036/hh4b_classification_var000036.h5",
+#        "true": "true_dict_hh4b_classification_var0000##",
+#        "label": "hh4b_classification_var000036",
+#        "color": "pink",
+#    },
+
+#    "spanet_dict_hh4b_classification_var000037": {
+#        "file": f"{spanet_dir_kevin}hh4b_classification_var000037/hh4b_classification_var000037.h5",
+#        "true": "true_dict_hh4b_classification_var0000##",
+#        "label": "hh4b_classification_var000037",
+#        "color": "pink",
+#    },
+
+#    "spanet_dict_hh4b_classification_var000038": {
+#        "file": f"{spanet_dir_kevin}hh4b_classification_var000038/hh4b_classification_var000038.h5",
+#        "true": "true_dict_hh4b_classification_var0000##",
+#        "label": "hh4b_classification_var000038",
+#        "color": "pink",
+#    },
+
+#    "spanet_dict_hh4b_classification_var000039": {
+#        "file": f"{spanet_dir_kevin}hh4b_classification_var000039/hh4b_classification_var000039.h5",
+#        "true": "true_dict_hh4b_classification_var0000##",
+#        "label": "hh4b_classification_var000039",
+#        "color": "pink",
+#    },
+
+#    "spanet_dict_hh4b_classification_var000040": {
+#        "file": f"{spanet_dir_kevin}hh4b_classification_var000040/hh4b_classification_var000040.h5",
+#        "true": "true_dict_hh4b_classification_var0000##",
+#        "label": "hh4b_classification_var000040",
+#        "color": "pink",
+#    },
+
+#    "spanet_dict_hh4b_classification_var000041": {
+#        "file": f"{spanet_dir_kevin}hh4b_classification_var000041/hh4b_classification_var000041.h5",
+#        "true": "true_dict_hh4b_classification_var0000##",
+#        "label": "hh4b_classification_var000041",
+#        "color": "pink",
+#    },
+
+#    "spanet_dict_hh4b_classification_var000042": {
+#        "file": f"{spanet_dir_kevin}hh4b_classification_var000042/hh4b_classification_var000042.h5",
+#        "true": "true_dict_hh4b_classification_var0000##",
+#        "label": "hh4b_classification_var000042",
+#        "color": "pink",
+#    },
+
+#    "spanet_dict_hh4b_classification_var000043": {
+#        "file": f"{spanet_dir_kevin}hh4b_classification_var000043/hh4b_classification_var000043.h5",
+#        "true": "true_dict_hh4b_classification_var0000##",
+#        "label": "hh4b_classification_var000043",
+#        "color": "pink",
+#    },
+
+#    "spanet_dict_hh4b_classification_var000044": {
+#        "file": f"{spanet_dir_kevin}hh4b_classification_var000044/hh4b_classification_var000044.h5",
+#        "true": "true_dict_hh4b_classification_var0000##",
+#        "label": "hh4b_classification_var000044",
+#        "color": "pink",
+#    },
+
+#    "spanet_dict_hh4b_classification_var000045": {
+#        "file": f"{spanet_dir_kevin}hh4b_classification_var000045/hh4b_classification_var000045.h5",
+#        "true": "true_dict_hh4b_classification_var0000##",
+#        "label": "hh4b_classification_var000045",
+#        "color": "pink",
+#    },
+
+#    "spanet_dict_hh4b_classification_var000046": {
+#        "file": f"{spanet_dir_kevin}hh4b_classification_var000046/hh4b_classification_var000046.h5",
+#        "true": "true_dict_hh4b_classification_var0000##",
+#        "label": "hh4b_classification_var000046",
+#        "color": "pink",
+#    },
+
+#    "spanet_dict_hh4b_classification_var000047": {
+#        "file": f"{spanet_dir_kevin}hh4b_classification_var000047/hh4b_classification_var000047.h5",
+#        "true": "true_dict_hh4b_classification_var0000##",
+#        "label": "hh4b_classification_var000047",
+#        "color": "pink",
+#    },
+
+#    "spanet_dict_hh4b_classification_var000048": {
+#        "file": f"{spanet_dir_kevin}hh4b_classification_var000048/hh4b_classification_var000048.h5",
+#        "true": "true_dict_hh4b_classification_var0000##",
+#        "label": "hh4b_classification_var000048",
+#        "color": "pink",
+#    },
+
+#    "spanet_dict_hh4b_classification_var000049": {
+#        "file": f"{spanet_dir_kevin}hh4b_classification_var000049/hh4b_classification_var000049.h5",
+#        "true": "true_dict_hh4b_classification_var0000##",
+#        "label": "hh4b_classification_var000049",
+#        "color": "pink",
+#    },
+
+#    "spanet_dict_hh4b_classification_var000050": {
+#        "file": f"{spanet_dir_kevin}hh4b_classification_var000050/hh4b_classification_var000050.h5",
+#        "true": "true_dict_hh4b_classification_var0000##",
+#        "label": "hh4b_classification_var000050",
+#        "color": "pink",
+#    },
+
+#    "spanet_dict_hh4b_classification_var000051": {
+#        "file": f"{spanet_dir_kevin}hh4b_classification_var000051/hh4b_classification_var000051.h5",
+#        "true": "true_dict_hh4b_classification_var0000##",
+#        "label": "hh4b_classification_var000051",
+#        "color": "pink",
+#    },
+
+#    "spanet_dict_hh4b_classification_var000052": {
+#        "file": f"{spanet_dir_kevin}hh4b_classification_var000052/hh4b_classification_var000052.h5",
+#        "true": "true_dict_hh4b_classification_var0000##",
+#        "label": "hh4b_classification_var000052",
+#        "color": "pink",
+#    },
+
+#    "spanet_dict_hh4b_classification_var000053": {
+#        "file": f"{spanet_dir_kevin}hh4b_classification_var000053/hh4b_classification_var000053.h5",
+#        "true": "true_dict_hh4b_classification_var0000##",
+#        "label": "hh4b_classification_var000053",
+#        "color": "pink",
+#    },
+
+#    "spanet_dict_hh4b_classification_var000054": {
+#        "file": f"{spanet_dir_kevin}hh4b_classification_var000054/hh4b_classification_var000054.h5",
+#        "true": "true_dict_hh4b_classification_var0000##",
+#        "label": "hh4b_classification_var000054",
+#        "color": "pink",
+#    },
+
+#    "spanet_dict_hh4b_classification_var000055": {
+#        "file": f"{spanet_dir_kevin}hh4b_classification_var000055/hh4b_classification_var000055.h5",
+#        "true": "true_dict_hh4b_classification_var0000##",
+#        "label": "hh4b_classification_var000055",
 #        "color": "pink",
 #    },
 }

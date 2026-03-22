@@ -46,8 +46,8 @@ INPUTS:
       pt: log_normalize
     HiggsSubLeading:
       # dEta: normalize
-      # dPhi: normalize
-      # dR: normalize
+      dPhi: normalize
+      dR: normalize
       eta: normalize
       helicityCosTheta: normalize
       phi: normalize

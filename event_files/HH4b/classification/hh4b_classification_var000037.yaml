@@ -38,7 +38,7 @@ INPUTS:
     HiggsLeading:
       # dEta: normalize
       # dPhi: normalize
-      # dR: normalize
+      dR: normalize
       eta: normalize
       helicityCosTheta: normalize
       phi: normalize
@@ -47,7 +47,7 @@ INPUTS:
     HiggsSubLeading:
       # dEta: normalize
       # dPhi: normalize
-      # dR: normalize
+      dR: normalize
       eta: normalize
       helicityCosTheta: normalize
       phi: normalize
@@ -56,8 +56,8 @@ INPUTS:
     HH:
       Costhetastar_CS: normalize
       # dEta: normalize
-      # dPhi: normalize
-      # dR: normalize
+      dPhi: normalize
+      dR: normalize
       eta: normalize
       mass: log_normalize
       phi: normalize

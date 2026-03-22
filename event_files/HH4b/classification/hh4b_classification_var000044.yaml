@@ -24,7 +24,7 @@ INPUTS:
       # Arctanh_Delta_pairing_probabilities: normalize
       # Binned_Arctanh_Delta_pairing_probabilities: normalize
       # Delta_pairing_probabilities: normalize
-      HT: log_normalize
+      # HT: log_normalize
       # Padded_Arctanh_Delta_pairing_probabilities: normalize
       dR_max: normalize
       dR_min: normalize
@@ -38,7 +38,7 @@ INPUTS:
     HiggsLeading:
       # dEta: normalize
       # dPhi: normalize
-      # dR: normalize
+      dR: normalize
       eta: normalize
       helicityCosTheta: normalize
       phi: normalize
@@ -47,7 +47,7 @@ INPUTS:
     HiggsSubLeading:
       # dEta: normalize
       # dPhi: normalize
-      # dR: normalize
+      dR: normalize
       eta: normalize
       helicityCosTheta: normalize
       phi: normalize
@@ -55,9 +55,9 @@ INPUTS:
       pt: log_normalize
     HH:
       Costhetastar_CS: normalize
-      # dEta: normalize
+      dEta: normalize
       # dPhi: normalize
-      # dR: normalize
+      dR: normalize
       eta: normalize
       mass: log_normalize
       phi: normalize

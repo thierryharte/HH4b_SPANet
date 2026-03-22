@@ -26,8 +26,8 @@ INPUTS:
       # Delta_pairing_probabilities: normalize
       HT: log_normalize
       # Padded_Arctanh_Delta_pairing_probabilities: normalize
-      # dR_max: normalize
-      # dR_min: normalize
+      dR_max: normalize
+      dR_min: normalize
       # era: normalize
       # event: normalize
       # kl: normalize
@@ -40,7 +40,7 @@ INPUTS:
       # dPhi: normalize
       dR: normalize
       eta: normalize
-      helicityCosTheta: normalize
+      # helicityCosTheta: normalize
       phi: normalize
       mass: log_normalize
       pt: log_normalize
@@ -49,7 +49,7 @@ INPUTS:
       # dPhi: normalize
       dR: normalize
       eta: normalize
-      helicityCosTheta: normalize
+      #helicityCosTheta: normalize
       phi: normalize
       mass: log_normalize
       pt: log_normalize

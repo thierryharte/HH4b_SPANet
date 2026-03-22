@@ -26,14 +26,14 @@ INPUTS:
       # Delta_pairing_probabilities: normalize
       HT: log_normalize
       # Padded_Arctanh_Delta_pairing_probabilities: normalize
-      # dR_max: normalize
-      # dR_min: normalize
+      dR_max: normalize
+      dR_min: normalize
       # era: normalize
       # event: normalize
       # kl: normalize
       # sig_bkg_dnn_score: normalize
-      sigma_over_higgs1_reco_mass: normalize
-      sigma_over_higgs2_reco_mass: normalize
+      # sigma_over_higgs1_reco_mass: normalize
+      # sigma_over_higgs2_reco_mass: normalize
       # year: normalize
     HiggsLeading:
       # dEta: normalize
@@ -54,10 +54,10 @@ INPUTS:
       mass: log_normalize
       pt: log_normalize
     HH:
-      Costhetastar_CS: normalize
+      # Costhetastar_CS: normalize
       dEta: normalize
       # dPhi: normalize
-      dR: normalize
+      # dR: normalize
       eta: normalize
       mass: log_normalize
       phi: normalize
