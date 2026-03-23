@@ -40,8 +40,6 @@ spanet_dict = {
     #     'color': 'orange',
     #     'vbf': True,
     # },
-<<<<<<< HEAD
-<<<<<<< HEAD
     'hh4b_pairing_vbf_ggf_pairing_allKalmbda': {
         'file': f'{new_spanet_dir_matteo}/out_hh4b_pairing_vbf_ggf_pairing_classification_allKlambda/out_seed_trainings_100/version_1/JetTotalSPANetPadded_kl_combined_test_vbf_all_Klambda_predicitons.h5',
         'true': '9_jets_vbf_ggf_all_Klambda',
@@ -70,9 +68,6 @@ spanet_dict = {
         'color': 'red',
         'vbf': True,
     },
-=======
-=======
->>>>>>> eac65b70bf1e4efecd8107300aef7fe994d51f19
     ##'hh4b_pairing_vbf_ggf_pairing_allKalmbda': {
     ##    'file': f'{new_spanet_dir_matteo}/out_hh4b_pairing_vbf_ggf_pairing_classification_allKlambda/out_seed_trainings_100/version_1/JetTotalSPANetPadded_kl_combined_test_vbf_all_Klambda_predicitons.h5',
     ##    'true': '9_jets_vbf_ggf_all_Klambda',
@@ -87,10 +82,6 @@ spanet_dict = {
     ##    'color': 'blue',
     ##    'vbf': True,
     ##},
-<<<<<<< HEAD
->>>>>>> 12c7015 (adding option files for nkontaxa)
-=======
->>>>>>> eac65b70bf1e4efecd8107300aef7fe994d51f19
     # 'hh4b_pairing_vbf_ggf_pairing_classification_allKalmbda_SeparateHiggsVBF': {
     #     'file': f'{new_spanet_dir_matteo}/out_hh4b_pairing_vbf_ggf_pairing_classification_allKlambda_SeparateHiggsVBF/out_seed_trainings_100/version_0/hh4b_pairing_vbf_ggf_pairing_classification_AllKlambda_SeparateHiggsVBF_JetGoodProvHiggsPadded_JetGoodVBFMergedProvVBFPadded_test_eval.h5',
     #     'true': '9_jets_vbf_ggf_all_Klambda_SeparateHiggsVBF',
