@@ -13,69 +13,11 @@ import pyarrow.dataset as ds
 import pathlib
 from collections import defaultdict
 
-KEEP_TOGETHER_COLLECTIONS = ["add_jet1pt"]
-
-JET_COLLECTIONS_SEPARATE_HIGGS_VBF = [
-    {
-        "JetGoodProvHiggsPadded": {
-            "saved_name": "JetHiggs",
-            "max_num_jets": 4,
-            "resonances": ["h1", "h2"],
-        },
-        "JetGoodVBFMergedProvVBFPadded": {
-            "saved_name": "JetVBF",
-            "max_num_jets": 5,
-            "resonances": ["vbf"],
-        },
-    },
-    {
-        "JetGoodProvHiggsPtFlattenPadded": {
-            "saved_name": "JetHiggs",
-            "max_num_jets": 4,
-            "resonances": ["h1", "h2"],
-        },
-        "JetGoodVBFMergedProvVBFPtFlattenPadded": {
-            "saved_name": "JetVBF",
-            "max_num_jets": 5,
-            "resonances": ["vbf"],
-        },
-    },
-    {
-        "JetGoodProvHiggsPtFlattenPadded": {
-            "saved_name": "JetHiggs",
-            "max_num_jets": 4,
-            "resonances": ["h1", "h2"],
-        },
-        "JetGoodVBFMergedProvVBFPadded": {
-            "saved_name": "JetVBF",
-            "max_num_jets": 5,
-            "resonances": ["vbf"],
-        },
-    },
-]
-
-GLOBAL_COLLECTIONS_VBF = [
-    {
-        "events_mjjJetTotalSPANetPtFlattenPadded": {
-            "saved_name_coll": "Event",
-            "saved_name_var": "mjjVBF",
-        },
-        "events_detaJetTotalSPANetPtFlattenPadded": {
-            "saved_name_coll": "Event",
-            "saved_name_var": "detaVBF",
-        },
-    },
-    {
-        "events_mjjJetTotalSPANetPadded": {
-            "saved_name_coll": "Event",
-            "saved_name_var": "mjjVBF",
-        },
-        "events_detaJetTotalSPANetPadded": {
-            "saved_name_coll": "Event",
-            "saved_name_var": "detaVBF",
-        },
-    },
-]
+from collections_coffea_to_h5_direct import (
+    KEEP_TOGETHER_COLLECTIONS,
+    jet_collections_dict,
+    global_collections_dict,
+)
 
 COFFEA_PADDING_VALUE = -999.0
 H5_PADDING_VALUE = 9999.0
@@ -481,7 +423,7 @@ def load_cols_parquet(rootdir):
     cols = defaultdict(lambda: defaultdict(lambda: defaultdict(dict)))
     rootdir = pathlib.Path(rootdir)
 
-    # Expected structure: rootdir/skey/dataset/region/variation/
+    # Expected structure: rootdir/dataset/region/variation/
     for dataset_dir in rootdir.iterdir():
         if not dataset_dir.is_dir():
             continue
@@ -497,6 +439,8 @@ def load_cols_parquet(rootdir):
                 cols[dataset_dir.name][dataset_dir.name][region_dir.name][
                     variation_dir.name
                 ] = ds.dataset(variation_dir, format="parquet")
+
+    return cols
 
 
 # -----------------------------------------------------------------------------
@@ -526,14 +470,19 @@ def coffea_to_h5(
         rootdir = get_parquet_save_directory(coffea_path)
         print("Empty columns, trying to read from parquet files from:", rootdir)
         cols = load_cols_parquet(rootdir)
+        breakpoint()
 
     path_base = os.path.splitext(h5_path)[0]
     out_dir_name = os.path.dirname(h5_path)
     if out_dir_name:
         os.makedirs(out_dir_name, exist_ok=True)
 
-    if jet_collections[0] == "JET_COLLECTIONS_SEPARATE_HIGGS_VBF":
-        jet_collections = JET_COLLECTIONS_SEPARATE_HIGGS_VBF
+    if (
+        len(jet_collections) == 1
+        and jet_collections[0].isupper()
+        and jet_collections[0] in jet_collections_dict
+    ):
+        jet_collections = jet_collections_dict[jet_collections[0]]
 
     for j, jet_coll_group in enumerate(jet_collections):
 
@@ -553,8 +502,8 @@ def coffea_to_h5(
 
         jet_coll_group_str = "_".join(list(jet_coll_group.keys()))
 
-        h5_tr = f"{path_base}_{jet_coll_group_str}_train.h5"
-        h5_te = f"{path_base}_{jet_coll_group_str}_test.h5"
+        h5_tr = f"{path_base}{jet_coll_group_str}_train.h5"
+        h5_te = f"{path_base}{jet_coll_group_str}_test.h5"
 
         with h5py.File(h5_tr, "w") as ftr, h5py.File(h5_te, "w") as fte:
 
@@ -734,8 +683,11 @@ def coffea_to_h5(
                                 glob_var = var
                             elif (
                                 (
-                                    "GLOBAL_COLLECTIONS_VBF" in global_variables
-                                    and name in GLOBAL_COLLECTIONS_VBF[j]
+                                    len(global_variables) == 1
+                                    and global_variables[0].isupper()
+                                    and global_variables[0] in global_collections_dict
+                                    and name
+                                    in global_collections_dict[global_variables[0]][j]
                                 )
                                 and jet_i == 0
                                 and type(arr_u[0]) is not np.ndarray
@@ -745,17 +697,17 @@ def coffea_to_h5(
                                 ) or (
                                     "PtFlatten" not in jet_coll and "PtFlatten" in name
                                 ):
-                                    raise ValueError(
-                                        f"Mixing pt-flatten and non-pt-flatten collections! \nChange the global variable configuration, maybe you just need to reorder the global variables."
+                                    print(
+                                        f"WARNING: Mixing pt-flatten and non-pt-flatten collections! \nMaybe need to change the global variable configuration, maybe you just need to reorder the global variables."
                                     )
 
                                 is_global = True
-                                glob_coll = GLOBAL_COLLECTIONS_VBF[j][name][
-                                    "saved_name_coll"
-                                ]
-                                glob_var = GLOBAL_COLLECTIONS_VBF[j][name][
-                                    "saved_name_var"
-                                ]
+                                glob_coll = global_collections_dict[
+                                    global_variables[0]
+                                ][j][name]["saved_name_coll"]
+                                glob_var = global_collections_dict[global_variables[0]][
+                                    j
+                                ][name]["saved_name_var"]
                             else:
                                 is_global = False
                                 glob_coll = None
