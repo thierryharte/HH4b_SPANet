@@ -70,7 +70,7 @@ python -m spanet.train --help
 > [!IMPORTANT]
 > To Install the `HEPPlotter` class you can use
 >
-> ```
+> ```bash
 > pip install --upgrade  --no-cache-dir git+https://github.com/matteomalucchi/AnalysisConfigs.git
 > ```
 >
