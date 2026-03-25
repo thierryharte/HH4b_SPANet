@@ -20,7 +20,7 @@ vector.register_awkward()
 
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 import helpers
-from utils.plot.HEPPlotter import HEPPlotter
+from utils_configs.plot.HEPPlotter import HEPPlotter
 
 
 parser = argparse.ArgumentParser()
@@ -188,7 +188,7 @@ def roc_curve_compare_weights(class_dict, plot_dir, fpr_cutoff, no_weights):
                     ylabel="False positive rate",
                 )
                 .set_options(
-                    legend_font_size="16",
+                    legend_font_size=16,
                     xlim_left_value=0,
                     xlim_right_value=0.4 if zoom else 0,
                     ylim_bottom_value=1e-6,
@@ -247,7 +247,7 @@ def precision_recall_curve_function(class_dict, plot_dir, no_weights):
                 ylabel="Precision",
             )
             .set_options(
-                legend_font_size="16",
+                legend_font_size=16,
                 xlim_left_value=0,
                 xlim_right_value=1,
                 ylim_bottom_value=1e-6,
@@ -323,7 +323,7 @@ def signal_background_hist(class_dict, plot_dir, no_weights):
                 )
                 .set_options(
                     set_ylim=False,
-                    legend_font_size="16",
+                    legend_font_size=16,
                     y_log=True if log else False,
                     legend=True,
                     grid=True,

@@ -7,7 +7,7 @@ import vector
 import sys
 import os
 from hist import Hist
-from utils.plot.HEPPlotter import HEPPlotter
+from utils_configs.plot.HEPPlotter import HEPPlotter
 
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 import helpers
