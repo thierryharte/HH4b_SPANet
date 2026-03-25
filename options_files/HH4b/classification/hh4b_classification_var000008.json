@@ -29,7 +29,7 @@
 
     "skip_connections": true,
     "initial_embedding_skip_connections": true,
-    "event_info_file": "${SPANET_MAIN_DIR}/HH4b_SPANet/event_files/HH4b/classification/hh4b_classification_5jetinput_AN23_183_variables.yaml",
+    "event_info_file": "${SPANET_MAIN_DIR}/HH4b_SPANet/event_files/HH4b/classification/hh4b_classification_var000008.yaml",
     "training_file": "/eos/user/t/tharte/Analysis_data/spanet_samples/classification/1_15_9_jetgoodfromhiggsordered5jets_additional_parameters/columns_for_sig_bkg_classifierJetGoodFromHiggsOrdered5Jets_train.h5",
 
     "normalize_features": true,
@@ -66,7 +66,7 @@
     "gradient_clip": 0.425,
     "dropout": 0.0059,
 
-    "metric": "CLASSIFICATION/EVENT/class_accuracy",
+    "metric": "CLASSIFICATION/EVENT/class_accuracy_event_and_class_weight",
     "epochs": 100,
     "num_gpu": 1,
     "verbose_output": true
