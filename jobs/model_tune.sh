@@ -62,6 +62,9 @@ echo "Python path:    $(which python)"
 cd "${HH4b_SPANET_DIR}"
 echo "Working dir:    $(pwd)"
 
+pip install "ray[train]" "ray[tune]==2.5.1" hyperopt
+echo "Installing "ray[train]" \"ray[tune]==2.5.1\" and hyperopt"
+
 echo "Extra args passed to spanet.tune: ${EXTRA_ARGS[*]}"
 
 # Launch tuning
