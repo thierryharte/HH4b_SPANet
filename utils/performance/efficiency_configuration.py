@@ -25,7 +25,8 @@ true_dir_matteo = (
 
 # uncomment the configurations that you want to use
 
-run2_dataset_MC = "5_jets_pt_true_5wp_AN23_151_cuts_allklambda"
+run2_dataset_MC = "5_jets_pt_true_5wp_3L1cuts_allklambda"
+# run2_dataset_MC = "5_jets_pt_true_5wp_AN23_151_cuts_allklambda"
 run2_dataset_DATA = "5_jets_pt_true_wp_DATA_oldWP"
 
 spanet_dict = {
@@ -65,11 +66,12 @@ spanet_dict = {
     #     'true': '5_jets_pt_true_wp_allklambda_oldWP',
     #     'label': 'SPANet baseline',
     #     'color': 'darkblue'},
-    # '5_jets_pt_btag_wp_300e_allklambda': {
-    #     'file': f'{spanet_dir}spanet_hh4b_5jets_300_ptreg_loose_s100_btag_wp.h5',
-    #     'true': '5_jets_pt_true_wp_allklambda_oldWP',
-    #     'label': 'SPANet btag 5 WP',
-    #     'color': 'royalblue'},
+    '5_jets_pt_btag_wp_300e_allklambda': {
+        'file': f'{spanet_dir}spanet_hh4b_5jets_300_ptreg_loose_s100_btag_wp.h5',
+        'true': '5_jets_pt_true_wp_allklambda_oldWP',
+        # 'label': 'SPANet btag 5 WP',
+        'label': 'SPANet nominal pT',
+        'color': 'royalblue'},
     # '5_jets_pt_btag_3wp_300e_allklambda': {
     #     'file': f'{spanet_dir}spanet_hh4b_5jets_300_ptreg_loose_s100_btag_3wp.h5',
     #     'true': '5_jets_pt_true_wp_allklambda_oldWP',
@@ -133,12 +135,13 @@ spanet_dict = {
     #     'true': '5_jets_pt_true_wp_allklambda',
     #     'label': 'SPANet btag 5 WP - Flattened pt [0.3,1.7]',
     #     'color': 'orange'},
-    # "5_jets_ptvary_btag_5wp_300e_3L1cuts_allklambda": {
-    #     "file": f"{spanet_dir}1_13_2_spanet_loose_MC_postEE_pt_vary_btagWP_s100_newLeptonVeto_3L1Cut_UpdateJetVetoMap_MC.h5",
-    #     "true": "5_jets_pt_true_5wp_3L1cuts_allklambda",
-    #     "label": "SPANet btag 5 WP - Flattened pt [0.3,1.7] - 3L1 triggers",
-    #     "color": "firebrick",
-    # },
+    "5_jets_ptvary_btag_5wp_300e_3L1cuts_allklambda": {
+        "file": f"{spanet_dir}1_13_2_spanet_loose_MC_postEE_pt_vary_btagWP_s100_newLeptonVeto_3L1Cut_UpdateJetVetoMap_MC.h5",
+        "true": "5_jets_pt_true_5wp_3L1cuts_allklambda",
+        # "label": "SPANet btag 5 WP - Flattened pt [0.3,1.7] - 3L1 triggers",
+        "label": "SPANet flattened pT",
+        "color": "firebrick",
+    },
     # "5_jets_ptvary_nobtag_5wp_300e_3L1cuts_allklambda": {
     #     "file": f"{spanet_dir}1_14_8_h4b_5jets_ptvary_loose_300_nobtag_newLeptonVeto_3L1Cut_UpdateJetVetoMap.h5",
     #     "true": "5_jets_pt_true_5wp_3L1cuts_allklambda",
@@ -146,30 +149,30 @@ spanet_dict = {
     #     "color": "forestgreen",
     # },
     # ================== Cuts AN23-151 ======================
-    "5_jets_ptvary_btag_5wp_300e_AN23_151_cuts_4b_region_allklambda": {
-        "file": f"{spanet_dir}1_18_1_loose_postEE_pt_nominal_btagWP_newLeptonVeto_3L1Cut_UpdateJetVetoMap_AN23_151_cuts.h5",
-        "true": "5_jets_pt_true_5wp_AN23_151_cuts_allklambda",
-        "label": "SPANet btag5WP ptFlat - AN23_151 cuts 4b region",
-        "color": "royalblue",
-    },
-    "5_jets_ptvary_btag_5wp_300e_AN23_151_cuts_inclusive_allklambda": {
-        "file": f"{spanet_dir}1_18_2_loose_postEE_ptvary_btagWP_newLeptonVeto_3L1Cut_UpdateJetVetoMap_AN23_151_cuts_inclusive_eval_4b_region.h5",
-        "true": "5_jets_pt_true_5wp_AN23_151_cuts_allklambda",
-        "label": "SPANet btag5WP ptFlat - AN23_151 cuts inclusive region eval 4b",
-        "color": "orange",
-    },
-    "5_jets_ptvary_btag_wp_inclusive_300e_allklambda": {
-        "file": f"{spanet_dir}spanet_hh4b_5jets_300_ptvary_loose_s100_btag_wp_inclusive_eval_AN23_151.h5",
-        "true": "5_jets_pt_true_5wp_AN23_151_cuts_allklambda",
-        "label": "SPANet btag5WP ptFlat - 3L1 inclusive eval AN23_151 4b",
-        "color": "deepskyblue",
-    },
-    "5_jets_ptvary_btag_5wp_300e_3L1cuts_allklambda": {
-        "file": f"{spanet_dir}1_13_2_spanet_loose_MC_postEE_pt_vary_btagWP_s100_newLeptonVeto_3L1Cut_UpdateJetVetoMap_MC_eval_AN23_151.h5",
-        "true": "5_jets_pt_true_5wp_AN23_151_cuts_allklambda",
-        "label": "SPANet btag5WP ptFlat - 3L1 eval AN23_151 4b",
-        "color": "firebrick",
-    },
+    # "5_jets_ptvary_btag_5wp_300e_AN23_151_cuts_4b_region_allklambda": {
+    #     "file": f"{spanet_dir}1_18_1_loose_postEE_pt_nominal_btagWP_newLeptonVeto_3L1Cut_UpdateJetVetoMap_AN23_151_cuts.h5",
+    #     "true": "5_jets_pt_true_5wp_AN23_151_cuts_allklambda",
+    #     "label": "SPANet btag5WP ptFlat - AN23_151 cuts 4b region",
+    #     "color": "royalblue",
+    # },
+    # "5_jets_ptvary_btag_5wp_300e_AN23_151_cuts_inclusive_allklambda": {
+    #     "file": f"{spanet_dir}1_18_2_loose_postEE_ptvary_btagWP_newLeptonVeto_3L1Cut_UpdateJetVetoMap_AN23_151_cuts_inclusive_eval_4b_region.h5",
+    #     "true": "5_jets_pt_true_5wp_AN23_151_cuts_allklambda",
+    #     "label": "SPANet btag5WP ptFlat - AN23_151 cuts inclusive region eval 4b",
+    #     "color": "orange",
+    # },
+    # "5_jets_ptvary_btag_wp_inclusive_300e_allklambda": {
+    #     "file": f"{spanet_dir}spanet_hh4b_5jets_300_ptvary_loose_s100_btag_wp_inclusive_eval_AN23_151.h5",
+    #     "true": "5_jets_pt_true_5wp_AN23_151_cuts_allklambda",
+    #     "label": "SPANet btag5WP ptFlat - 3L1 inclusive eval AN23_151 4b",
+    #     "color": "deepskyblue",
+    # },
+    # "5_jets_ptvary_btag_5wp_300e_3L1cuts_allklambda": {
+    #     "file": f"{spanet_dir}1_13_2_spanet_loose_MC_postEE_pt_vary_btagWP_s100_newLeptonVeto_3L1Cut_UpdateJetVetoMap_MC_eval_AN23_151.h5",
+    #     "true": "5_jets_pt_true_5wp_AN23_151_cuts_allklambda",
+    #     "label": "SPANet btag5WP ptFlat - 3L1 eval AN23_151 4b",
+    #     "color": "firebrick",
+    # },
     # '5_jets_ptvary_btag_5wp_300e_NoL1cuts_allklambda': {
     #     'file': f'{spanet_dir}1_13_2_spanet_loose_MC_postEE_pt_vary_btagWP_s100_newLeptonVeto_NoL1Cut_UpdateJetVetoMap_MC.h5',
     #     'true': '5_jets_pt_true_5wp_NoL1cuts_allklambda',
@@ -300,11 +303,12 @@ spanet_dict = {
     #     'true': '5_jets_pt_true_wp_DATA_oldWP',
     #      'label': 'SPANet baseline',
     #      'color': 'darkblue'},
-    # '5_jets_pt_data_btag_wp_300e': {
-    #     'file': f'{spanet_dir}spanet_hh4b_5jets_300_ptreg_loose_s100_btag_wp_DATA_postEE.h5',
-    #     'true': '5_jets_pt_true_wp_DATA_oldWP',
-    #     'label': 'SPANet btag 5 WP full postEE',
-    #     'color': 'royalblue'},
+    '5_jets_pt_data_btag_wp_300e': {
+        'file': f'{spanet_dir}spanet_hh4b_5jets_300_ptreg_loose_s100_btag_wp_DATA_postEE.h5',
+        'true': '5_jets_pt_true_wp_DATA_oldWP',
+        # 'label': 'SPANet btag 5 WP full postEE',
+        'label': 'SPANet normal pT',
+        'color': 'royalblue'},
     # '5_jets_pt_data_btag_3wp_300e': {
     #     'file': f'{spanet_dir}spanet_hh4b_5jets_300_ptreg_loose_s100_btag_3wp_DATA_postEE.h5',
     #     'true': '5_jets_pt_true_wp_DATA_oldWP',
@@ -313,7 +317,8 @@ spanet_dict = {
     # '5_jets_pt_data_vary_loose_btag_300e_03_17_allklambda_rerun': {
     #      'file': f'{spanet_dir}rerun/spanet_rerun_hh4b_data_5jets_300_ptvary_loose_s100_btag_03_17_eval_on_btagWP_DATA_postEE.h5',
     #     'true': '5_jets_pt_true_wp_DATA_oldWP',
-    #      'label': 'SPANet - Flattened pt [0.3,1.7]',
+    #     'label': 'SPANet flattened pt',
+    # #     'label': 'SPANet - Flattened pt [0.3,1.7]',
     #      'color': 'firebrick'},
     # '5_jets_pt_data_vary_btag_wp_300e': {
     #     'file': f'{spanet_dir}spanet_hh4b_5jets_300_ptvary_loose_s100_btag_wp_DATA_postEE.h5',
@@ -328,7 +333,7 @@ spanet_dict = {
     # '5_jets_pt_data_vary_btag_wp_300e': {
     #     'file': f'{spanet_dir}spanet_hh4b_5jets_300_ptvary_loose_s100_btag_wp_DATA_postEE_oldWP.h5',
     #     'true': '5_jets_pt_true_wp_DATA_oldWP',
-    #     'label': 'SPANet btag 5 WP - Flattened pt [0.3,1.7]',
+    #     # 'label': 'SPANet btag 5 WP - Flattened pt [0.3,1.7]',
     #     'color': 'orangered'},
     # '5_jets_pt_data_vary_btag_3wp_300e': {
     #     'file': f'{spanet_dir}spanet_hh4b_5jets_300_ptvary_loose_s100_btag_3wp_DATA_postEE_oldWP.h5',
