@@ -102,6 +102,13 @@ parser.add_argument(
     default=None,
     help="Configuration with the models to consider",
 )
+parser.add_argument(
+    "-cms",
+    "--cmstext",
+    type=str,
+    help="Text shown on CMS plot",
+    default="Private",
+)
 args = parser.parse_args()
 
 if not args.vbf and args.ignore_higgs:
@@ -639,6 +646,7 @@ def main():
                 "eff_fully_matched_allklambda",
                 plot_dir,
                 xlabels=cv_c2v_kl_values_dict if (args.vbf or args.vbf_labels) else None,
+                cmstext=args.cmstext,
             )
             plot_diff_eff_klambda(
                 [
@@ -660,6 +668,7 @@ def main():
                 "tot_eff_fully_matched_allklambda",
                 plot_dir,
                 xlabels=cv_c2v_kl_values_dict if (args.vbf or args.vbf_labels) else None,
+                cmstext=args.cmstext,
             )
         if not args.ignore_higgs:
             logger.info("Plotting differential efficiencies")
@@ -675,6 +684,7 @@ def main():
                 + ["yellowgreen"],
                 plot_dir,
                 "diff_eff_spanet",
+                cmstext=args.cmstext,
             )
             plot_diff_eff(
                 mhh_bins,
@@ -691,16 +701,19 @@ def main():
                 + ["yellowgreen"],
                 plot_dir,
                 "total_diff_eff_spanet",
+                cmstext=args.cmstext,
             )
 
     if not args.ignore_higgs and args.histo_mass:
-        logger.info("Plotting mhh")
-        plot_mhh(
-            mhh_bins,
-            list(df_collection.values())[0]["true_hh_fully_matched"][0].mass,
-            plot_dir,
-            "mhh_fully_matched",
-        )
+        if not args.data:
+            logger.info("Plotting mhh")
+            plot_mhh(
+                mhh_bins,
+                list(df_collection.values())[0]["true_hh_fully_matched"][0].mass,
+                plot_dir,
+                "mhh_fully_matched",
+                cmstext=args.cmstext,
+            )
 
         logger.info("Plotting higgs 1d all events")
         for bins, name in zip([mh_bins, mh_bins_peak], ["", "_peak"]):
@@ -710,7 +723,7 @@ def main():
                 )  # This is needed to make sure, that we are only producing one plot.
             for number in [1, 2]:
                 for kl_variation, kl_name in zip(
-                    range(len(kl_values) + 1), ["all"] + kl_values.tolist()
+                    range(len(kl_values) + 1), ["all"] + kl_values
                 ):
                     os.makedirs(f"{plot_dir}/kl_{kl_name}_massplot", exist_ok=True)
                     plot_histos_1d(
@@ -742,6 +755,7 @@ def main():
                         number,
                         name=f"{name}_true_run2_kl_eval_{kl_name}",
                         plot_dir=f"{plot_dir}/kl_{kl_name}_massplot",
+                        cmstext=args.cmstext,
                     )
                     # for true_model in df_collection.values():
                     #     plot_histos_1d(
