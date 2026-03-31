@@ -225,6 +225,9 @@ def roc_curve_compare_weights(class_dict, roc_values_dict, plot_dir, fpr_cutoff,
                         legend=True,
                         grid=True,
                     )
+                    .set_plot_config(
+                        cmstext="Private"
+                    )
                     .run()
                 )
 
@@ -293,6 +296,9 @@ def precision_recall_curve_function(class_dict, plot_dir, no_weights, kl):
                     y_log=True if log else False,
                     legend=True,
                     grid=True,
+                )
+                .set_plot_config(
+                    cmstext="Private"
                 )
                 .run()
             )
@@ -379,6 +385,9 @@ def signal_background_hist(class_dict, plot_dir, no_weights, kl):
                         legend=True,
                         grid=True,
                     )
+                    .set_plot_config(
+                        cmstext="Private"
+                    )
                     .run()
                 )
     
@@ -401,6 +410,9 @@ def signal_background_hist(class_dict, plot_dir, no_weights, kl):
                     y_log=True if log else False,
                     legend=True,
                     grid=True,
+                )
+                .set_plot_config(
+                    cmstext="Private"
                 )
                 .run()
             )
@@ -453,7 +465,7 @@ def main():
                 var_name: np_arrays[var_name],
             } | model_dict  
 
-    for kl in ["all", "-2.00", "-1.00", "0.00", "0.50", "1.00", "1.50", "2.00", "2.45", "3.00", "3.50", "4.00", "5.00"]:
+    for kl in ["all"]: #, "-2.00", "-1.00", "0.00", "0.50", "1.00", "1.50", "2.00", "2.45", "3.00", "3.50", "4.00", "5.00"]:
         roc_curve_compare_weights(
             class_dict, roc_values_dict, args.plot_dir, args.fpr_cutoff, args.no_weights, kl
         )
