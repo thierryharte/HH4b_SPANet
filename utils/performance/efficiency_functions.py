@@ -488,6 +488,7 @@ def plot_histos_1d(
     num=1,
     name="",
     plot_dir="plots",
+    cmstext="Private",
 ):
 
     xlabel = r"Leading $m_{H}$ [GeV]" if num == 1 else r"Subleading $m_{H}$ [GeV]"
@@ -608,11 +609,15 @@ def plot_histos_1d(
             xlim_right_value=xlim[1],
             ylim_top_factor=1.6 if "peak" in name else 1.2,
         )
+        .set_plot_config(
+            lumitext="(13.6 TeV)", cmstext=cmstext,
+            figsize=[13, 13],
+        )
         .run()
     )
 
 
-def plot_mhh(bins, mhh, plot_dir="plots", name="mhh"):
+def plot_mhh(bins, mhh, plot_dir="plots", name="mhh", cmstext="Private"):
 
     # ---------------------------------------------------------
     # Create normalized histogram
@@ -650,11 +655,15 @@ def plot_mhh(bins, mhh, plot_dir="plots", name="mhh"):
             grid=True,
             legend=False,  # matches your original (only 1 entry)
         )
+        .set_plot_config(
+            lumitext="(13.6 TeV)", cmstext=cmstext,
+            figsize=[13, 13],
+        )
         .run()
     )
 
 
-def plot_histos_2d(mh_bins, higgs, label, name, plot_dir="plots"):
+def plot_histos_2d(mh_bins, higgs, label, name, plot_dir="plots", cmstext="Private"):
     # NOTE: not tested
 
     # ---------------------------------------------------------
@@ -714,6 +723,10 @@ def plot_histos_2d(mh_bins, higgs, label, name, plot_dir="plots"):
         #     facecolor="none",
         #     linewidth=1,
         # )
+        .set_plot_config(
+            lumitext="(13.6 TeV)", cmstext=cmstext,
+            figsize=[13, 13],
+        )
         .run()
     )
 
@@ -726,6 +739,7 @@ def plot_diff_eff(
     colors,
     plot_dir,
     file_name,
+    cmstext="Private",
 ):
 
     # ---------------------------------------------------------
@@ -771,6 +785,10 @@ def plot_diff_eff(
             grid=True,
             set_ylim=False,
         )
+        .set_plot_config(
+            lumitext="(13.6 TeV)", cmstext=cmstext,
+            figsize=[13, 13],
+        )
         .run()
     )
 
@@ -784,6 +802,7 @@ def plot_diff_eff_klambda(
     name,
     plot_dir="plots",
     xlabels=None,  # dict: {kl_value: "label"}
+    cmstext="Private",
 ):
     """
     Parameters
@@ -864,6 +883,10 @@ def plot_diff_eff_klambda(
             legend_loc="lower left",
             grid=True,
             set_ylim=False,
+        )
+        .set_plot_config(
+            lumitext="(13.6 TeV)", cmstext=cmstext,
+            figsize=[13, 13],
         )
     )
 
