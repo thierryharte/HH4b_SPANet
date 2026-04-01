@@ -470,7 +470,6 @@ def coffea_to_h5(
         rootdir = get_parquet_save_directory(coffea_path)
         print("Empty columns, trying to read from parquet files from:", rootdir)
         cols = load_cols_parquet(rootdir)
-        breakpoint()
 
     path_base = os.path.splitext(h5_path)[0]
     out_dir_name = os.path.dirname(h5_path)
