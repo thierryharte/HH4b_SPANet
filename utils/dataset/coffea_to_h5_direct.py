@@ -171,41 +171,11 @@ def create_dummy_targets(N, tr_targets, te_targets, train_mask, test_mask, shuff
             idx += 1
 
 
-def unwrap_accumulator(x):
-    """Unwrap common coffea accumulator wrappers (duck-typed)."""
-    if hasattr(x, "value"):
-        try:
-            return x.value
-        except Exception:
-            pass
-
-    if hasattr(x, "_value"):
-        try:
-            return x._value
-        except Exception:
-            pass
-
-    for meth in ("to_numpy", "numpy"):
-        if hasattr(x, meth):
-            try:
-                return getattr(x, meth)()
-            except Exception:
-                pass
-
-    x = np.array(x)
-
-    return x
-
-
 def unflatten_to_jagged(flat, counts):
     """flat: 1D array of length sum(counts)
     counts: 1D int array of length Nevents
     returns: awkward jagged array (Nevents, Nj)
     """
-    flat = unwrap_accumulator(flat)
-    counts = unwrap_accumulator(counts)
-
-    flat = np.asarray(flat)
     counts = np.asarray(counts).astype(np.int64)
 
     if flat.ndim != 1:
@@ -217,33 +187,7 @@ def unflatten_to_jagged(flat, counts):
 
     return ak.unflatten(flat, counts)
 
-
-def to_numpy_event_vector(x):
-    """Convert event-level data to a strict 1D numeric numpy array."""
-    x = unwrap_accumulator(x)
-
-    if is_awkward(x):
-        x = ak.to_numpy(x)
-
-    arr = np.asarray(x)
-
-    if arr.shape == () and arr.dtype == object:
-        arr = np.asarray(unwrap_accumulator(arr.item()))
-
-    if arr.ndim != 1:
-        # arr = arr.flatten()
-        # print("WARNING: Flattening the array for global variables")
-        raise ValueError(f"Expected 1D event vector, got shape {arr.shape}")
-
-    arr = np.stack(arr)
-
-    if arr.dtype == object:
-        raise TypeError("Object dtype after unwrapping")
-    return arr
-
-
 def pad_clip_jets(jets, max_jets):
-    jets = unwrap_accumulator(jets)
 
     # replace coffea padding to h5 padding
     jets = ak.where(jets == COFFEA_PADDING_VALUE, H5_PADDING_VALUE, jets)
@@ -314,14 +258,14 @@ def get_permutation(N):
 
 
 def cast_floats32(x):
-    x = np.asarray(x)
+    x = np.array(x)
     if np.issubdtype(x.dtype, np.floating):
         return x.astype(np.float32, copy=False)
     return x
 
 
 def cast_int64(x):
-    x = np.asarray(x)
+    x = np.array(x)
     if np.issubdtype(x.dtype, np.integer):
         return x.astype(np.int64, copy=False)
     return x
@@ -364,13 +308,12 @@ def extract_param_value(s, param):
 # -----------------------------------------------------------------------------
 
 
-def ensure_resizable_dataset(group, path, data, shuffle, compression="gzip"):
+def add_column_to_group(group, path, data, shuffle, compression="gzip"):
     """Create or append to a resizable dataset located at group/<path_parts...>.
     data: numpy array, first dimension is N (events)
     """
-    g = group
     for p in path[:-1]:
-        g = g.require_group(p)
+        group = group.require_group(p)
 
     name = path[-1]
     data = np.asarray(data)
@@ -378,8 +321,8 @@ def ensure_resizable_dataset(group, path, data, shuffle, compression="gzip"):
     if data.dtype == object:
         raise TypeError(f"Object dtype at {'/'.join(path)}")
 
-    if name not in g:
-        dset = g.create_dataset(
+    if name not in group:
+        dset = group.create_dataset(
             name,
             data=data,
             maxshape=(None,) + data.shape[1:],
@@ -388,7 +331,7 @@ def ensure_resizable_dataset(group, path, data, shuffle, compression="gzip"):
             shuffle=False,
         )
     else:
-        dset = g[name]
+        dset = group[name]
         old = dset.shape[0]
         dset.resize((old + data.shape[0],) + dset.shape[1:])
         dset[old:] = data
@@ -399,10 +342,10 @@ def ensure_resizable_dataset(group, path, data, shuffle, compression="gzip"):
         dset[...] = full
 
 
-def write_block_split(tr, te, path, data, train_mask, test_mask, shuffle):
+def write_block_split(train, test, path, data, train_mask, test_mask, shuffle):
     """Append split slices of `data` to train/test datasets."""
-    ensure_resizable_dataset(tr, path, data[train_mask], shuffle)
-    ensure_resizable_dataset(te, path, data[test_mask], shuffle)
+    add_column_to_group(train, path, data[train_mask], shuffle)
+    add_column_to_group(test, path, data[test_mask], shuffle)
 
 
 def get_parquet_save_directory(input_parquet):
@@ -544,7 +487,7 @@ def coffea_to_h5(
                     else:
                         payload_columns = list(payload.keys())
 
-                    w = to_numpy_event_vector(payload[weight_name])
+                    w = payload[weight_name].value
                     if args.norm_weights:
                         print(
                             f"weights before norm = {np.mean(w):.3f}, {np.std(w):.3f}"
@@ -590,11 +533,9 @@ def coffea_to_h5(
                         jet_counts = None
                         jetN = f"{jet_coll}_N"
                         if jetN in payload_columns:
-                            jet_counts = to_numpy_event_vector(payload[jetN]).astype(
-                                np.int64
-                            )
+                            jet_counts = payload[jetN].value
                             jet_pt = unflatten_to_jagged(
-                                unwrap_accumulator(payload[f"{jet_coll}_pt"]),
+                                np.array(payload[f"{jet_coll}_pt"].value),
                                 jet_counts,
                             )
                         else:
@@ -622,7 +563,7 @@ def coffea_to_h5(
                         if prov_key in payload_columns:
                             if jet_counts is not None:
                                 jets_prov = unflatten_to_jagged(
-                                    unwrap_accumulator(payload[prov_key]), jet_counts
+                                    np.array(payload[prov_key].value), jet_counts
                                 )
                             else:
                                 jets_prov = ak.Array(payload[prov_key])
@@ -643,12 +584,12 @@ def coffea_to_h5(
                             )
 
                             for (r, q), arr in targets_tr.items():
-                                ensure_resizable_dataset(
+                                add_column_to_group(
                                     tr_t, [r, q], cast_int64(arr), shuffle
                                 )
 
                             for (r, q), arr in targets_te.items():
-                                ensure_resizable_dataset(
+                                add_column_to_group(
                                     te_t, [r, q], cast_int64(arr), shuffle
                                 )
                         else:
@@ -663,7 +604,7 @@ def coffea_to_h5(
                                 continue
 
                             coll, var = infer_collection_and_var(name)
-                            arr_u = unwrap_accumulator(arr)
+                            arr_u = arr.value
                             is_jet = coll == jet_coll and var != "N"
 
                             if (
@@ -718,10 +659,9 @@ def coffea_to_h5(
                                 )
 
                             if is_jet:
-                                arr_np = np.asarray(arr_u)
                                 jets = (
                                     unflatten_to_jagged(arr_u, jet_counts)
-                                    if arr_np.ndim == 1 and jet_counts is not None
+                                    if arr_u.ndim == 1 and jet_counts is not None
                                     else ak.Array(arr_u)
                                 )
 
@@ -733,13 +673,13 @@ def coffea_to_h5(
                                 dtr = pad_clip_jets(jtr, jet_info_dict["max_num_jets"])
                                 dte = pad_clip_jets(jte, jet_info_dict["max_num_jets"])
 
-                                ensure_resizable_dataset(
+                                add_column_to_group(
                                     tr_in,
                                     [jet_info_dict["saved_name"], var],
                                     cast_floats32(dtr),
                                     shuffle,
                                 )
-                                ensure_resizable_dataset(
+                                add_column_to_group(
                                     te_in,
                                     [jet_info_dict["saved_name"], var],
                                     cast_floats32(dte),
@@ -747,13 +687,13 @@ def coffea_to_h5(
                                 )
 
                                 if not jet_mask_written:
-                                    ensure_resizable_dataset(
+                                    add_column_to_group(
                                         tr_in,
                                         [jet_info_dict["saved_name"], "MASK"],
                                         mtr,
                                         shuffle,
                                     )
-                                    ensure_resizable_dataset(
+                                    add_column_to_group(
                                         te_in,
                                         [jet_info_dict["saved_name"], "MASK"],
                                         mte,
@@ -762,18 +702,17 @@ def coffea_to_h5(
                                     jet_mask_written = True
 
                             elif is_global:
-                                arr_ev = to_numpy_event_vector(arr_u)
                                 # replace coffea padding to h5 padding
-                                arr_ev = ak.where(
-                                    arr_ev == COFFEA_PADDING_VALUE,
+                                arr_u = ak.where(
+                                    arr_u == COFFEA_PADDING_VALUE,
                                     H5_PADDING_VALUE,
-                                    arr_ev,
+                                    arr_u,
                                 )
                                 write_block_split(
                                     tr_in,
                                     te_in,
                                     [glob_coll, glob_var],
-                                    cast_floats32(arr_ev),
+                                    cast_floats32(arr_u),
                                     train_mask,
                                     test_mask,
                                     shuffle,
@@ -782,9 +721,7 @@ def coffea_to_h5(
                     # Get the various k-values for each dataset
                     if "GluGlu" in dataset:
                         kl_val = extract_param_value(dataset, "kl")
-                        kl_val_array = kl_val * ak.ones_like(
-                            to_numpy_event_vector(payload[weight_name])
-                        )
+                        kl_val_array = kl_val * ak.ones_like(payload[weight_name].value)
                         write_block_split(
                             tr_in,
                             te_in,
@@ -798,9 +735,7 @@ def coffea_to_h5(
                         # Get the C2V and not the k_lambda because the c2v is unique for each dataset of vbf
                         # while the k_lambda is not
                         c2v_val = extract_param_value(dataset, "C2V")
-                        c2v_val_array = c2v_val * ak.ones_like(
-                            to_numpy_event_vector(payload[weight_name])
-                        )
+                        c2v_val_array = c2v_val * ak.ones_like(payload[weight_name].value)
                         write_block_split(
                             tr_in,
                             te_in,
@@ -811,9 +746,7 @@ def coffea_to_h5(
                             shuffle,
                         )
                     else:
-                        kl_padding = H5_PADDING_VALUE * ak.ones_like(
-                            to_numpy_event_vector(payload[weight_name])
-                        )
+                        kl_padding = H5_PADDING_VALUE * ak.ones_like(payload[weight_name].value)
                         write_block_split(
                             tr_in,
                             te_in,
