@@ -140,24 +140,26 @@ def my_roc_auc(
     )
 
 
-def roc_curve_compare_weights(class_dict, roc_values_dict, plot_dir, fpr_cutoff, no_weights, kl):
+def roc_curve_compare_weights(class_dict, roc_values_dict, plot_dir, fpr_cutoff, no_weights, kl, roc_info_dict):
     """Plot precision/recall curve from a dictionary fed into this function."""
-    logger.info(f"Plotting roc curves for kl = {kl} ...")
 
-    kl_tag = kl.replace("-", "m").replace(".", "p")
-
+    kl_string = kl if type(kl) == str else f"{kl:.2f}"
+    kl_tag = kl_string.replace("-", "m").replace(".", "p")
+    logger.info(f"Plotting roc curves for kl = {kl_string} ...")
+    
     assert 1e-6 < fpr_cutoff < 1e-1
 
     series = {}
-
+    
     for model_name, sub_dict in class_dict.items():
         kls = sub_dict["kls"]
         if kl == "all":
             mask_kl = np.ones_like(kls, dtype=bool)
         elif np.any(kls == float(kl)):
-            mask_kl = (kls == float(kl)) | (kls == 9999.)
+            mask_kl = (kls == float(kl)) | (kls == 9999.)  | (sub_dict["true_class"]==0)
         else:
             continue
+        
 
         spanet_class = sub_dict["spanet_class"][mask_kl]
         true_class = sub_dict["true_class"][mask_kl]
@@ -178,12 +180,14 @@ def roc_curve_compare_weights(class_dict, roc_values_dict, plot_dir, fpr_cutoff,
         # auc_score_zoom = auc(fpr_zoom, tpr_zoom)
         # auc_score = auc(fpr, tpr)
 
-        name = f"{sub_dict['label']} | kl={kl} | AUC={auc_score:.3f}"
+        name = f"{sub_dict['label']} | kl={kl_string} | AUC={auc_score:.3f}"
 
         series[name] = {
             "data": {"x": [tpr, None], "y": [fpr, None]},
             "style": {"color": sub_dict["color"], "linestyle": "-", "markersize": 0},
         }
+        roc_info_dict[f"tpr_kl_{kl_string}_{model_name}"]=tpr
+        roc_info_dict[f"fpr_kl_{kl_string}_{model_name}"]=fpr
     
     for model_name, sub_dict in roc_values_dict.items():
         if kl not in sub_dict:
@@ -194,7 +198,7 @@ def roc_curve_compare_weights(class_dict, roc_values_dict, plot_dir, fpr_cutoff,
         tpr = tpr_fpr_dict[f"tpr_kl_{kl}"]
         fpr = tpr_fpr_dict[f"fpr_kl_{kl}"]
 
-        name = f"{tpr_fpr_dict['label']} | kl={kl}"
+        name = f"{tpr_fpr_dict['label']} | kl={kl_string}"
 
         series[name] = {
             "data": {"x": [tpr, None], "y": [fpr, None]},
@@ -234,9 +238,10 @@ def roc_curve_compare_weights(class_dict, roc_values_dict, plot_dir, fpr_cutoff,
 
 def precision_recall_curve_function(class_dict, plot_dir, no_weights, kl):
     """Plot precision/recall curve from a dictionary fed into this function."""
-    logger.info(f"Plotting precision-recall curves for kl = {kl} ...")
-
-    kl_tag = kl.replace("-", "m").replace(".", "p")
+    
+    kl_string = kl if type(kl) == str else f"{kl:.2f}"
+    kl_tag = kl_string.replace("-", "m").replace(".", "p")
+    logger.info(f"Plotting precision-recall curves for kl = {kl_string} ...")
 
     series = {}
 
@@ -245,7 +250,7 @@ def precision_recall_curve_function(class_dict, plot_dir, no_weights, kl):
         if kl == "all":
             mask_kl = np.ones_like(kls, dtype=bool)
         elif np.any(kls == float(kl)):
-            mask_kl = (kls == float(kl)) | (kls == 9999.)
+            mask_kl = (kls == float(kl)) | (kls == 9999.)  | (sub_dict["true_class"]==0)
         else:
             continue
 
@@ -267,7 +272,7 @@ def precision_recall_curve_function(class_dict, plot_dir, no_weights, kl):
                 true_class, spanet_class, sample_weight=weights
             )
 
-        label = f"{sub_dict['label']} | kl={kl} | AP={ap_score:.3f}"
+        label = f"{sub_dict['label']} | kl={kl_string} | AP={ap_score:.3f}"
 
         series[label] = {
             "data": {"x": [recall, None], "y": [precision, None]},
@@ -306,10 +311,11 @@ def precision_recall_curve_function(class_dict, plot_dir, no_weights, kl):
 
 def signal_background_hist(class_dict, plot_dir, no_weights, kl):
     """Plot background/signal histogram from a dictionary fed into this function."""
-    logger.info(f"Plotting score histogram for kl = {kl}...")
 
-    kl_tag = kl.replace("-", "m").replace(".", "p")
-
+    kl_string = kl if type(kl) == str else f"{kl:.2f}"
+    kl_tag = kl_string.replace("-", "m").replace(".", "p")
+    logger.info(f"Plotting score histogram for kl = {kl_string}...")
+    
     series_all_models = {}
 
     for model_name, sub_dict in class_dict.items():
@@ -317,7 +323,7 @@ def signal_background_hist(class_dict, plot_dir, no_weights, kl):
         if kl == "all":
             mask_kl = np.ones_like(kls, dtype=bool)
         elif np.any(kls == float(kl)):
-            mask_kl = (kls == float(kl)) | (kls == 9999.)
+            mask_kl = (kls == float(kl)) | (kls == 9999.)  | (sub_dict["true_class"]==0)
         else:
             continue
 
@@ -345,7 +351,7 @@ def signal_background_hist(class_dict, plot_dir, no_weights, kl):
         hist_sig.fill(spanet_class[~mask_background], weight=weights_sig / (weights_sig.sum() * hist_sig.axes[0].widths[0]) if weights_sig is not None else None)
 
         series = {
-            f"Background classified by {sub_dict['label']}": {
+            f"Background - {sub_dict['label']}": {
                 "data": hist_bkg,
                 "style": {
                     "histtype": "step",
@@ -353,7 +359,7 @@ def signal_background_hist(class_dict, plot_dir, no_weights, kl):
                     "weights": weights_bkg,
                 },
             },
-            f"Signal (kl={kl}) classified by {sub_dict['label']}": {
+            f"Signal (kl={kl_string}) - {sub_dict['label']}": {
                 "data": hist_sig,
                 "style": {
                     "histtype": "step",
@@ -366,12 +372,12 @@ def signal_background_hist(class_dict, plot_dir, no_weights, kl):
         series_all_models.update(series)
         
         if series != {}:
-            os.makedirs(f"{plot_dir}/background_signal_hist/{sub_dict['label']}/kl_{kl_tag}", exist_ok=True)
+            os.makedirs(f"{plot_dir}/background_signal_hist/{model_name}/kl_{kl_tag}", exist_ok=True)
             for log in [False, True]:
                 (
                     HEPPlotter("CMS")
                     .set_output(
-                        f"{plot_dir}/background_signal_hist/{sub_dict['label']}/kl_{kl_tag}/background_signal_hist_{sub_dict['label']}_kl_{kl_tag}{'_log' if log else ''}"
+                        f"{plot_dir}/background_signal_hist/{model_name}/kl_{kl_tag}/background_signal_hist_{model_name}_kl_{kl_tag}{'_log' if log else ''}"
                     )
                     .set_data(series)
                     .set_labels(
@@ -438,7 +444,11 @@ def main():
         spanet_class = spanetfile["CLASSIFICATIONS"]["EVENT"]["class"][:, 1][()][mask_region_spanet]
         true_class = truefile["CLASSIFICATIONS"]["EVENT"]["class"][()][mask_region_spanet]
         weights = truefile["WEIGHTS"]["weight"][()][mask_region_spanet]
-        kls = spanetfile["INPUTS"]["Event"]["kl"][()][mask_region_spanet]            
+        
+        try:
+            kls = spanetfile["INPUTS"]["Event"]["kl"][()][mask_region_spanet]            
+        except KeyError:
+            kls= np.ones_like(weights) * 9999.
         
         class_dict[model_name] = {
             "spanet_class": spanet_class,
@@ -465,14 +475,22 @@ def main():
                 var_name: np_arrays[var_name],
             } | model_dict  
 
-    for kl in ["all"]: #, "-2.00", "-1.00", "0.00", "0.50", "1.00", "1.50", "2.00", "2.45", "3.00", "3.50", "4.00", "5.00"]:
+    kls_signal=list(np.unique(kls[true_class==1]))
+    print(f"Separating kl for signal", kls_signal)
+    roc_info_dict={}
+    for kl in ["all"]+kls_signal:
         roc_curve_compare_weights(
-            class_dict, roc_values_dict, args.plot_dir, args.fpr_cutoff, args.no_weights, kl
+            class_dict, roc_values_dict, args.plot_dir, args.fpr_cutoff, args.no_weights, kl, roc_info_dict
         )
         precision_recall_curve_function(class_dict, args.plot_dir, args.no_weights, kl)
         signal_background_hist(class_dict, args.plot_dir, args.no_weights, kl)
 
-
+    # save the fpr and tpr in a npz file
+    np.savez(
+        f"{args.plot_dir}/roc_curves/tpr_fpr_all_kl_all_models.npz",
+        **roc_info_dict
+    )
+    
 if __name__ == "__main__":
     logger.debug(spanet_dict)
     logger.debug(true_dict)
