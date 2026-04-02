@@ -7,7 +7,7 @@ import vector
 import sys
 import os
 from hist import Hist
-from utils.plot.HEPPlotter import HEPPlotter
+from utils_configs.plot.HEPPlotter import HEPPlotter
 
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 import helpers
@@ -525,7 +525,8 @@ def plot_histos_1d(
     def make_hist(array):
         h = Hist.new.Variable(bins, name="mass", flow=False).Weight()
         weights = np.ones(len(array)) / len(array)
-        h.fill(array, weight=weights)
+        array_numpy = ak.to_numpy(array, allow_missing=True)
+        h.fill(array_numpy, weight=weights)
         return h
 
     # ---------------------------------------------------------
@@ -591,8 +592,13 @@ def plot_histos_1d(
     # Run plot
     # ---------------------------------------------------------
 
+    lumitext_prefix=r"$\kappa_{\lambda}$: " + name.split("_")[-1]
     (
         HEPPlotter("CMS")
+        .set_plot_config(
+            figsize=(10, 10),
+            lumitext=f"{lumitext_prefix}      (13.6 TeV)",
+        )
         .set_output(output_base)
         .set_labels(
             xlabel=xlabel,
@@ -602,6 +608,7 @@ def plot_histos_1d(
         .set_data(series_dict, plot_type="1d")
         .set_options(
             legend_loc="upper right",
+            legend_font_size=23,
             grid=True,
             set_xlim=True,
             set_ylim_ratio=1,
@@ -880,6 +887,7 @@ def plot_diff_eff_klambda(
         .set_data(series_dict, plot_type="graph")
         .set_options(
             legend=True,
+            legend_font_size=20,
             legend_loc="lower left",
             grid=True,
             set_ylim=False,
