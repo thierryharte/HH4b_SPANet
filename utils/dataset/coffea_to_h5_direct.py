@@ -29,7 +29,7 @@ RESONANCES = {
     "h2": (2, ("b3", "b4")),
     "vbf": (3, ("q1", "q2")),
 }
-
+MIN_NUMBER_JETS = 4
 
 # -----------------------------------------------------------------------------
 # CLI
@@ -555,6 +555,12 @@ def coffea_to_h5(
                             )
                             != COFFEA_PADDING_VALUE
                         )
+
+                        # check that there are at least MIN_NUMBER_JETS jets in the event
+                        if np.any(np.sum(mask_jet_pt, axis=1) < MIN_NUMBER_JETS):
+                            raise ValueError(
+                                f"Event has less than {MIN_NUMBER_JETS} jets. Check dataset {dataset}"
+                            )
 
                         jet_mask_written = False
 
