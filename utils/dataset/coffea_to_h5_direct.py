@@ -90,6 +90,12 @@ p.add_argument(
     help="Normalize weights divided by sum_genweights",
 )
 p.add_argument(
+    "-rw",
+    "--remove-high-weights",
+    action="store_true",
+    help="Remove events with weights above 100 (only applies to regions containing 'postW' in name)",
+)
+p.add_argument(
     "--novars",
     action="store_true",
     help="If true, old save format without saved variations is expected",
@@ -484,10 +490,19 @@ def coffea_to_h5(
                     if type(payload) == pyarrow._dataset.FileSystemDataset:
                         payload = payload.to_table()
                         payload_columns = payload.schema.names
+                        payload = {key: np.array(payload[key]) for key in payload_columns}
                     else:
+                        payload = {key: values.value for key, values in payload.items()}
                         payload_columns = list(payload.keys())
 
-                    w = payload[weight_name].value
+                    w = payload[weight_name]
+                    N = len(w)
+
+                    if args.remove_high_weights and "postW" in region:
+                        weight_mask = payload[weight_name] < 100
+                        print(f"Maximal weight: {np.max(w[weight_mask])}")
+                        print(f"Maximal weight without cutting: {np.max(w)}")
+
                     if args.norm_weights:
                         print(
                             f"weights before norm = {np.mean(w):.3f}, {np.std(w):.3f}"
@@ -497,7 +512,6 @@ def coffea_to_h5(
                             f"Dividing by sum_genweights = {sum_genweights[dataset]:.3f}",
                             f"weights after norm = {np.mean(w):.8f}, {np.std(w):.8f}",
                         )
-                    N = len(w)
 
                     train_mask = (
                         rng.random(N) < train_frac
@@ -505,6 +519,9 @@ def coffea_to_h5(
                         else np.arange(N) < int(N * train_frac)
                     )
                     test_mask = ~train_mask
+                    if args.remove_high_weights and "postW" in region:
+                        train_mask = train_mask & weight_mask
+                        test_mask = test_mask & weight_mask
 
                     write_block_split(
                         tr_w,
@@ -533,9 +550,9 @@ def coffea_to_h5(
                         jet_counts = None
                         jetN = f"{jet_coll}_N"
                         if jetN in payload_columns:
-                            jet_counts = payload[jetN].value
+                            jet_counts = payload[jetN]
                             jet_pt = unflatten_to_jagged(
-                                np.array(payload[f"{jet_coll}_pt"].value),
+                                np.array(payload[f"{jet_coll}_pt"]),
                                 jet_counts,
                             )
                         else:
@@ -569,7 +586,7 @@ def coffea_to_h5(
                         if prov_key in payload_columns:
                             if jet_counts is not None:
                                 jets_prov = unflatten_to_jagged(
-                                    np.array(payload[prov_key].value), jet_counts
+                                    np.array(payload[prov_key]), jet_counts
                                 )
                             else:
                                 jets_prov = ak.Array(payload[prov_key])
@@ -610,7 +627,7 @@ def coffea_to_h5(
                                 continue
 
                             coll, var = infer_collection_and_var(name)
-                            arr_u = arr.value
+                            arr_u = arr
                             is_jet = coll == jet_coll and var != "N"
 
                             if (
@@ -727,7 +744,7 @@ def coffea_to_h5(
                     # Get the various k-values for each dataset
                     if "GluGlu" in dataset:
                         kl_val = extract_param_value(dataset, "kl")
-                        kl_val_array = kl_val * ak.ones_like(payload[weight_name].value)
+                        kl_val_array = kl_val * ak.ones_like(payload[weight_name])
                         write_block_split(
                             tr_in,
                             te_in,
@@ -741,7 +758,7 @@ def coffea_to_h5(
                         # Get the C2V and not the k_lambda because the c2v is unique for each dataset of vbf
                         # while the k_lambda is not
                         c2v_val = extract_param_value(dataset, "C2V")
-                        c2v_val_array = c2v_val * ak.ones_like(payload[weight_name].value)
+                        c2v_val_array = c2v_val * ak.ones_like(payload[weight_name])
                         write_block_split(
                             tr_in,
                             te_in,
@@ -752,7 +769,7 @@ def coffea_to_h5(
                             shuffle,
                         )
                     else:
-                        kl_padding = H5_PADDING_VALUE * ak.ones_like(payload[weight_name].value)
+                        kl_padding = H5_PADDING_VALUE * ak.ones_like(payload[weight_name])
                         write_block_split(
                             tr_in,
                             te_in,
