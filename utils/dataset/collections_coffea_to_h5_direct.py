@@ -75,6 +75,14 @@ global_collections_dict = {
                 "saved_name_coll": "Event",
                 "saved_name_var": "detaVBF",
             },
+            "events_centralityHiggsLeadingRun2JetTotalSPANetPtFlattenPadded": {
+                "saved_name_coll": "Event",
+                "saved_name_var": "centralityHiggsLeadingRun2VBF",
+            },
+            "events_centralityHiggsSubLeadingRun2JetTotalSPANetPtFlattenPadded": {
+                "saved_name_coll": "Event",
+                "saved_name_var": "centralityHiggsSubLeadingRun2VBF",
+            },
         },
         {
             "events_mjjJetTotalSPANetPadded": {
@@ -84,6 +92,14 @@ global_collections_dict = {
             "events_detaJetTotalSPANetPadded": {
                 "saved_name_coll": "Event",
                 "saved_name_var": "detaVBF",
+            },
+            "events_centralityHiggsLeadingRun2JetTotalSPANetPadded": {
+                "saved_name_coll": "Event",
+                "saved_name_var": "centralityHiggsLeadingRun2VBF",
+            },
+            "events_centralityHiggsSubLeadingRun2JetTotalSPANetPadded": {
+                "saved_name_coll": "Event",
+                "saved_name_var": "centralityHiggsSubLeadingRun2VBF",
             },
         },
     ],
