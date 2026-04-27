@@ -26,10 +26,10 @@ _permutations = {}
 
 RESONANCES = {
     "h1": (1, ("b1", "b2")),
-    "h2": (2, ("b3", "b4")),
+    "h2": (2, ("b1", "b2")),
     "vbf": (3, ("q1", "q2")),
 }
-MIN_NUMBER_JETS = 4
+MIN_NUMBER_JETS = 1
 
 # -----------------------------------------------------------------------------
 # CLI
@@ -101,6 +101,13 @@ p.add_argument(
     help="If true, old save format without saved variations is expected",
     default=False,
 )
+p.add_argument(
+    "--downscale_training",
+    action="store_true",
+    help="Downscale the training fraction of the background by a factor 33398/1629245 (mixed vs. 2b)",
+    default=False,
+)
+
 
 args = p.parse_args()
 
@@ -512,11 +519,14 @@ def coffea_to_h5(
                             f"Dividing by sum_genweights = {sum_genweights[dataset]:.3f}",
                             f"weights after norm = {np.mean(w):.8f}, {np.std(w):.8f}",
                         )
-
+                    if class_idx == 0 and args.downscale_training:
+                        train_frac_sample = train_frac*33398/1629245
+                    else:
+                        train_frac_sample = train_frac
                     train_mask = (
-                        rng.random(N) < train_frac
+                        rng.random(N) < train_frac_sample
                         if shuffle
-                        else np.arange(N) < int(N * train_frac)
+                        else np.arange(N) < int(N * train_frac_sample)
                     )
                     test_mask = ~train_mask
                     if args.remove_high_weights and "postW" in region:
