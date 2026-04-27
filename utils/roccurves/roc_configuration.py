@@ -12,11 +12,11 @@ logger = logging.getLogger(__name__)
 
 
 roc_dict = {
-   "some_model_of_matteo": {
-       "file": "/eos/home-m/mmalucch/spanet_infos/dnn_roc/DNN_AN_1e-3_e20drop75_minDelta1em5_SPANet_newUpdates_newLeptonVeto_3L1Cut_UpdateJetVetoMap_postEE_thierry/tpr_fpr.npz",
-       "label": "some_model_of_matteo",
-       "color": "pink",
-   },
+#    "some_model_of_matteo": {
+#        "file": "/eos/home-m/mmalucch/spanet_infos/dnn_roc/DNN_AN_1e-3_e20drop75_minDelta1em5_SPANet_newUpdates_newLeptonVeto_3L1Cut_UpdateJetVetoMap_postEE_thierry/tpr_fpr.npz",
+#        "label": "some_model_of_matteo",
+#        "color": "pink",
+#    },
 }
 
 
@@ -449,11 +449,60 @@ spanet_dict = {
 #        "color": "pink",
 #    },
 
-    "spanet_dict_hh4b_classification_var000055": {
-       "file": f"{spanet_dir_kevin}hh4b_classification_var000055/hh4b_classification_var000055.h5",
+#     "spanet_dict_hh4b_classification_var000055": {
+#        "file": f"{spanet_dir_kevin}hh4b_classification_var000055/hh4b_classification_var000055.h5",
+#        "true": "true_dict_hh4b_classification_var0000##",
+#        "label": "hh4b_classification_var000055",
+#        "color": "pink",
+#    },
+
+    "spanet_dict_hh4b_classification_var000056": {
+       "file": f"{spanet_dir_kevin}hh4b_classification_var000056/hh4b_classification_var000056.h5",
        "true": "true_dict_hh4b_classification_var0000##",
-       "label": "hh4b_classification_var000055",
-       "color": "pink",
+       "label": "set A (old train/test data)",
+       "color": "tab:blue",
+   },
+
+    "spanet_dict_hh4b_classification_var000057": {
+       "file": f"{spanet_dir_kevin}hh4b_classification_var000057/hh4b_classification_var000057.h5",
+       "true": "true_dict_hh4b_classification_var0000##_reweighted",
+       "label": "set A (new train/test data)",
+       "color": "tab:orange",
+   },
+
+#     "spanet_dict_hh4b_classification_var000058": {
+#        "file": f"{spanet_dir_kevin}hh4b_classification_var000058/hh4b_classification_var000058.h5",
+#        "true": "true_dict_hh4b_classification_var0000##_reweighted",
+#        "label": "hh4b_classification_var000058",
+#        "color": "pink",
+#    },
+
+    "spanet_dict_hh4b_classification_var000059": {
+       "file": f"{spanet_dir_kevin}hh4b_classification_var000059/hh4b_classification_var000059.h5",
+       "true": "true_dict_hh4b_classification_var0000##_reweighted",
+       "label": "set A + btag (new train/test data)",
+       "color": "tab:green",
+   },
+
+    "spanet_dict_hh4b_classification_var000060": {
+       "file": f"{spanet_dir_kevin}hh4b_classification_var000060/hh4b_classification_var000060.h5",
+       "true": "true_dict_hh4b_classification_var0000##_reweighted",
+       "label": "set A + DeltaPP (new train/test data)",
+       "color": "tab:red",
+   },
+
+#     "spanet_dict_hh4b_classification_var000061": {
+#        "file": f"{spanet_dir_kevin}hh4b_classification_var000061/hh4b_classification_var000061.h5",
+#        "true": "true_dict_hh4b_classification_var0000##_reweighted",
+#        "label": "hh4b_classification_var000061",
+#        "color": "pink",
+#    },
+
+    "spanet_dict_hh4b_classification_var000062": {
+       "file": f"{spanet_dir_kevin}hh4b_classification_var000062/hh4b_classification_var000062.h5",
+       "true": "true_dict_hh4b_classification_var0000##_reweighted",
+       "label": "set A + btag + DeltaPP (new train/test data)",
+       "color": "tab:purple",
    },
 }
 
@@ -486,5 +535,9 @@ true_dict = {
 
     "true_dict_hh4b_classification_var0000##": {
         "name": f"{true_path_thierry}1_15_9_jetgoodfromhiggsordered5jets_additional_parameters/columns_for_sig_bkg_classifierJetGoodFromHiggsOrdered5Jets_test.h5"
+    },
+
+    "true_dict_hh4b_classification_var0000##_reweighted": {
+        "name": f"{true_path_thierry}1_15_5_mixeddata_reweight/columns_for_classifierJetGoodFromHiggsOrdered5Jets_test.h5"
     },
 }
