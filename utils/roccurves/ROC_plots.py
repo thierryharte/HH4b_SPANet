@@ -10,6 +10,7 @@ import numpy as np
 import vector
 from hist import Hist
 from sklearn.metrics import (
+    auc,
     average_precision_score,
     precision_recall_curve,
     roc_curve,
@@ -147,7 +148,7 @@ def my_roc_auc(
 
 def roc_curve_compare_weights(class_dict, roc_values_dict, plot_dir, fpr_cutoff, no_weights, kl, roc_info_dict):
     """Plot precision/recall curve from a dictionary fed into this function."""
-    kl_string = kl if type(kl) == str else f"{kl:.2f}"
+    kl_string = kl if isinstance(kl, str) else f"{kl:.2f}"
     kl_tag = kl_string.replace("-", "m").replace(".", "p")
     logger.info(f"Plotting roc curves for kl = {kl_string} ...")
 
@@ -198,10 +199,11 @@ def roc_curve_compare_weights(class_dict, roc_values_dict, plot_dir, fpr_cutoff,
 
         tpr_fpr_dict = sub_dict[kl]
 
-        tpr = tpr_fpr_dict[f"tpr_kl_{kl}"]
-        fpr = tpr_fpr_dict[f"fpr_kl_{kl}"]
+        tpr = tpr_fpr_dict[f"tpr_kl_{kl_string}"]
+        fpr = tpr_fpr_dict[f"fpr_kl_{kl_string}"]
+        auc_score = auc(fpr, tpr)
 
-        name = f"{tpr_fpr_dict['label']} | kl={kl_string}"
+        name = f"{tpr_fpr_dict['label']} | kl={kl_string} | AUC={auc_score:.3f}"
 
         series[name] = {
             "data": {"x": [tpr, None], "y": [fpr, None]},
@@ -241,7 +243,7 @@ def roc_curve_compare_weights(class_dict, roc_values_dict, plot_dir, fpr_cutoff,
 
 def precision_recall_curve_function(class_dict, plot_dir, no_weights, kl):
     """Plot precision/recall curve from a dictionary fed into this function."""
-    kl_string = kl if type(kl) == str else f"{kl:.2f}"
+    kl_string = kl if isinstance(kl, str) else f"{kl:.2f}"
     kl_tag = kl_string.replace("-", "m").replace(".", "p")
     logger.info(f"Plotting precision-recall curves for kl = {kl_string} ...")
 
@@ -313,7 +315,7 @@ def precision_recall_curve_function(class_dict, plot_dir, no_weights, kl):
 
 def signal_background_hist(class_dict, plot_dir, no_weights, kl):
     """Plot background/signal histogram from a dictionary fed into this function."""
-    kl_string = kl if type(kl) == str else f"{kl:.2f}"
+    kl_string = kl if isinstance(kl, str) else f"{kl:.2f}"
     kl_tag = kl_string.replace("-", "m").replace(".", "p")
     logger.info(f"Plotting score histogram for kl = {kl_string}...")
 
@@ -372,7 +374,7 @@ def signal_background_hist(class_dict, plot_dir, no_weights, kl):
         hist_sig.fill(spanet_class[~mask_background], weight=weights_sig / (weights_sig.sum() * hist_sig.axes[0].widths[0]) if weights_sig is not None else None)
 
         series = {
-            f"Background - {sub_dict['label']}": {
+            f"Background | {sub_dict['label']}": {
                 "data": hist_bkg,
                 "style": {
                     "histtype": "step",
@@ -380,7 +382,7 @@ def signal_background_hist(class_dict, plot_dir, no_weights, kl):
                     "weights": weights_bkg,
                 },
             },
-            f"Signal (kl={kl_string}) - {sub_dict['label']}": {
+            f"Signal | kl={kl_string} | {sub_dict['label']}": {
                 "data": hist_sig,
                 "style": {
                     "histtype": "step",
@@ -417,7 +419,7 @@ def signal_background_hist(class_dict, plot_dir, no_weights, kl):
                     )
                 )
                 # if args.plot_quantile:
-                histplot.add_line(orientation="v", x=cut, color="black", linestyle="dotted")  # 0 and 1 should not have a particular effect. its just to have two points on the line
+                histplot.add_line(orientation="v", x=cut, color="black", linestyle="dotted", label=f"99% Background Quantile | Signal Efficiency {sig_eff * 100:.2f}%")  # 0 and 1 should not have a particular effect. its just to have two points on the line
                 histplot.run()
 
     if len(series_all_models) > 2:  # to avoid plotting the combined plot with all the models if there's only one model
@@ -450,6 +452,7 @@ def signal_background_hist(class_dict, plot_dir, no_weights, kl):
 def main():
     class_dict = {}
     roc_values_dict = {}
+    kls_signal = []
 
     for model_name, model_dict in spanet_dict.items():
         logger.info(f"Loading new file {model_name}")
@@ -494,18 +497,20 @@ def main():
         model_dict.pop("file")
 
         for var_name in np_arrays.keys():
-            kl = var_name.split("kl_")[-1]
+            kl_str = var_name.split("kl_")[-1]
+            kl = kl_str if kl_str == "all" else float(kl_str)
             if kl not in roc_values_dict[model_name]:
                 roc_values_dict[model_name][kl] = {}
+                if kl != "all":
+                    kls_signal.append(kl)
 
             roc_values_dict[model_name][kl] |= {
                 var_name: np_arrays[var_name],
             } | model_dict
 
-    kls_signal = list(np.unique(kls[true_class == 1]))
-    print("Separating kl for signal", kls_signal)
+    kls_signal_list = list(np.unique(kls_signal))
     roc_info_dict = {}
-    for kl in ["all"] + kls_signal:
+    for kl in ["all"] + kls_signal_list:
         roc_curve_compare_weights(
             class_dict, roc_values_dict, args.plot_dir, args.fpr_cutoff, args.no_weights, kl, roc_info_dict
         )
